@@ -445,16 +445,41 @@
       "title": "Красивое число",
       "icon": "🔢",
       "hint": "Что случится, если на карте окажется 777?",
-      "enabled": false,
+      "enabled": true,
       "priority": 7,
       "trigger": { "type": "event", "name": "balance:show", "where": { "value": { "in": [777, 1111, 1234, 2222] } } },
       "screens": ["home"],
       "schedule": null,
       "cooldownMs": 0,
       "maxPerDay": 3,
-      "effect": { "type": "cssAnimate", "params": { "anchor": "balance", "animation": "jump", "durationMs": 800 } },
+      "effect": {
+        "type": "particles",
+        "params": {
+          "spawn": "anchor", "anchor": "balance", "shapes": ["star", "spark", "star"],
+          "colors": ["#FFD84D", "#FFC93C", "#FFF3B0", "#FFB020"], "count": 36, "size": [10, 22],
+          "speed": [140, 300], "gravity": 240, "drag": 1.8, "rotation": 240, "lifeMs": [900, 1500], "durationMs": 1900
+        }
+      },
       "haptic": "light",
       "sound": "sounds/sparkle.wav"
+    },
+    {
+      "id": "balance-pretty-glow",
+      "title": "Красивое число: сияние",
+      "icon": "✨",
+      "hint": "",
+      "enabled": true,
+      "exclusive": false,
+      "collect": false,
+      "priority": 7,
+      "trigger": { "type": "event", "name": "balance:show", "where": { "value": { "in": [777, 1111, 1234, 2222] } } },
+      "screens": ["home"],
+      "schedule": null,
+      "cooldownMs": 0,
+      "maxPerDay": 3,
+      "effect": { "type": "cssAnimate", "params": { "anchor": "balance", "animation": "pretty", "durationMs": 1300 } },
+      "haptic": null,
+      "sound": null
     },
     {
       "id": "flip-phone",
@@ -503,7 +528,8 @@
       "title": "Вехи копилки",
       "icon": "🏁",
       "hint": "Что бывает на полпути к мечте?",
-      "enabled": false,
+      "enabled": true,
+      "exclusive": false,
       "priority": 9,
       "trigger": { "type": "event", "name": "moneybox:topup", "where": { "progress": { "crosses": [0.25, 0.5, 0.75, 1] } } },
       "screens": ["topup_success"],
@@ -514,8 +540,8 @@
         "type": "particles",
         "params": {
           "spawn": "anchor", "anchor": "progress", "shapes": ["star", "spark"],
-          "colors": ["#FFC93C", "#21A038", "#3D8BFF", "#FF7A59"], "count": 60, "size": [12, 24],
-          "rotation": 220, "lifeMs": [1400, 2000], "durationMs": 2400
+          "colors": ["#FFC93C", "#21A038", "#3D8BFF", "#FF7A59"], "count": 46, "size": [10, 22],
+          "speed": [120, 260], "gravity": 360, "drag": 1.6, "rotation": 220, "lifeMs": [1200, 1800], "durationMs": 2400
         }
       },
       "haptic": "success",

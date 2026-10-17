@@ -109,7 +109,7 @@ export function init(rawConfig, bus, stage, { baseUrl = document.baseURI } = {})
     if (screen.zone === 'red') return;
     const found = new Set(collection.ids());
     const items = config.prikoly
-      .filter(p => p.enabled || found.has(p.id))
+      .filter(p => p.collect !== false && (p.enabled || found.has(p.id)))
       .map(p => ({ id: p.id, title: p.title, icon: p.icon, hint: p.hint, found: found.has(p.id) }));
     haptics.play('light');
     ui.openAlbum({
@@ -272,7 +272,8 @@ export function init(rawConfig, bus, stage, { baseUrl = document.baseURI } = {})
     haptics.play(prikol.haptic);
     if (prikol.sound) run.stopSound = sound.play(ctx.asset(prikol.sound));
     decision(c, true);
-    if (collection.add(prikol.id)) ui.toast(`✨ Новая находка: ${prikol.title}`);
+    // collect: false — служебная часть другого прикола (например, сияние суммы при «Красивом числе»).
+    if (prikol.collect !== false && collection.add(prikol.id)) ui.toast(`✨ Новая находка: ${prikol.title}`);
     return true;
   }
 

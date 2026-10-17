@@ -48,6 +48,18 @@ const ANIMATIONS = {
       { transform: 'scale(1)' },
     ],
   },
+  // «Красивое число»: сумма подпрыгивает и вспыхивает золотом.
+  pretty: {
+    duration: 1300,
+    easing: 'ease-out',
+    keyframes: [
+      { transform: 'translateY(0) scale(1)', filter: 'brightness(1) drop-shadow(0 0 0 rgba(255, 214, 90, 0))' },
+      { transform: 'translateY(-16%) scale(1.14)', filter: 'brightness(1.3) drop-shadow(0 0 12px rgba(255, 214, 90, 0.95))', offset: 0.28 },
+      { transform: 'translateY(0) scale(1.06, 0.94)', filter: 'brightness(1.2) drop-shadow(0 0 9px rgba(255, 214, 90, 0.85))', offset: 0.5 },
+      { transform: 'translateY(-5%) scale(1.04)', filter: 'brightness(1.15) drop-shadow(0 0 7px rgba(255, 214, 90, 0.7))', offset: 0.7 },
+      { transform: 'translateY(0) scale(1)', filter: 'brightness(1) drop-shadow(0 0 0 rgba(255, 214, 90, 0))' },
+    ],
+  },
   glow: {
     duration: 900,
     easing: 'ease-in-out',
