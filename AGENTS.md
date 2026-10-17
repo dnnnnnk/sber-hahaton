@@ -23,7 +23,8 @@
 
 ```
 index.html  cms.html  AGENTS.md  README.md
-app/        main.js (оболочка, навигация, lazy-загрузка движка) · screens.js (экраны, зоны) · bus.js · debug.js
+app/        main.js (оболочка, навигация, lazy-загрузка движка) · screens.js (экраны, зоны, READY_IMAGES)
+            bus.js · debug.js + debug.css (панель ?debug=1) · shell.css
 engine/     engine.js (boot/init/reload) · config.js (загрузка+валидация) · rules.js · stage.js · sensors.js
             ui.js (тост, чип разрешений, альбом) · collection.js · haptics.js · sound.js · engine.css
 engine/triggers/  index.js (реестр) + по файлу на тип
@@ -32,7 +33,8 @@ content/    config.json · effects/ (Lottie, картинки) · sounds/
 cms/        cms.js · cms.css
 screens/    PNG экранов из Figma (см. screens/README.md)
 vendor/     lottie.min.js (единственная внешняя библиотека, локальная копия)
-docs/       ARCHITECTURE.md · CONFIG.md · NATIVE.md
+docs/       ARCHITECTURE.md (слои, конвейер решений) · CONFIG.md (формат конфига) · NATIVE.md (Kotlin/Swift)
+tools/      генераторы собственных звуков и Lottie (Python, нужны только для пересборки ассетов)
 ```
 
 ## Контракт событий (оболочка → движок)
@@ -63,7 +65,8 @@ app:firstOpenToday { hour }
 }
 ```
 
-2. Ассеты — в `content/effects/` или `content/sounds/`, пути в конфиге относительно `content/`.
+2. Ассеты — в `content/effects/` или `content/sounds/`, пути в конфиге относительно `content/`. Только свои образы.
+   Если прикол привязан к элементу экрана — нужен якорь (список в `docs/ARCHITECTURE.md`).
 3. Проверь в `index.html?debug=1`: лог решений движка покажет, сработал прикол или почему пропущен.
 
 Фильтр `where`: `{ "taskId": "dog_walk" }` (равенство), `{ "value": { "in": [777, 1111] } }`,

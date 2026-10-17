@@ -1,0 +1,73 @@
+# Перенос в нативные приложения
+
+Движок специально написан так, чтобы перенос был построчным: те же сущности, те же интерфейсы, тот же
+`config.json` и те же Lottie-файлы. Бэкенд не нужен, новых разрешений нет (в нативе акселерометр и
+гироскоп разрешений не требуют).
+
+## Таблица соответствий
+
+| Веб-прототип | Android (Kotlin, Compose) | iOS (Swift, SwiftUI) |
+|---|---|---|
+| `app/bus.js` — шина событий | `SharedFlow<PrikolEvent>` в синглтоне `Prikoly`; экраны зовут `Prikoly.emit(TaskDone(id))` | `PassthroughSubject<PrikolEvent, Never>` / `AsyncStream`; `Prikoly.shared.emit(.taskDone(id))` |
+| `screen:open { zone }` | `LaunchedEffect(route)` в `NavHost` + список красных маршрутов | `.onAppear` / `NavigationStack` path + список красных экранов |
+| `stage` — слой поверх экрана | `Box { AppContent(); PrikolyOverlay() }`, оверлей без обработки касаний | `.overlay { PrikolyOverlay().allowsHitTesting(false) }` на корневом view |
+| якоря `data-anchor` / `getAnchorRect` | `Modifier.prikolyAnchor("card")` = `onGloballyPositioned` → `Map<String, Rect>` | `.prikolyAnchor("card")` = `anchorPreference` / `GeometryReader` → `[String: CGRect]` |
+| `particles` (canvas) | `Canvas` + `withFrameNanos` в `LaunchedEffect`, спрайты — `ImageBitmap` из эмодзи | `Canvas` + `TimelineView(.animation)`, спрайты — `context.resolve(Text("🍂"))` |
+| `lottie` | `lottie-compose`: `LottieAnimation(composition, iterations = 1)` | `lottie-ios`: `LottieView(animation:).playing(loopMode: .playOnce)` |
+| `cssAnimate` (WAAPI) | `Animatable` + `graphicsLayer { rotationZ; translationY }` на view якоря | `.rotationEffect` / `.offset` + `withAnimation` на view якоря (`PhaseAnimator`/`keyframeAnimator`) |
+| `holo` (`mix-blend-mode`) | `Brush.linearGradient` + `BlendMode.Overlay`/`HardLight` в `drawWithContent` | `LinearGradient` + `.blendMode(.hardLight)` поверх карты |
+| `shake`, `still` (`devicemotion`) | `SensorManager`, `TYPE_LINEAR_ACCELERATION` (+ `TYPE_GYROSCOPE`) | `CMMotionManager.deviceMotion` (`userAcceleration`, `rotationRate`) |
+| `tilt`, `flip` (`deviceorientation`) | `TYPE_ROTATION_VECTOR` → `getOrientation` (pitch/roll) | `CMMotionManager.deviceMotion.attitude` (pitch/roll) |
+| `multitap`, `longpress` (pointer на document) | `pointerInput` с `PointerEventPass.Initial` на корне, без consume; попадание — по `Rect` якоря | `simultaneousGesture` на корне или `UIWindow.sendEvent`; попадание — по `CGRect` якоря |
+| `rules.js` | чистый Kotlin, без Android-зависимостей (юнит-тесты как есть) | чистый Swift |
+| `config.json` override из CMS | CMS-ключ: произвольный JSON по ключу (уже умеет приложение) → `kotlinx.serialization` | тот же ключ → `Codable` |
+| ассеты `content/` | CDN + дисковый кэш (Coil / OkHttp cache), Lottie по URL с кэшем | CDN + `URLCache`, `LottieAnimation.loadedFrom(url:)` |
+| `collection.js` (localStorage) | `DataStore<Preferences>` | `UserDefaults` / `@AppStorage` |
+| `haptics.js` | `HapticFeedback` / `VibrationEffect.createPredefined` | `UIImpactFeedbackGenerator`, `UINotificationFeedbackGenerator(.success)` |
+| `sound.js` | `SoundPool` (короткие сэмплы) | `AVAudioPlayer` с категорией `.ambient` |
+| пауза при `document.hidden` | `Lifecycle.State.STARTED` (`repeatOnLifecycle`) | `scenePhase != .active` |
+| `prefers-reduced-motion` | `Settings.Global.ANIMATOR_DURATION_SCALE == 0` | `UIAccessibility.isReduceMotionEnabled` |
+| тост, альбом | маленький `Snackbar`-подобный оверлей; `ModalBottomSheet` | оверлей-капсула; `.sheet` с `presentationDetents` |
+
+## Интерфейсы
+
+```kotlin
+interface Trigger { fun start(spec: TriggerSpec, ctx: TriggerContext, fire: (Map<String, Any>) -> Unit): () -> Unit }
+interface Effect {
+    val fullscreen: Boolean
+    fun play(params: JsonObject, ctx: EffectContext): EffectHandle?   // null — нет якоря
+}
+interface EffectHandle { fun stop(); fun update(payload: Map<String, Any>) {} }
+```
+
+```swift
+protocol Trigger { func start(_ spec: TriggerSpec, _ ctx: TriggerContext, fire: @escaping ([String: Any]) -> Void) -> () -> Void }
+protocol Effect { var fullscreen: Bool { get }; func play(_ params: JSON, _ ctx: EffectContext) -> EffectHandle? }
+protocol EffectHandle { func stop(); func update(_ payload: [String: Any]) }
+```
+
+Реестры — `Map<String, Trigger>` / `[String: Trigger]`; новый тип = класс + строка в реестре, как в вебе.
+
+## Что меняется без релиза
+
+Всё, что в `config.json`: какие приколы включены, где и когда играют, кулдауны, лимиты, приоритеты,
+параметры частиц, тексты, подсказки, звуки и Lottie-файлы (по URL с CDN). Релиз нужен только для нового
+**типа** триггера или эффекта — и это небольшой модуль по интерфейсу выше.
+
+## Оценка объёма (на платформу, 1 разработчик)
+
+| Блок | Дней |
+|---|---|
+| Шина + события из 6 мест существующих экранов | 1 |
+| Оверлей + якоря (модификатор / view-модификатор) | 1–1,5 |
+| Правила, конфиг, валидация, загрузка по CMS-ключу, кэш | 1,5 |
+| Частицы (Canvas, спрайты, оседание, следы) | 2–3 |
+| Lottie, cssAnimate, голограмма | 1,5 |
+| Сенсорные триггеры (shake, tilt, flip, still) + жесты (multitap, longpress) | 1,5–2 |
+| Коллекция, тост, альбом | 1,5 |
+| Звук, вибрация, reduced motion, lifecycle | 1 |
+| Тесты правил, QA на слабых устройствах | 1,5–2 |
+| **Итого** | **~13–15** |
+
+Риски: производительность частиц на слабых Android (решается лимитом частиц из конфига без релиза),
+корректный расчёт якорей при прокрутке (в Compose/SwiftUI это стандартные механизмы).
