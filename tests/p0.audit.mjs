@@ -208,6 +208,14 @@ for (const browserType of [chromium, webkit].filter(b => !process.env.ONLY_BROWS
               await stop();
               return;
             }
+            // Постоянный жилец не заканчивается сам: проверяем, что он стоит без цикла и гаснет по stopAll.
+            if (spec.type === 'resident' && spec.params?.durationMs == null) {
+              await page.waitForFunction(() => !window.sberKids.engine.stats().running);
+              await stop();
+              assert.equal(await page.locator('.prikoly-resident').count(), 0);
+              report.effects.push({ id: entry.id, variant: variant + 1, persistent: true });
+              return;
+            }
             if (entry.id === 'holo-card') {
               for (const scroll of [0, 75]) {
                 await page.locator('#viewport').evaluate((el, top) => { el.scrollTop = top; }, scroll);

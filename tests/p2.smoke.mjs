@@ -52,7 +52,9 @@ for (const browserType of [chromium, webkit].filter(b => !process.env.ONLY_BROWS
     const reset = () => page.evaluate(() => window.sberKids.engine.rules.resetCooldowns());
     const preview = id => page.evaluate(id => window.sberKids.engine.simulateEntry(id), id);
     const active = id => page.waitForFunction(id => window.sberKids.engine.stats().active.includes(id), id);
-    const idle = () => page.waitForFunction(() => !window.sberKids.engine.stats().running && !window.sberKids.engine.stats().active.length);
+    // Постоянная Капля остаётся активной на зелёных экранах; «тишина» — нет других эффектов и цикл стоит.
+    const idle = () => page.waitForFunction(() => !window.sberKids.engine.stats().running
+      && !window.sberKids.engine.stats().active.filter(id => id !== 'screen-resident').length);
     const screenshot = async name => {
       await page.addStyleTag({ content: '.dbg { visibility: hidden !important; }' });
       await page.screenshot({ path: `${output}/${browserType.name()}-${name}.png` });
@@ -64,9 +66,9 @@ for (const browserType of [chromium, webkit].filter(b => !process.env.ONLY_BROWS
       await go(id);
       assert.equal(await page.locator('.screen').count(), 1);
     }
-    await page.mouse.dblclick(190, 180, { delay: 80 });
+    // Капля живёт на главном сразу: наклон катит, тап смешит, тряска кружит голову, свайп отпускает.
     await active('screen-resident');
-    await page.waitForTimeout(300);
+    await page.waitForTimeout(500);
     assert.equal(await page.locator('.prikoly-resident').count(), 1);
     const start = await page.locator('.prikoly-resident').boundingBox();
     await page.evaluate(() => {
@@ -77,8 +79,15 @@ for (const browserType of [chromium, webkit].filter(b => !process.env.ONLY_BROWS
     await page.waitForTimeout(550);
     const moved = await page.locator('.prikoly-resident').boundingBox();
     assert.ok(moved.x > start.x + 5, 'resident follows tilt');
-    await page.mouse.click(moved.x + moved.width / 2, moved.y + moved.height / 2);
+    await page.evaluate(() => {
+      const sensors = window.sberKids.engine.sensors;
+      for (let i = 0; i < 60; i++) sensors.inject('orientation', { beta: 30, gamma: 0 });
+    });
+    await page.waitForTimeout(900);
+    const back = await page.locator('.prikoly-resident').boundingBox();
+    await page.mouse.click(back.x + back.width / 2, back.y + back.height / 2);
     await page.waitForFunction(() => document.querySelector('.prikoly-resident')?.dataset.mood === 'happy');
+    assert.equal(await page.evaluate(() => window.sberKids.current()), 'home', 'tap on Drop does not navigate');
     await screenshot('resident');
     await page.evaluate(() => {
       const sensors = window.sberKids.engine.sensors;
@@ -86,19 +95,26 @@ for (const browserType of [chromium, webkit].filter(b => !process.env.ONLY_BROWS
       for (let i = 0; i < 3; i++) sensors.inject('motion', { linear: 30, rotation: 0, t: t + i * 100 });
     });
     await page.waitForFunction(() => document.querySelector('.prikoly-resident')?.dataset.mood === 'dizzy');
+    await page.waitForTimeout(1800);
     const box = await page.locator('.prikoly-resident').boundingBox();
     await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
     await page.mouse.down();
     await page.mouse.move(box.x + box.width / 2 + 80, box.y + box.height / 2, { steps: 6 });
     await page.mouse.up();
     await page.waitForFunction(() => !document.querySelector('.prikoly-resident'));
-    await page.evaluate(() => window.sberKids.engine.stopAll('test cleanup'));
-
-    // Ресурсы освобождаются при уходе с главного, в том числе до истечения эффекта.
-    await reset(); await preview('screen-resident'); await active('screen-resident');
+    // Отпущенная свайпом Капля не возвращается сама до следующего входа; debug зовёт её обратно.
     await go('tasks');
     assert.equal(await page.locator('.prikoly-resident').count(), 0);
+    await page.evaluate(() => window.sberKids.engine.simulateEntry('screen-resident', { summon: true }));
+    await active('screen-resident');
+
+    // Ресурсы освобождаются в красной зоне, в том числе посреди реакции.
+    await page.evaluate(() => window.sberKids.engine.simulateEntry('screen-resident', { react: 'dance' }));
+    await go('transfer');
+    assert.equal(await page.locator('.prikoly-resident').count(), 0);
     await idle();
+    await go('tasks');
+    await active('screen-resident');
     // Старый эффект дел проходит через обычное действие пользователя.
     await page.locator('[data-zone="task-dog_walk"]').click();
     await active('tasks-alive-dog');
@@ -196,6 +212,7 @@ for (const browserType of [chromium, webkit].filter(b => !process.env.ONLY_BROWS
 
     // Пауза фоновой вкладки проверяется тем же visibilitychange, что приходит от браузера.
     await reset(); await preview('screen-resident'); await active('screen-resident');
+    await page.evaluate(() => window.sberKids.engine.simulateEntry('screen-resident', { react: 'dance' }));
     assert.equal(await page.evaluate(() => window.sberKids.engine.stats().running), true);
     await page.evaluate(() => {
       Object.defineProperty(document, 'hidden', { configurable: true, value: true });
@@ -255,7 +272,7 @@ for (const browserType of [chromium, webkit].filter(b => !process.env.ONLY_BROWS
       await page.evaluate(() => window.sberKids.engine.stopAll('test cleanup'));
       await go('home');
       await reset(); await preview('screen-resident'); await active('screen-resident');
-      await page.evaluate(() => { window.sberKids.engine.setSeason('winter'); window.sberKids.engine.simulate('shake'); });
+      await page.evaluate(() => { window.sberKids.engine.simulateEntry('screen-resident', { react: 'dance' }); window.sberKids.engine.setSeason('winter'); window.sberKids.engine.simulate('shake'); });
       await active('season-winter-snow');
       const resident = await measure('resident-and-snow');
       performanceResult = [coins, resident];
@@ -274,7 +291,7 @@ for (const browserType of [chromium, webkit].filter(b => !process.env.ONLY_BROWS
     await page.waitForFunction(() => !window.sberKids.engine.stats().running, null, { timeout: 12000 });
     await idle();
     await page.evaluate(() => window.sberKids.engine.openAlbum());
-    assert.ok((await page.locator('.prikoly-album').innerText()).includes('Капля на карте'));
+    assert.ok((await page.locator('.prikoly-album').innerText()).includes('Капля'));
     await page.evaluate(() => window.sberKids.engine.closeAlbum());
     assert.deepEqual(errors, [], 'browser console and responses');
     assert.deepEqual(external, [], 'same-origin requests only');

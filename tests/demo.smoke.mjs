@@ -192,6 +192,174 @@ for (const browserType of [chromium, webkit].filter(b => !process.env.ONLY_BROWS
       await stop();
     });
 
+    // ——— B1: Капля — сквозной персонаж ———
+    const drop = () => page.locator('.prikoly-drop');
+    const mood = () => page.evaluate(() => document.querySelector('.prikoly-drop')?.dataset.mood ?? null);
+    const dropCenter = async () => {
+      const b = await drop().boundingBox();
+      return { x: b.x + b.width / 2, y: b.y + b.height * 0.58 };
+    };
+    const settle = () => page.waitForFunction(() => !window.sberKids.engine.stats().running, null, { timeout: 6000 });
+
+    await check('B1 Drop lives on green screens and vanishes on red', async () => {
+      // stopAll выше снял её на этом же экране; она возвращается со следующим открытием экрана.
+      await go('content');
+      await go('home');
+      await page.waitForFunction(() => document.querySelectorAll('.prikoly-drop').length === 1);
+      const tab = await page.locator('[data-anchor="tabbar"]').boundingBox();
+      const b = await drop().boundingBox();
+      assert.ok(b.y >= tab.y - 2 && b.y + b.height <= tab.y + tab.height + 2, 'sits inside the tabbar');
+      assert.ok(Math.abs(b.x + b.width / 2 - (tab.x + tab.width / 2)) < 3, 'in the middle slot');
+      await settle();
+      for (const id of ['tasks', 'moneybox', 'content', 'tasks_done', 'moneybox_goal', 'topup_success']) {
+        await go(id);
+        assert.equal(await drop().count(), 1, `${id}: present`);
+        assert.equal(await drop().evaluate(el => el.classList.contains('is-away')), false, `${id}: has a perch`);
+      }
+      await go('transfer');
+      assert.equal(await drop().count(), 0, 'red zone: gone');
+      await go('home');
+      await page.waitForFunction(() => document.querySelectorAll('.prikoly-drop').length === 1);
+      await shot('b1-home');
+    });
+
+    await check('B1 tap on Drop giggles and does not press the tab under her', async () => {
+      await go('home');
+      await settle();
+      const c = await dropCenter();
+      await page.touchscreen.tap(c.x, c.y);
+      await page.waitForFunction(() => document.querySelector('.prikoly-drop')?.dataset.mood === 'happy');
+      assert.equal(await page.evaluate(() => window.sberKids.current()), 'home');
+      // Касания рядом с ней по-прежнему уходят в интерфейс.
+      const tasksTab = await page.locator('#tabbar [data-tab="tasks"]').boundingBox();
+      await page.touchscreen.tap(tasksTab.x + tasksTab.width / 2, tasksTab.y + tasksTab.height / 2);
+      await page.waitForFunction(() => window.sberKids.current() === 'tasks');
+    });
+
+    await check('B1 task done → joy, all done → dance', async () => {
+      await go('tasks');
+      await page.evaluate(() => { Object.keys(window.sberKids.state.tasks).forEach(id => { window.sberKids.state.tasks[id] = false; }); window.sberKids.refresh(); });
+      await settle();
+      await page.locator('[data-zone="task-dog_walk"]').tap();
+      await page.waitForFunction(() => document.querySelector('.prikoly-drop')?.dataset.face === 'happy', null, { timeout: 500 });
+      assert.ok(await page.locator('.pd-fx--spark').count() > 0, 'sparkles over her head');
+      await page.waitForTimeout(1300);
+      for (const id of ['dishes', 'multiplication', 'clean_room', 'read_book']) {
+        await page.locator(`[data-zone="task-${id}"]`).evaluate(el => el.scrollIntoView({ block: 'center' }));
+        await page.locator(`[data-zone="task-${id}"]`).tap();
+        await page.waitForTimeout(250);
+      }
+      await page.waitForFunction(() => document.querySelector('.pd-fx--note'), null, { timeout: 1500 });
+      await shot('b1-dance');
+      await page.waitForFunction(() => window.sberKids.current() === 'tasks_done');
+      await stop();
+      await page.evaluate(() => window.sberKids.resetTasks());
+      await page.waitForFunction(() => window.sberKids.current() === 'tasks');
+    });
+
+    await check('B1 shake → dizzy, tilt → rolls to the edge and back', async () => {
+      await go('home');
+      await page.waitForFunction(() => document.querySelectorAll('.prikoly-drop').length === 1);
+      await settle();
+      const start = await drop().boundingBox();
+      await page.evaluate(() => {
+        const s = window.sberKids.engine.sensors;
+        s.inject('orientation', { beta: 30, gamma: 0 });
+        s.inject('orientation', { beta: 30, gamma: 13 });
+      });
+      await page.waitForTimeout(900);
+      const tilted = await drop().boundingBox();
+      assert.ok(tilted.x > start.x + 60, `rolled right (${tilted.x - start.x})`);
+      await page.evaluate(() => { const s = window.sberKids.engine.sensors; for (let i = 0; i < 80; i++) s.inject('orientation', { beta: 30, gamma: 0 }); });
+      await settle();
+      const back = await drop().boundingBox();
+      assert.ok(Math.abs(back.x - start.x) < 25, `returned home (${back.x - start.x})`);
+      await page.evaluate(() => {
+        const s = window.sberKids.engine.sensors;
+        const t = performance.now();
+        for (let i = 0; i < 3; i++) s.inject('motion', { linear: 30, rotation: 0, t: t + i * 100 });
+      });
+      await page.waitForFunction(() => document.querySelector('.prikoly-drop')?.dataset.mood === 'dizzy');
+      assert.ok(await page.locator('.pd-fx--star').count() >= 3, 'stars circle her head');
+    });
+
+    await check('B1 face down sleeps, face up wakes with a stretch', async () => {
+      await go('home');
+      await page.waitForTimeout(1800);
+      await page.evaluate(() => window.sberKids.engine.sensors.inject('orientation', { beta: 178, gamma: 0 }));
+      await page.waitForTimeout(350);
+      await page.evaluate(() => window.sberKids.engine.sensors.inject('orientation', { beta: 179, gamma: 0 }));
+      await page.waitForFunction(() => document.querySelector('.prikoly-drop')?.dataset.face === 'sleep');
+      assert.ok(await page.locator('.pd-fx--z').count() >= 3, 'z-z-z');
+      await page.evaluate(() => window.sberKids.engine.sensors.inject('orientation', { beta: 20, gamma: 0 }));
+      await page.waitForFunction(() => document.querySelector('.prikoly-drop')?.dataset.face === 'yawn');
+      await page.waitForFunction(() => document.querySelector('.prikoly-drop')?.dataset.face === 'happy', null, { timeout: 2500 });
+    });
+
+    await check('B1 idle and lying still → dozes, touch wakes her', async () => {
+      await go('home');
+      await page.evaluate(() => {
+        const engine = window.sberKids.engine;
+        const config = structuredClone(engine.config);
+        config.prikoly.find(p => p.id === 'screen-resident').effect.params.idleMs = 700;
+        engine.reload(config, 'demo idle');
+      });
+      await page.waitForFunction(() => document.querySelector('.prikoly-drop')?.dataset.face === 'sleep', null, { timeout: 2500 });
+      await page.mouse.move(40, 300);
+      await page.mouse.move(60, 320);
+      await page.waitForFunction(() => document.querySelector('.prikoly-drop')?.dataset.face !== 'sleep');
+      await page.evaluate(() => window.sberKids.engine.reloadFromSources());
+      await page.waitForFunction(() => document.querySelectorAll('.prikoly-drop').length === 1);
+      await page.evaluate(() => {
+        const s = window.sberKids.engine.sensors;
+        const t = performance.now();
+        for (let i = 0; i <= 14; i++) s.inject('motion', { linear: 0.05, rotation: 0.5, t: t + i * 500 });
+      });
+      await page.waitForFunction(() => document.querySelector('.prikoly-drop')?.dataset.face === 'sleep');
+      await page.evaluate(() => window.sberKids.engine.sensors.inject('motion', { linear: 2, rotation: 40 }));
+      await page.waitForFunction(() => document.querySelector('.prikoly-drop')?.dataset.face !== 'sleep');
+    });
+
+    await check('B1 reactions come from the CMS without a release', async () => {
+      const cms = await context.newPage();
+      cms.on('pageerror', e => errors.push(`cms: ${e.message}`));
+      await cms.setViewportSize({ width: 1280, height: 900 });
+      await cms.goto(`${base}cms.html`, { waitUntil: 'networkidle' });
+      const item = cms.locator('.item').filter({ has: cms.locator('.item__meta', { hasText: 'screen-resident' }) });
+      await item.locator('select[data-reaction="tap"]').selectOption('dance');
+      await cms.locator('#save').click();
+      await page.waitForFunction(() => window.sberKids.engine.source === 'CMS'
+        && window.sberKids.engine.config.prikoly.find(p => p.id === 'screen-resident').effect.params.reactions.tap === 'dance');
+      await go('home');
+      await page.waitForFunction(() => document.querySelectorAll('.prikoly-drop').length === 1);
+      await settle();
+      const c = await dropCenter();
+      await page.touchscreen.tap(c.x, c.y);
+      await page.waitForFunction(() => document.querySelector('.pd-fx--note'), null, { timeout: 1500 });
+      await cms.locator('#reset').click(); await cms.locator('#reset').click();
+      await page.waitForFunction(() => window.sberKids.engine.source === 'config.json');
+      await cms.close();
+    });
+
+    await check('B1 swipe lets her go until the next app open', async () => {
+      await go('home');
+      await page.waitForFunction(() => document.querySelectorAll('.prikoly-drop').length === 1);
+      await settle();
+      const c = await dropCenter();
+      await page.mouse.move(c.x, c.y);
+      await page.mouse.down();
+      await page.mouse.move(c.x + 90, c.y, { steps: 6 });
+      await page.mouse.up();
+      await page.waitForFunction(() => !document.querySelector('.prikoly-drop'));
+      await go('tasks');
+      await go('home');
+      assert.equal(await drop().count(), 0, 'stays away while the app is open');
+      await page.reload({ waitUntil: 'networkidle' });
+      await page.waitForFunction(() => window.sberKids?.engine?.config?.prikoly.length);
+      await page.addStyleTag({ content: '.dbg { visibility: hidden !important; }' });
+      await page.waitForFunction(() => document.querySelectorAll('.prikoly-drop').length === 1);
+    });
+
     assert.deepEqual(errors, [], 'console and HTTP');
     assert.deepEqual(external, [], 'same-origin only');
     await context.close();
