@@ -66,6 +66,14 @@ export function createRules(getSettings) {
       lastFired.clear();
       lastFullscreen = { at: -Infinity, priority: -Infinity };
     },
+    // «Сбросить демо»: дневные лимиты с нуля.
+    resetDaily() {
+      try {
+        localStorage.removeItem(DAILY_KEY);
+      } catch {
+        // без хранилища лимиты и так живут до перезагрузки
+      }
+    },
   };
 }
 

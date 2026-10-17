@@ -149,3 +149,22 @@
   background: rgba(61, 139, 255, 0.15);
   pointer-events: none;
 }
+
+/* Режим ведущего: крупные кнопки сверху панели */
+.dbg__host { display: grid; gap: 6px; padding: 8px; border-radius: 12px; background: #f1fbf4; }
+.dbg__reset {
+  padding: 10px;
+  border: 0;
+  border-radius: 10px;
+  background: #21a038;
+  color: #fff;
+  font-weight: 700 !important;
+}
+.dbg__seasons { display: grid; grid-template-columns: 1.4fr repeat(4, 1fr); gap: 4px; }
+.dbg__seasons button {
+  padding: 6px 0;
+  border: 1px solid #d5e9da;
+  border-radius: 8px;
+  background: #fff;
+}
+.dbg__grid--hero button { background: #fff; border-color: #d5e9da; }

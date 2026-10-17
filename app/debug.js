@@ -1,5 +1,8 @@
-// Debug-панель (?debug=1): имитация сенсоров, лог решений движка, FPS, подсветка зон и якорей, калибровка.
+// Debug-панель (?debug=1): режим ведущего (сброс демо, сезон, геройские моменты), имитация сенсоров,
+// лог решений движка, FPS, подсветка зон и якорей, калибровка.
 // Инструмент разработчика оболочки — к движку обращается только через его публичный API.
+
+import { TASKS, MONEYBOXES } from './screens.js';
 
 const COLLAPSED_KEY = 'sberkids.debugCollapsed';
 const SEASONS = ['auto', 'autumn', 'winter', 'spring', 'summer'];
@@ -19,19 +22,34 @@ export function mountDebug({ shell, bus, engine }) {
         <button type="button" data-act="toggle" aria-label="Свернуть">✕</button>
       </header>
       <div class="dbg__status" data-out="status"></div>
+      <section class="dbg__host" aria-label="Режим ведущего">
+        <button type="button" class="dbg__reset" data-act="resetDemo">🔄 Сбросить демо</button>
+        <div class="dbg__seasons" role="group" aria-label="Сезон">
+          <button type="button" data-season="auto">Авто</button>
+          <button type="button" data-season="autumn">🍂</button>
+          <button type="button" data-season="winter">❄️</button>
+          <button type="button" data-season="spring">🌸</button>
+          <button type="button" data-season="summer">☀️</button>
+        </div>
+        <div class="dbg__grid dbg__grid--hero">
+          <button type="button" data-act="heroGiggle">💧 Капля хихикает</button>
+          <button type="button" data-act="heroDance">💃 Капля танцует</button>
+          <button type="button" data-act="heroHolo">💳 Голограмма</button>
+          <button type="button" data-act="shake">🍂 Погода (тряхнуть)</button>
+          <button type="button" data-act="flip">🙃 Кувырок</button>
+          <button type="button" data-act="still">💤 Тихий час</button>
+          <button type="button" data-act="allDone">✅ Все дела</button>
+          <button type="button" data-act="coins">🪙 Копилки</button>
+        </div>
+      </section>
       <div class="dbg__stats" data-out="stats"></div>
       <div class="dbg__grid">
-        <button type="button" data-act="shake">📳 Тряхнуть</button>
-        <button type="button" data-act="flip">🙃 Перевернуть</button>
-        <button type="button" data-act="still">🛌 Лежит</button>
         <button type="button" data-act="balance">💰 Баланс 1111</button>
-        <button type="button" data-act="allDone">✅ Все дела выполнены</button>
         <button type="button" data-act="season">🗓 Сменить сезон</button>
         <button type="button" data-act="album">📒 Открыть альбом</button>
         <button type="button" data-act="resetCollection">🧹 Сбросить коллекцию</button>
         <button type="button" data-act="cooldowns">⏱ Сбросить кулдауны</button>
         <button type="button" data-act="mute">🔊 Звук</button>
-        <button type="button" data-act="coins">🪙 Звенящие копилки</button>
         <button type="button" data-act="resident">💧 Позвать Каплю</button>
       </div>
       <fieldset class="dbg__tilt">
@@ -63,7 +81,30 @@ export function mountDebug({ shell, bus, engine }) {
       setTimeout(() => face(179), 450);
       setTimeout(() => face(12), 2900);
     },
-    still: () => engine.simulate('still', { seconds: 10 }),
+    // Тихий час как с телефона: датчик движения «молчит» 7 с (метки времени вперёд) — 💤 и Капля засыпает.
+    still: () => {
+      const t = performance.now();
+      for (let i = 0; i <= 14; i++) engine.sensors.inject('motion', { linear: 0.04, rotation: 0.4, t: t + i * 500 });
+    },
+    resetDemo: () => resetDemo(),
+    heroGiggle: () => {
+      engine.simulateEntry('screen-resident', { summon: true });
+      setTimeout(() => engine.simulateEntry('screen-resident', { react: 'giggle' }), 60);
+    },
+    heroDance: () => {
+      engine.simulateEntry('screen-resident', { summon: true });
+      setTimeout(() => engine.simulateEntry('screen-resident', { react: 'dance' }), 60);
+    },
+    // Голограмма: 2,6 с «покачивания» телефона.
+    heroHolo: () => {
+      if (shell.current() !== 'home') shell.go('home');
+      const started = performance.now();
+      const timer = setInterval(() => {
+        const t = (performance.now() - started) / 1000;
+        if (t > 2.6) return clearInterval(timer);
+        engine.simulate('tilt', { x: Math.sin(t * 2.6) * 0.65, y: Math.cos(t * 1.7) * 0.3 });
+      }, 40);
+    },
     coins: () => engine.simulateEntry('moneybox-rattle', { strength: 0.8 }),
     resident: () => engine.simulateEntry('screen-resident', { summon: true }),
     balance: () => shell.setBalance(1111),
@@ -88,7 +129,35 @@ export function mountDebug({ shell, bus, engine }) {
   panel.addEventListener('click', e => {
     const act = e.target.closest('[data-act]')?.dataset.act;
     if (act) actions[act]();
+    const season = e.target.closest('[data-season]')?.dataset.season;
+    if (season) {
+      engine.setSeason(season);
+      seasonIndex = Math.max(0, SEASONS.indexOf(season));
+      renderStatus();
+    }
   });
+
+  // «Сбросить демо»: приколы (коллекция, кулдауны, лимиты, сезон, звук, Капля) и оболочка
+  // (дела, копилки, баланс) — в исходное, затем главный экран.
+  function resetDemo() {
+    const { state } = shell;
+    TASKS.forEach(t => { state.tasks[t.id] = t.done; });
+    state.moneyboxes = MONEYBOXES.map(m => ({ ...m }));
+    state.balance = 800.55;
+    state.lastTopup = null;
+    state.pending = [];
+    seasonIndex = 0;
+    try {
+      localStorage.removeItem('sberkids.lastOpenDay');
+    } catch {
+      // не страшно
+    }
+    engine.resetDemo();
+    if (shell.current() === 'home') shell.refresh();
+    else shell.go('home');
+    document.getElementById('viewport').scrollTop = 0;
+    renderStatus();
+  }
 
   // Наклон: слайдеры шлют tilt, пока их двигают; отпустили — значения возвращаются к нулю.
   const tiltInputs = [...panel.querySelectorAll('[data-tilt]')];

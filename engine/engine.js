@@ -361,6 +361,23 @@ export function init(rawConfig, bus, stage, { baseUrl = document.baseURI } = {})
       info(`🗓 сезон: ${value || 'как в конфиге'}`);
     },
 
+    // Режим ведущего: всё состояние приколов в исходное — коллекция, кулдауны, лимиты, сезон, звук, Капля.
+    resetDemo() {
+      pending = [];
+      stopAll('сброс демо');
+      ui.hideToast();
+      ui.closeAlbum(true);
+      collection.reset();
+      rules.resetCooldowns();
+      rules.resetDaily();
+      rules.setSeasonOverride(null);
+      sound.setMuted(false);
+      for (const def of Object.values(effects)) safely(() => def.reset?.());
+      info('🔄 демо сброшено: коллекция, кулдауны, лимиты, сезон, звук, Капля');
+      // Постоянные жильцы возвращаются сразу, без перехода между экранами.
+      if (screen.zone !== 'red') build();
+    },
+
     collection,
     openAlbum,
     closeAlbum: () => ui.closeAlbum(),
