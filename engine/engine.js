@@ -9,6 +9,7 @@ import { createHaptics } from './haptics.js';
 import { createSound } from './sound.js';
 import { createSensors, PERMISSION_SOURCES } from './sensors.js';
 import { createUi } from './ui.js';
+import { createCollection } from './collection.js';
 import { fetchConfig, readOverride, validateConfig, OVERRIDE_KEY, DEFAULT_SETTINGS } from './config.js';
 
 const LOG_LIMIT = 60;
@@ -51,11 +52,13 @@ export function init(rawConfig, bus, stage, { baseUrl = document.baseURI } = {})
   const sound = createSound(() => settings().sound);
   const sensors = createSensors();
   const ui = createUi(stage);
+  const collection = createCollection();
   const screen = { id: null, zone: 'green' };
   const active = new Map(); // id прикола → { handle, fullscreen, priority, timer }
   const log = [];
   const logListeners = new Set();
   let entries = []; // { prikol, fullscreen, dispose }
+  let disposeAlbumGesture = null;
   let pending = [];
 
   const triggerCtx = { bus, stage, sensors, settings };
@@ -66,6 +69,7 @@ export function init(rawConfig, bus, stage, { baseUrl = document.baseURI } = {})
     if (screen.zone === 'red') {
       pending = [];
       stopAll('красная зона');
+      ui.closeAlbum();
     }
   });
 
@@ -84,6 +88,28 @@ export function init(rawConfig, bus, stage, { baseUrl = document.baseURI } = {})
         }
         return entry;
       });
+
+    // Альбом коллекции — долгое нажатие на якорь из settings.albumAnchor (по умолчанию аватар).
+    disposeAlbumGesture?.();
+    disposeAlbumGesture = triggers.longpress.create({ anchor: settings().albumAnchor }, triggerCtx, () => {
+      if (screen.zone !== 'red') openAlbum();
+    });
+  }
+
+  function openAlbum() {
+    const found = new Set(collection.ids());
+    const items = config.prikoly
+      .filter(p => p.enabled || found.has(p.id))
+      .map(p => ({ id: p.id, title: p.title, icon: p.icon, hint: p.hint, found: found.has(p.id) }));
+    haptics.play('light');
+    ui.openAlbum({
+      items,
+      muted: sound.isMuted(),
+      onToggleMute: () => {
+        sound.setMuted(!sound.isMuted());
+        return sound.isMuted();
+      },
+    });
   }
 
   function reload(raw, from = 'конфиг') {
@@ -206,6 +232,7 @@ export function init(rawConfig, bus, stage, { baseUrl = document.baseURI } = {})
     haptics.play(prikol.haptic);
     if (prikol.sound) sound.play(ctx.asset(prikol.sound));
     decision(c, true);
+    if (collection.add(prikol.id)) ui.toast(`✨ Новая находка: ${prikol.title}`);
   }
 
   function stopEffect(id, reason) {
@@ -262,6 +289,14 @@ export function init(rawConfig, bus, stage, { baseUrl = document.baseURI } = {})
     setSeason(value) {
       rules.setSeasonOverride(value);
       info(`🗓 сезон: ${value || 'как в конфиге'}`);
+    },
+
+    collection,
+    openAlbum,
+    closeAlbum: () => ui.closeAlbum(),
+    resetCollection() {
+      collection.reset();
+      info('🧹 коллекция сброшена');
     },
 
     getLog: () => [...log],

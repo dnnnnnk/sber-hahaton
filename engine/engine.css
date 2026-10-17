@@ -71,3 +71,141 @@
 @keyframes prikoly-chip-in {
   from { opacity: 0; transform: translate(-50%, 8px); }
 }
+
+/* ——— Эффекты в DOM ——— */
+
+/* Голограмма: смешивается с картой под ней (opacity и blend — на одном элементе). */
+.prikoly-holo {
+  position: absolute;
+  z-index: 15;
+  overflow: hidden;
+  opacity: 0;
+  mix-blend-mode: hard-light;
+  pointer-events: none;
+}
+
+.prikoly-holo__rainbow,
+.prikoly-holo__shine {
+  position: absolute;
+  inset: 0;
+}
+
+.prikoly-holo__rainbow {
+  background-image: linear-gradient(115deg,
+    rgba(255, 255, 255, 0) 18%,
+    rgba(255, 92, 205, 0.95) 30%,
+    rgba(92, 225, 255, 0.95) 40%,
+    rgba(255, 245, 120, 0.95) 50%,
+    rgba(120, 255, 170, 0.9) 60%,
+    rgba(160, 120, 255, 0.9) 70%,
+    rgba(255, 255, 255, 0) 82%);
+  background-size: 260% 260%;
+}
+
+.prikoly-lottie {
+  position: absolute;
+  z-index: 22;
+  pointer-events: none;
+}
+
+/* ——— Альбом находок ——— */
+
+.prikoly-album {
+  position: absolute;
+  inset: 0;
+  pointer-events: auto;
+}
+
+.prikoly-album__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(15, 18, 24, 0.35);
+  opacity: 0;
+  transition: opacity 0.25s;
+}
+
+.prikoly-album__sheet {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  max-height: 78%;
+  padding: 0 16px calc(16px + env(safe-area-inset-bottom));
+  border-radius: 24px 24px 0 0;
+  background: #fff;
+  color: #1f2229;
+  box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.18);
+  transform: translateY(100%);
+  transition: transform 0.3s cubic-bezier(.2, .8, .2, 1);
+}
+
+.prikoly-album.is-open .prikoly-album__backdrop { opacity: 1; }
+.prikoly-album.is-open .prikoly-album__sheet { transform: translateY(0); }
+
+.prikoly-album__drag { touch-action: none; cursor: grab; }
+
+.prikoly-album__grip {
+  width: 40px;
+  height: 5px;
+  margin: 8px auto 6px;
+  border-radius: 3px;
+  background: #d5dae1;
+}
+
+.prikoly-album__head { display: flex; align-items: center; gap: 8px; padding: 4px 0 12px; }
+.prikoly-album__head h2 { margin: 0; font-size: 20px; }
+.prikoly-album__count { flex: 1; color: #7b8291; font-size: 14px; }
+
+.prikoly-album__mute {
+  width: 36px;
+  height: 36px;
+  border: 0;
+  border-radius: 50%;
+  background: #f1f3f6;
+  font-size: 18px;
+  cursor: pointer;
+}
+
+.prikoly-album__grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  list-style: none;
+}
+
+.prikoly-album__grid li {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  min-height: 104px;
+  padding: 10px 6px;
+  border-radius: 16px;
+  background: #f4f6f8;
+  text-align: center;
+  font-size: 13px;
+  line-height: 1.2;
+}
+
+.prikoly-album__grid .is-found { background: linear-gradient(160deg, #e8f7ec, #fff6d9); }
+.prikoly-album__grid .is-locked { color: #7b8291; }
+.prikoly-album__grid small { font-size: 11px; }
+
+.prikoly-album__icon { font-size: 30px; line-height: 1.3; }
+.is-locked .prikoly-album__icon { font-weight: 800; color: #c3c9d2; }
+
+.prikoly-album__done {
+  margin-top: 12px;
+  padding: 13px;
+  border: 0;
+  border-radius: 14px;
+  background: #21a038;
+  color: #fff;
+  font: 700 16px/1.2 -apple-system, system-ui, Roboto, sans-serif;
+  cursor: pointer;
+}

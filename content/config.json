@@ -237,6 +237,137 @@
       },
       "haptic": "medium",
       "sound": "sounds/whoosh.wav"
+    },
+    {
+      "id": "holo-card",
+      "title": "Голографическая карта",
+      "icon": "💳",
+      "hint": "Покачай телефон на главном экране",
+      "enabled": true,
+      "priority": 1,
+      "trigger": { "type": "tilt", "rangeDeg": 20 },
+      "screens": ["home"],
+      "schedule": null,
+      "cooldownMs": 0,
+      "maxPerDay": null,
+      "effect": { "type": "holo", "params": { "anchor": "card", "intensity": 0.75, "idleMs": 900, "durationMs": 20000 } },
+      "haptic": null,
+      "sound": null
+    },
+    {
+      "id": "avatar-flip",
+      "title": "Сальто",
+      "icon": "🤸",
+      "hint": "Быстро тапни по аватарке три раза",
+      "enabled": true,
+      "priority": 8,
+      "trigger": { "type": "multitap", "anchor": "avatar", "count": 3, "withinMs": 450 },
+      "screens": ["home"],
+      "schedule": null,
+      "cooldownMs": 1500,
+      "maxPerDay": null,
+      "effect": { "type": "cssAnimate", "params": { "anchor": "avatar", "animation": "flip", "durationMs": 900 } },
+      "haptic": "medium",
+      "sound": "sounds/boing.wav"
+    },
+    {
+      "id": "topup-star",
+      "title": "Звезда копилки",
+      "icon": "⭐",
+      "hint": "Пополни копилку",
+      "enabled": true,
+      "priority": 6,
+      "trigger": { "type": "event", "name": "moneybox:topup" },
+      "screens": ["topup_success"],
+      "schedule": null,
+      "cooldownMs": 0,
+      "maxPerDay": null,
+      "effect": { "type": "lottie", "params": { "src": "effects/sparkle.json", "anchor": "success", "size": 240, "durationMs": 1500 } },
+      "haptic": "light",
+      "sound": "sounds/sparkle.wav"
+    },
+    {
+      "id": "balance-pretty-number",
+      "title": "Красивое число",
+      "icon": "🔢",
+      "hint": "Загляни на главный, когда на счёте 777 или 1111",
+      "enabled": false,
+      "priority": 7,
+      "trigger": { "type": "event", "name": "balance:show", "where": { "value": { "in": [777, 1111, 1234, 2222] } } },
+      "screens": ["home"],
+      "schedule": null,
+      "cooldownMs": 0,
+      "maxPerDay": 3,
+      "effect": { "type": "cssAnimate", "params": { "anchor": "balance", "animation": "jump", "durationMs": 800 } },
+      "haptic": "light",
+      "sound": "sounds/sparkle.wav"
+    },
+    {
+      "id": "flip-phone",
+      "title": "Кувырок",
+      "icon": "🙃",
+      "hint": "А что, если перевернуть телефон?",
+      "enabled": false,
+      "priority": 6,
+      "trigger": { "type": "flip", "holdMs": 300, "maxMs": 5000 },
+      "screens": null,
+      "schedule": null,
+      "cooldownMs": 10000,
+      "maxPerDay": null,
+      "effect": {
+        "type": "particles",
+        "params": {
+          "spawn": "center", "emoji": ["⭐", "🌟", "✨"], "count": 40, "size": [18, 30],
+          "rotation": 200, "lifeMs": [1500, 2200], "durationMs": 2600
+        }
+      },
+      "haptic": "medium",
+      "sound": "sounds/boing.wav"
+    },
+    {
+      "id": "still-sleep",
+      "title": "Тихий час",
+      "icon": "💤",
+      "hint": "Положи телефон и не трогай",
+      "enabled": false,
+      "priority": 3,
+      "trigger": { "type": "still", "seconds": 10 },
+      "screens": null,
+      "schedule": null,
+      "cooldownMs": 60000,
+      "maxPerDay": null,
+      "effect": {
+        "type": "particles",
+        "params": {
+          "spawn": "bottom", "emoji": ["💤"], "count": 8, "size": [26, 40], "speed": [40, 70],
+          "gravity": -20, "drag": 0.3, "sway": 16, "emitMs": 2000, "lifeMs": [3000, 3800], "durationMs": 5200
+        }
+      },
+      "haptic": null,
+      "sound": null
+    },
+    {
+      "id": "moneybox-milestones",
+      "title": "Вехи копилки",
+      "icon": "🏁",
+      "hint": "Накопи четверть, половину и всю сумму",
+      "enabled": false,
+      "priority": 9,
+      "trigger": { "type": "event", "name": "moneybox:topup", "where": { "progress": { "crosses": [0.25, 0.5, 0.75, 1] } } },
+      "screens": ["topup_success"],
+      "schedule": null,
+      "cooldownMs": 0,
+      "maxPerDay": null,
+      "effect": {
+        "type": "particles",
+        "params": {
+          "spawn": "anchor", "anchor": "progress", "shapes": ["star", "spark"],
+          "colors": ["#FFC93C", "#21A038", "#3D8BFF", "#FF7A59"], "count": 60, "size": [12, 24],
+          "rotation": 220, "lifeMs": [1400, 2000], "durationMs": 2400
+        }
+      },
+      "haptic": "success",
+      "sound": "sounds/chime.wav"
     }
   ]
 }
