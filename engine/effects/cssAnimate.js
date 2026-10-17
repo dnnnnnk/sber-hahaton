@@ -2,19 +2,26 @@
 // Через Web Animations API: ничего не остаётся на элементе после окончания.
 // prefers-reduced-motion → вместо движения мягкое свечение.
 
-const ANIMATIONS = {
-  flip: {
+// Сальто: высота прыжка ограничена местом над якорем, чтобы аватар не вылетал за верх экрана;
+// «к зрителю» его выносит увеличение.
+function flipPreset(hop) {
+  return {
     duration: 900,
     easing: 'cubic-bezier(.3,.7,.4,1)',
     keyframes: [
       { transform: 'translateY(0) rotate(0deg) scale(1)' },
-      { transform: 'translateY(-35%) rotate(-100deg) scale(1.05)', offset: 0.3 },
-      { transform: 'translateY(-55%) rotate(-220deg) scale(1.08)', offset: 0.55 },
-      { transform: 'translateY(-10%) rotate(-340deg) scale(1.02)', offset: 0.82 },
+      { transform: 'translateY(4px) rotate(0deg) scale(1.08, 0.9)', offset: 0.12 },
+      { transform: `translateY(${-hop * 0.7}px) rotate(-110deg) scale(1.1)`, offset: 0.35 },
+      { transform: `translateY(${-hop}px) rotate(-220deg) scale(1.16)`, offset: 0.55 },
+      { transform: `translateY(${-hop * 0.25}px) rotate(-340deg) scale(1.02)`, offset: 0.82 },
       { transform: 'translateY(0) rotate(-360deg) scale(1.08, 0.92)', offset: 0.9 },
       { transform: 'translateY(0) rotate(-360deg) scale(1)' },
     ],
-  },
+  };
+}
+
+const ANIMATIONS = {
+  flip: flipPreset(24),
   jump: {
     duration: 800,
     easing: 'ease-out',
@@ -67,7 +74,11 @@ export default {
   play(params, ctx) {
     const el = params.anchor && ctx.stage.getAnchorElement(params.anchor);
     if (!el?.animate) return null;
-    const preset = ANIMATIONS[ctx.reducedMotion ? 'glow' : params.animation] || ANIMATIONS.pop;
+    let preset = ANIMATIONS[ctx.reducedMotion ? 'glow' : params.animation] || ANIMATIONS.pop;
+    if (preset === ANIMATIONS.flip) {
+      const r = ctx.stage.getAnchorRect(params.anchor);
+      preset = flipPreset(Math.max(0, Math.min(r.height * 0.55, r.top - 6)));
+    }
     const zIndex = el.style.zIndex;
     el.style.zIndex = '5';
     const animation = el.animate(preset.keyframes, {
