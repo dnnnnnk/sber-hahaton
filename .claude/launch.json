@@ -4,8 +4,24 @@
     {
       "name": "static",
       "runtimeExecutable": "python3",
-      "runtimeArgs": ["-m", "http.server", "8000"],
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "8000"
+      ],
       "port": 8000
+    },
+    {
+      "name": "subpath",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "8001",
+        "--directory",
+        ".."
+      ],
+      "port": 8001
     }
   ]
 }
