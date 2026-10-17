@@ -413,18 +413,46 @@
     },
     {
       "id": "screen-resident",
-      "title": "Капля на карте",
+      "title": "Капля",
       "icon": "💧",
-      "hint": "Дважды коснись карты. Кто там прячется?",
+      "hint": "Кто живёт в серединке таббара? Погладь его пальцем!",
       "enabled": true,
-      "priority": 9,
-      "trigger": { "type": "multitap", "anchor": "card", "count": 2, "withinMs": 500 },
-      "screens": ["home"],
+      "exclusive": false,
+      "priority": 2,
+      "trigger": { "type": "presence" },
+      "screens": null,
       "schedule": null,
-      "cooldownMs": 10000,
+      "cooldownMs": 0,
       "maxPerDay": null,
-      "effect": { "type": "resident", "params": { "anchor": "card", "size": 52, "rangeDeg": 15, "shakeThreshold": 14, "durationMs": 9000 } },
-      "haptic": "light",
+      "effect": {
+        "type": "resident",
+        "params": {
+          "size": 46,
+          "rangeDeg": 15,
+          "shakeThreshold": 14,
+          "idleMs": 20000,
+          "stillMs": 6000,
+          "perches": {
+            "default": { "anchor": "tabbar", "x": 0.5, "y": "center", "plate": true },
+            "tasks_done": { "anchor": "trophy", "x": 0.84, "y": "bottom" },
+            "moneybox_goal": { "anchor": "goal", "x": 0.92, "y": "bottom" },
+            "topup_success": { "anchor": "success", "x": 1, "y": "bottom" }
+          },
+          "reactions": {
+            "tilt": "roll",
+            "shake": "dizzy",
+            "flip": "sleep",
+            "tap": "giggle",
+            "swipe": "leave",
+            "still": "doze",
+            "idle": "doze",
+            "task:done": "joy",
+            "tasks:allDone": "dance",
+            "moneybox:topup": "joy"
+          }
+        }
+      },
+      "haptic": null,
       "sound": null
     },
     {

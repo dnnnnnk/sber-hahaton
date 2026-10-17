@@ -59,7 +59,7 @@ export function mountDebug({ shell, bus, engine }) {
     flip: () => engine.simulate('flip', { downMs: 800 }),
     still: () => engine.simulate('still', { seconds: 10 }),
     coins: () => engine.simulateEntry('moneybox-rattle', { strength: 0.8 }),
-    resident: () => engine.simulateEntry('screen-resident'),
+    resident: () => engine.simulateEntry('screen-resident', { summon: true }),
     balance: () => shell.setBalance(1111),
     allDone: () => shell.completeAllTasks(),
     album: () => engine.openAlbum?.(),

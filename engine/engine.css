@@ -16,8 +16,120 @@
   height: 100%;
 }
 
-/* Положение персонажа для проверки геометрии; рисунок живёт на общем canvas. */
+/* ——— Капля: SVG в DOM. Позицию, наклон и сквош задаёт JS, дыхание и моргание в покое — CSS ——— */
+
 .prikoly-resident { position: absolute; pointer-events: none; }
+
+.prikoly-drop {
+  left: 0;
+  top: 0;
+  z-index: 21;
+  will-change: transform;
+  transition: opacity 0.2s;
+}
+
+.prikoly-drop.is-away { visibility: hidden; }
+
+.prikoly-drop-plate {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 21;
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 40%, #ffffff 58%, #e9fbf5 72%, #d4f5eb 100%);
+  box-shadow: inset 0 0 0 1.5px rgba(102, 231, 199, 0.45);
+  pointer-events: none;
+}
+
+.prikoly-drop-plate[hidden] { display: none; }
+.prikoly-drop *, .prikoly-drop svg { pointer-events: none; }
+
+/* Только тело Капли принимает касание (тап по ней не должен нажимать вкладку под ней); жест не уходит
+   браузеру под прокрутку, поэтому свайп распознаётся надёжно. */
+.prikoly-drop .prikoly-drop__hit {
+  position: absolute;
+  left: 50%;
+  top: 58%;
+  width: 90%;
+  height: 78%;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: auto;
+  touch-action: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.prikoly-drop__shadow {
+  position: absolute;
+  left: 50%;
+  bottom: -3%;
+  width: 72%;
+  height: 14%;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(18, 90, 77, 0.3), rgba(18, 90, 77, 0));
+  transform: translateX(-50%);
+}
+
+.prikoly-drop__pop, .prikoly-drop__roll, .prikoly-drop__squash { position: absolute; inset: 0; }
+.prikoly-drop__roll { transform-origin: 50% 64%; }
+.prikoly-drop__squash { transform-origin: 50% 100%; }
+.prikoly-drop__svg { display: block; width: 100%; height: 100%; overflow: visible; filter: drop-shadow(0 2px 3px rgba(18, 90, 77, 0.18)); }
+
+.pd-breath { transform-box: fill-box; transform-origin: 50% 100%; animation: pd-breath 2.8s ease-in-out infinite; }
+.is-sleepy .pd-breath { animation-duration: 4.4s; }
+@keyframes pd-breath { 50% { transform: scale(0.982, 1.032); } }
+
+.pd-eyes, .pd-mouth { display: none; }
+.pd-eyes--open { transform-box: fill-box; transform-origin: 50% 50%; animation: pd-blink 4.3s infinite; }
+@keyframes pd-blink { 0%, 93%, 100% { transform: scaleY(1); } 95.5% { transform: scaleY(0.08); } }
+
+[data-face="idle"] .pd-eyes--open, [data-face="surprised"] .pd-eyes--open,
+[data-face="happy"] .pd-eyes--happy, [data-face="sleep"] .pd-eyes--sleep, [data-face="yawn"] .pd-eyes--sleep,
+[data-face="dizzy"] .pd-eyes--dizzy,
+[data-face="idle"] .pd-mouth--smile, [data-face="sleep"] .pd-mouth--smile, [data-face="happy"] .pd-mouth--laugh,
+[data-face="dizzy"] .pd-mouth--o, [data-face="surprised"] .pd-mouth--o, [data-face="yawn"] .pd-mouth--yawn { display: inline; }
+[data-face="surprised"] .pd-eyes--open { animation: none; transform: scale(1.16); }
+
+.pd-arm { transform-box: fill-box; transform-origin: 50% 10%; }
+[data-face="happy"] .pd-arm--l { animation: pd-wave-l 0.28s ease-in-out infinite alternate; }
+[data-face="happy"] .pd-arm--r { animation: pd-wave-r 0.28s ease-in-out infinite alternate; }
+@keyframes pd-wave-l { to { transform: rotate(38deg); } }
+@keyframes pd-wave-r { to { transform: rotate(-38deg); } }
+
+/* Значки над головой */
+.prikoly-drop__fx { position: absolute; left: 50%; top: 4%; width: 0; height: 0; }
+.pd-fx { position: absolute; left: -6px; top: -6px; font: 800 13px/12px -apple-system, system-ui, Roboto, sans-serif; font-style: normal; }
+.pd-fx--spark::before { content: '✦'; color: #ffbe2e; }
+.pd-fx--heart::before { content: '♥'; color: #ff7aa2; }
+.pd-fx--note::before { content: '♪'; color: #8174e5; font-size: 15px; }
+.pd-fx--z::before { content: 'z'; color: #7a86d8; }
+.pd-fx--star::before { content: '✦'; color: #ffbe2e; font-size: 11px; }
+.pd-fx--spark, .pd-fx--heart { animation: pd-pop 0.9s ease-out forwards; }
+.pd-fx--note { animation: pd-note 1.2s ease-out forwards; }
+.pd-fx--z { opacity: 0; animation: pd-z 2.4s ease-out infinite; animation-delay: calc(var(--i) * 0.8s); }
+.pd-fx--star { top: 2px; animation: pd-orbit 0.9s linear infinite; animation-delay: calc(var(--i) * -0.3s); }
+@keyframes pd-pop {
+  from { opacity: 1; transform: translate(var(--dx), 4px) scale(0.4); }
+  to { opacity: 0; transform: translate(calc(var(--dx) * 1.7), -24px) scale(1.15); }
+}
+@keyframes pd-note {
+  from { opacity: 0; transform: translate(8px, 0) rotate(-10deg); }
+  25% { opacity: 1; }
+  to { opacity: 0; transform: translate(22px, -30px) rotate(14deg); }
+}
+@keyframes pd-z {
+  0% { opacity: 0; transform: translate(10px, 0) scale(0.7); }
+  30% { opacity: 1; }
+  100% { opacity: 0; transform: translate(24px, -26px) scale(1.25); }
+}
+@keyframes pd-orbit {
+  from { transform: scaleY(0.45) rotate(0deg) translateX(17px) rotate(0deg); }
+  to { transform: scaleY(0.45) rotate(360deg) translateX(17px) rotate(-360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pd-breath, .pd-arm { animation: none !important; }
+}
 
 .prikoly-ui {
   position: absolute;
