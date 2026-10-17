@@ -1,0 +1,168 @@
+{
+  "version": 1,
+  "settings": {
+    "globalCooldownMs": 3000,
+    "maxParticles": 150,
+    "sound": true,
+    "haptics": true,
+    "season": "auto",
+    "albumAnchor": "avatar"
+  },
+  "prikoly": [
+    {
+      "id": "tasks-alive-dog",
+      "title": "Лапки",
+      "icon": "🐾",
+      "hint": "Отметь прогулку с собакой",
+      "enabled": true,
+      "priority": 10,
+      "trigger": { "type": "event", "name": "task:done", "where": { "taskId": "dog_walk" } },
+      "screens": ["tasks"],
+      "schedule": null,
+      "cooldownMs": 0,
+      "maxPerDay": null,
+      "effect": {
+        "type": "particles",
+        "params": {
+          "mode": "trail", "spawn": "anchor", "anchor": "task-{taskId}",
+          "emoji": ["🐾"], "count": 12, "size": 32, "stepMs": 170, "lifeMs": 1300, "durationMs": 3400
+        }
+      },
+      "haptic": "light",
+      "sound": "sounds/pop.wav"
+    },
+    {
+      "id": "tasks-alive-dishes",
+      "title": "Мыльные пузыри",
+      "icon": "🫧",
+      "hint": "Помой посуду и отметь это",
+      "enabled": true,
+      "priority": 10,
+      "trigger": { "type": "event", "name": "task:done", "where": { "taskId": "dishes" } },
+      "screens": ["tasks"],
+      "schedule": null,
+      "cooldownMs": 0,
+      "maxPerDay": null,
+      "effect": {
+        "type": "particles",
+        "params": {
+          "spawn": "bottom", "shapes": ["bubble"], "colors": ["#5DB8FF", "#A57CFF", "#4CD4C0"],
+          "count": 30, "size": [16, 44], "speed": [120, 220], "gravity": -80, "drag": 0.4,
+          "sway": 18, "emitMs": 900, "lifeMs": [2600, 3400], "durationMs": 4000
+        }
+      },
+      "haptic": "light",
+      "sound": "sounds/pop.wav"
+    },
+    {
+      "id": "tasks-alive-math",
+      "title": "Дождь из цифр",
+      "icon": "🔢",
+      "hint": "Выучи таблицу умножения",
+      "enabled": true,
+      "priority": 10,
+      "trigger": { "type": "event", "name": "task:done", "where": { "taskId": "multiplication" } },
+      "screens": ["tasks"],
+      "schedule": null,
+      "cooldownMs": 0,
+      "maxPerDay": null,
+      "effect": {
+        "type": "particles",
+        "params": {
+          "spawn": "top", "emoji": ["2", "3", "4", "5", "6", "7", "8", "9", "×", "="],
+          "colors": ["#21A038", "#3D8BFF", "#FF7A59", "#9B6BFF", "#F5A300"],
+          "count": 36, "size": [22, 34], "speed": [150, 230], "gravity": 300, "drag": 1, "rotation": 60, "sway": 10,
+          "emitMs": 1200, "lifeMs": [3000, 3800], "durationMs": 4400
+        }
+      },
+      "haptic": "light",
+      "sound": "sounds/pop.wav"
+    },
+    {
+      "id": "tasks-alive-clean",
+      "title": "Искорки чистоты",
+      "icon": "✨",
+      "hint": "Убери в комнате",
+      "enabled": true,
+      "priority": 10,
+      "trigger": { "type": "event", "name": "task:done", "where": { "taskId": "clean_room" } },
+      "screens": ["tasks"],
+      "schedule": null,
+      "cooldownMs": 0,
+      "maxPerDay": null,
+      "effect": {
+        "type": "particles",
+        "params": {
+          "spawn": "anchor", "anchor": "task-{taskId}", "emoji": ["✨"], "shapes": ["spark", "star"],
+          "colors": ["#FFC93C", "#FFE27A", "#FFB020", "#7FD858"],
+          "count": 46, "size": [14, 28], "speed": [160, 360], "gravity": 260, "drag": 2.2,
+          "rotation": 180, "lifeMs": [900, 1500], "durationMs": 1900
+        }
+      },
+      "haptic": "light",
+      "sound": "sounds/sparkle.wav"
+    },
+    {
+      "id": "tasks-alive-book",
+      "title": "Летящие буквы",
+      "icon": "📖",
+      "hint": "Почитай книжку",
+      "enabled": true,
+      "priority": 10,
+      "trigger": { "type": "event", "name": "task:done", "where": { "taskId": "read_book" } },
+      "screens": ["tasks"],
+      "schedule": null,
+      "cooldownMs": 0,
+      "maxPerDay": null,
+      "effect": {
+        "type": "particles",
+        "params": {
+          "spawn": "anchor", "anchor": "task-{taskId}", "direction": -90, "spread": 80,
+          "emoji": ["А", "Б", "В", "Г", "Д", "Ж", "З", "К", "Л", "М", "О", "Я"],
+          "colors": ["#3D8BFF", "#9B6BFF", "#FF7A59", "#21A038"],
+          "count": 26, "size": [20, 30], "speed": [220, 380], "gravity": -40, "drag": 1,
+          "rotation": 90, "sway": 14, "lifeMs": [1600, 2400], "durationMs": 2800
+        }
+      },
+      "haptic": "light",
+      "sound": "sounds/whoosh.wav"
+    },
+    {
+      "id": "tasks-all-done",
+      "title": "Праздник дел",
+      "icon": "🎉",
+      "hint": "Выполни все дела",
+      "enabled": true,
+      "priority": 20,
+      "trigger": { "type": "event", "name": "tasks:allDone" },
+      "screens": ["tasks", "tasks_done"],
+      "schedule": null,
+      "cooldownMs": 0,
+      "maxPerDay": null,
+      "effect": {
+        "variants": [
+          {
+            "type": "particles",
+            "params": {
+              "spawn": "top", "shapes": ["rect", "circle"],
+              "colors": ["#21A038", "#FFC93C", "#3D8BFF", "#FF7A59", "#B57BFF", "#4CD4C0"],
+              "count": 130, "size": [8, 14], "flutter": true, "rotation": 360, "sway": 25,
+              "gravity": 180, "drag": 0.8, "emitMs": 1000, "lifeMs": [3200, 4200], "durationMs": 5200
+            }
+          },
+          {
+            "type": "particles",
+            "params": {
+              "spawn": "center", "emoji": ["🎉", "⭐", "🌟", "🎈"], "shapes": ["rect", "star"],
+              "colors": ["#21A038", "#FFC93C", "#3D8BFF", "#FF7A59", "#B57BFF"],
+              "count": 90, "size": [12, 30], "speed": [300, 560], "gravity": 520, "drag": 1.4,
+              "rotation": 270, "lifeMs": [2200, 3200], "durationMs": 3800
+            }
+          }
+        ]
+      },
+      "haptic": "success",
+      "sound": "sounds/chime.wav"
+    }
+  ]
+}

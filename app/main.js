@@ -288,7 +288,38 @@ const ICONS = {
   play: '<svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="M10 9l5 3-5 3z"/></svg>',
 };
 
+// Движок приколов грузится после первой отрисовки и не может сломать оболочку.
+let engineRequested = false;
+
+function loadEngine() {
+  if (engineRequested) return;
+  engineRequested = true;
+  import('../engine/engine.js')
+    .then(engine => engine.boot({ bus, host: phone, configUrl: 'content/config.json' }))
+    .then(engine => {
+      shell.engine = engine;
+      if (state.screen) announce(); // движок пропустил первый screen:open
+      announceFirstOpenToday();
+    })
+    .catch(err => console.warn('[shell] движок приколов не запустился — приложение работает без него', err));
+}
+
+function announceFirstOpenToday() {
+  const now = new Date();
+  const day = now.toDateString();
+  try {
+    if (localStorage.getItem('sberkids.lastOpenDay') === day) return;
+    localStorage.setItem('sberkids.lastOpenDay', day);
+  } catch {
+    return;
+  }
+  bus.emit('app:firstOpenToday', { hour: now.getHours() });
+}
+
 if (!location.hash) history.replaceState(null, '', `#${START_SCREEN}`);
 preloadImages();
-render(screenFromHash());
+render(screenFromHash()).then(() => {
+  requestAnimationFrame(() => setTimeout(loadEngine, 0));
+  setTimeout(loadEngine, 300); // rAF не приходит в фоновой вкладке
+});
 if (DEBUG) window.sberKids = shell;
