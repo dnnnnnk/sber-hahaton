@@ -124,6 +124,8 @@ function normalizeMotion(e) {
   const g = e.accelerationIncludingGravity || {};
   const a = e.acceleration;
   const r = e.rotationRate;
+  // Без датчика браузер присылает событие с пустыми полями — это не «телефон лежит».
+  const empty = [g.x, a?.x, r?.alpha, r?.beta].every(v => v == null);
   const gx = g.x ?? 0;
   const gy = g.y ?? 0;
   const gz = g.z ?? 0;
@@ -135,7 +137,7 @@ function normalizeMotion(e) {
     linear = Math.hypot(gx - gravity[0], gy - gravity[1], gz - gravity[2]);
   }
   const rotation = r ? Math.hypot(r.alpha ?? 0, r.beta ?? 0, r.gamma ?? 0) : 0;
-  return { linear, rotation, gx, gy, gz, t: e.timeStamp };
+  return { linear, rotation, gx, gy, gz, t: e.timeStamp, empty };
 }
 
 function hasPermissionApi() {

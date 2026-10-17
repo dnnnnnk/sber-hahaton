@@ -511,7 +511,11 @@ export default {
     }));
 
     // Неподвижность и «лицом вниз» — сами, чтобы просыпаться, когда телефон снова взяли.
+    let lastMotion = -Infinity;
     disposers.push(ctx.sensors.subscribe('motion', s => {
+      if (s.empty) return;
+      if (s.t - lastMotion > 1000) stillSince = null; // разрыв в замерах — отсчёт заново
+      lastMotion = s.t;
       if (s.linear > 0.25 || s.rotation > 3) {
         if (stillSince != null && state === 'doze') wakeFromDoze();
         stillSince = null;

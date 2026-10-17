@@ -1,6 +1,8 @@
 // Телефон лежит неподвижно seconds секунд. Срабатывает один раз, пока его снова не возьмут в руки.
 // threshold — м/с² линейного ускорения, rotationThreshold — °/с.
 
+const GAP_MS = 1000;
+
 export default {
   type: 'still',
   sensors: ['motion'],
@@ -18,9 +20,14 @@ export default {
     const threshold = spec.threshold ?? 0.25;
     const rotationThreshold = spec.rotationThreshold ?? 3;
     let since = null;
+    let last = -Infinity;
     let fired = false;
 
     return ctx.sensors.subscribe('motion', s => {
+      if (s.empty) return;
+      // Разрыв в замерах (вкладка в фоне, датчик уснул) — отсчёт тишины заново.
+      if (s.t - last > GAP_MS) since = null;
+      last = s.t;
       if (s.linear > threshold || s.rotation > rotationThreshold) {
         since = null;
         fired = false;
