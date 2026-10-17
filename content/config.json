@@ -350,7 +350,10 @@
       "schedule": null,
       "cooldownMs": 0,
       "maxPerDay": null,
-      "effect": { "type": "holo", "params": { "anchor": "card", "intensity": 0.75, "idleMs": 900, "durationMs": 20000 } },
+      "effect": {
+        "type": "holo",
+        "params": { "anchor": "card", "intensity": 0.9, "fullAt": 0.45, "sparkles": 14, "idleMs": 900, "durationMs": 20000 }
+      },
       "haptic": null,
       "sound": null
     },
