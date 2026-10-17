@@ -53,16 +53,28 @@
 
 | Экран | Якоря |
 |---|---|
-| все с таббаром | `tabbar` |
+| все с таббаром | `tabbar` (белая «таблетка» закреплённого таббара) |
 | `home` | `avatar` (поднимаемый), `card`, `balance` (поднимаемый) |
-| `tasks` | `task-dog_walk`, `task-dishes`, `task-multiplication`, `task-clean_room`, `task-read_book` |
+| `tasks` | `avatar`, `task-dog_walk`, `task-dishes`, `task-multiplication`, `task-clean_room`, `task-read_book` |
 | `tasks_done` | `trophy` |
-| `moneybox` | `moneybox-bike`, `moneybox-paints`, `moneybox-headphones` |
-| `topup_success` | `success`, `progress` |
-| `content` | `feed-1` … `feed-4` (только в заглушке) |
+| `moneybox` | `avatar`, `moneybox-slides`, `moneybox-neon`, `moneybox-slime`, `moneybox-markers`, `moneybox-band`, `moneybox-robot` |
+| `moneybox_goal` | `goal` |
+| `topup_success` | `success` (+ `progress` в заглушке) |
 
 «Поднимаемый» якорь (`lift: true`) на PNG-экране — это кусочек картинки поверх подложки цвета фона:
 его можно анимировать (сальто, прыжок), и под ним не остаётся «двойника».
+
+## Экраны из Figma (PNG)
+
+- Кадр 375 pt, экспорт @2x; зоны и якоря — в % от картинки (`app/screens.js`), калибруются в `?debug=1`.
+- На каждом PNG нарисованы статус-бар, home indicator и (на вкладках) плавающий таббар. На телефоне свои
+  статус-бар и home indicator, поэтому оболочка срезает нарисованные (`IMAGE_CHROME`); в рамке на десктопе — оставляет.
+- Нарисованный таббар срезается всегда (`cropBottom`), вместо него — закреплённый `screens/tabbar.png`
+  (у него прозрачный градиент, контент уходит под него). В `tabbar.png` активна «Главный»; для других вкладок
+  поверх кладутся кусочки их собственных экранов, где вкладка нарисована активной (`TABBAR.active`).
+- На `tasks.png` видно только первое дело — остальные дорисованы HTML-строками в том же стиле (`afterImage`).
+- Какие PNG есть, перечислено в `READY_IMAGES`: без этого списка оболочка рисует HTML-заглушку и не делает
+  лишних запросов. Первая картинка грузится сразу, остальные — по одной после первой отрисовки.
 
 ## Жизненный цикл движка
 

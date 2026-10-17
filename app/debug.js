@@ -178,7 +178,8 @@ function createCalibration(output) {
   let box = null;
 
   function attach() {
-    const screen = viewport.querySelector('.screen');
+    // На PNG-экране — полный кадр картинки (зоны в % от него), в заглушке — сам экран.
+    const screen = viewport.querySelector('.screen__frame') || viewport.querySelector('.screen');
     if (!screen || screen.contains(layer)) return;
     layer = document.createElement('div');
     layer.className = 'dbg-calib';
@@ -233,7 +234,7 @@ function createCalibration(output) {
       if (on) {
         attach();
         observer = new MutationObserver(attach);
-        observer.observe(viewport, { childList: true });
+        observer.observe(viewport, { childList: true, subtree: true });
         output.hidden = false;
         output.textContent = 'Тап — точка, протяжка — прямоугольник. Координаты в % от картинки экрана.';
       } else {

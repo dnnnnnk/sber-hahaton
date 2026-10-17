@@ -10,6 +10,7 @@
   --green-dark: #128a2b;
   --radius: 20px;
   --tabbar-h: 64px;
+  --pt: calc(100vw / 375); /* 1 pt макета (кадр 375 pt): на телефоне — доля ширины экрана */
 }
 
 * { box-sizing: border-box; }
@@ -65,9 +66,10 @@ h1, h2, p { margin: 0; }
     height: 100vh;
     background: radial-gradient(circle at 30% 20%, #dfe7ee, #b9c4ce);
   }
+  :root { --pt: 1px; }
   .phone {
-    width: 390px;
-    height: min(844px, calc(100vh - 40px));
+    width: 375px;
+    height: min(812px, calc(100vh - 40px));
     border-radius: 44px;
     box-shadow: 0 0 0 10px #15171c, 0 30px 80px rgba(0, 0, 0, 0.35);
   }
@@ -83,11 +85,29 @@ h1, h2, p { margin: 0; }
   padding-top: env(safe-area-inset-top);
 }
 
-/* ——— Экран: PNG + зоны ——— */
+/* ——— Экран: PNG + зоны ———
+   .screen__frame — картинка целиком (зоны в % от неё). .screen__crop обрезает нарисованный «хром»:
+   на телефоне — статус-бар сверху и home indicator/таббар снизу, в рамке на десктопе — только таббар.
+   Отрицательные margin в % считаются от ширины, поэтому обрезка масштабируется вместе с картинкой. */
 
 .screen { position: relative; min-height: 100%; }
 
 .screen--image { min-height: 0; width: 100%; }
+.screen__crop { overflow: hidden; }
+
+.screen__frame {
+  position: relative;
+  margin-top: calc(-1 * var(--crop-top));
+  margin-bottom: calc(-1 * var(--crop-bottom-mobile));
+}
+
+/* Место под закреплённый таббар (162 pt минус срезанный home indicator) */
+.screen--image.has-tabbar { padding-bottom: calc(128 * var(--pt)); }
+
+@media (min-width: 600px) and (min-height: 640px) {
+  .screen__frame { margin-top: 0; margin-bottom: calc(-1 * var(--crop-bottom)); }
+  .screen--image.has-tabbar { padding-bottom: calc(162 * var(--pt)); }
+}
 
 .screen__img {
   display: block;
@@ -109,6 +129,57 @@ h1, h2, p { margin: 0; }
 .zone--hole { pointer-events: none; }
 .zone--lift { background-repeat: no-repeat; }
 
+/* Галочка «сделано» на зоне PNG */
+.zone.is-done::after,
+.png-task.is-done::after {
+  content: '';
+  position: absolute;
+  right: calc(20 * var(--pt));
+  top: 50%;
+  width: calc(28 * var(--pt));
+  height: calc(28 * var(--pt));
+  margin-top: calc(-14 * var(--pt));
+  border-radius: 50%;
+  background: var(--green) center / 60% no-repeat
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12l5 5 9-10'/%3E%3C/svg%3E");
+  box-shadow: 0 4px 10px rgba(33, 160, 56, 0.3);
+}
+
+/* Дела, которых нет на tasks.png: HTML-строки в стиле макета */
+.png-tasks {
+  display: grid;
+  gap: calc(16 * var(--pt));
+  margin: 0;
+  padding: calc(9 * var(--pt)) calc(16 * var(--pt)) calc(24 * var(--pt));
+  list-style: none;
+}
+
+.png-task {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: calc(16 * var(--pt));
+  width: 100%;
+  height: calc(97 * var(--pt));
+  padding: 0 calc(24 * var(--pt));
+  border-radius: calc(24 * var(--pt));
+  background: #fff;
+  text-align: left;
+}
+
+.png-task__icon {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: calc(48 * var(--pt));
+  height: calc(48 * var(--pt));
+  border-radius: 50%;
+  background: var(--tint);
+  font-size: calc(22 * var(--pt));
+}
+
+.png-task__title { font-size: calc(16 * var(--pt)); font-weight: 500; }
+
 /* ——— Таббар ——— */
 
 .tabbar {
@@ -125,6 +196,26 @@ h1, h2, p { margin: 0; }
 .tabbar[hidden] { display: none; }
 
 .tabbar--image { display: block; min-height: 0; padding-bottom: 0; border: 0; }
+
+/* Закреплённый таббар из PNG: поверх экрана, градиент над «таблеткой» касания пропускает */
+.tabbar.tabbar--image {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 2;
+  overflow: hidden;
+  background: none;
+  pointer-events: none;
+}
+
+.tabbar__frame { position: relative; margin-bottom: calc(-1 * var(--crop-bottom-mobile)); }
+.tabbar__slice { position: absolute; background-repeat: no-repeat; }
+.tabbar--image button.zone { pointer-events: auto; }
+
+@media (min-width: 600px) and (min-height: 640px) {
+  .tabbar__frame { margin-bottom: 0; }
+}
 
 .tab {
   display: flex;
@@ -326,7 +417,7 @@ h1, h2, p { margin: 0; }
 .btn--small { margin-top: 12px; padding: 10px 18px; border-radius: 12px; font-size: 14px; }
 .btn--bottom { align-self: stretch; margin-top: auto; }
 
-.mbox { margin-bottom: 12px; padding: 16px; border-radius: var(--radius); background: var(--surface); }
+.mbox { display: block; width: 100%; margin-bottom: 12px; padding: 16px; border-radius: var(--radius); background: var(--surface); text-align: left; }
 .mbox__top { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
 .mbox__icon { font-size: 34px; }
 .mbox__title { font-weight: 700; }

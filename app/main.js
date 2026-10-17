@@ -2,7 +2,9 @@
 // Про движок приколов знает только одно: его надо лениво загрузить после первой отрисовки.
 
 import { createBus } from './bus.js';
-import { SCREENS, TABS, TABBAR_ZONES, TASKS, MONEYBOXES, START_SCREEN, READY_IMAGES } from './screens.js';
+import {
+  SCREENS, TABS, TABBAR, TASKS, MONEYBOXES, START_SCREEN, READY_IMAGES, DESIGN_WIDTH, IMAGE_CHROME,
+} from './screens.js';
 
 const DEBUG = new URLSearchParams(location.search).get('debug') === '1';
 const IMAGE_WAIT_MS = 400;
@@ -14,7 +16,7 @@ const tabbar = document.getElementById('tabbar');
 
 const state = {
   screen: null,
-  balance: 1250,
+  balance: 800.55,
   tasks: Object.fromEntries(TASKS.map(t => [t.id, t.done])),
   moneyboxes: MONEYBOXES.map(m => ({ ...m })),
   lastTopup: null,
@@ -95,7 +97,9 @@ async function render(id) {
   const token = ++renderToken;
   const screen = SCREENS[id];
   const probe = loadImage(id);
-  const image = await Promise.race([probe, wait(IMAGE_WAIT_MS).then(() => null)]);
+  // Картинку экрана (и таббара) ждём недолго — иначе рисуем заглушку и подменяем, когда догрузится.
+  const ready = Promise.all([probe, screen.tab ? loadImage(TABBAR.image) : null]);
+  const image = await Promise.race([ready.then(([img]) => img), wait(IMAGE_WAIT_MS).then(() => null)]);
   if (token !== renderToken) return;
 
   state.screen = id;
@@ -106,12 +110,11 @@ async function render(id) {
   viewport.scrollTop = 0;
   announce();
 
-  // Картинка не успела — показали заглушку; подменим, как только загрузится.
-  if (!image) {
-    probe.then(img => {
-      if (img && token === renderToken) mountScreen(screen, img);
-    });
-  }
+  ready.then(([img]) => {
+    if (token !== renderToken) return;
+    if (img && !image) mountScreen(screen, img);
+    renderTabbar(screen.tab);
+  });
 }
 
 function refresh() {
@@ -131,14 +134,33 @@ function announce() {
 
 // ——— Отрисовка экрана: PNG + зоны, либо HTML-заглушка ———
 
+// pt макета → % ширины кадра (в этих единицах работают margin/padding, поэтому обрезка масштабируется сама).
+const widthPct = pt => `${(pt / DESIGN_WIDTH) * 100}%`;
+
 function mountScreen(screen, image) {
   const root = document.createElement('div');
   root.className = 'screen';
   if (image) {
+    // Кадр — картинка целиком (зоны в % от неё); .screen обрезает нарисованные статус-бар,
+    // home indicator и таббар (см. IMAGE_CHROME и cropBottom в screens.js).
+    const heightPt = (image.height / image.width) * DESIGN_WIDTH;
+    const cropBottom = screen.cropBottom || 0;
     root.classList.add('screen--image');
-    root.style.aspectRatio = `${image.width} / ${image.height}`;
-    root.append(imageEl(image, screen.title));
-    for (const zone of screen.zones) root.append(...zoneEls(zone, image));
+    root.classList.toggle('has-tabbar', Boolean(screen.tab));
+    root.style.setProperty('--crop-top', widthPct(IMAGE_CHROME.statusBar));
+    root.style.setProperty('--crop-bottom', widthPct(cropBottom));
+    root.style.setProperty('--crop-bottom-mobile', widthPct(cropBottom || IMAGE_CHROME.homeIndicator));
+    root.style.background = sampleColor(image, [[1, ((heightPt - cropBottom - 2) / heightPt) * 100]]);
+    const frame = document.createElement('div');
+    frame.className = 'screen__frame';
+    frame.style.aspectRatio = `${image.width} / ${image.height}`;
+    frame.append(imageEl(image, screen.title));
+    for (const zone of screen.zones) frame.append(...zoneEls(zone, image));
+    const crop = document.createElement('div');
+    crop.className = 'screen__crop';
+    crop.append(frame);
+    root.append(crop);
+    if (screen.afterImage) root.insertAdjacentHTML('beforeend', `<div class="screen__extra">${screen.afterImage(state)}</div>`);
   } else {
     root.classList.add('screen--stub');
     root.innerHTML = screen.stub(state);
@@ -149,20 +171,53 @@ function mountScreen(screen, image) {
 function renderTabbar(activeTab) {
   tabbar.hidden = !activeTab;
   if (!activeTab) return;
-  const image = imageCache.get('tabbar')?.result;
+  const image = imageCache.get(TABBAR.image)?.result;
   if (image) {
     tabbar.className = 'tabbar tabbar--image';
-    tabbar.style.aspectRatio = `${image.width} / ${image.height}`;
-    tabbar.replaceChildren(imageEl(image, ''), ...TABBAR_ZONES.flatMap(z => zoneEls(z, image)));
+    tabbar.removeAttribute('data-anchor');
+    tabbar.style.setProperty('--crop-bottom-mobile', widthPct(IMAGE_CHROME.homeIndicator));
+    const frame = document.createElement('div');
+    frame.className = 'tabbar__frame';
+    frame.style.aspectRatio = `${image.width} / ${image.height}`;
+    frame.append(imageEl(image, ''), ...activeTabSlices(activeTab));
+    frame.append(...zoneEls({ id: 'tabbar', anchor: 'tabbar', ...TABBAR.pill }, image));
+    for (const zone of TABBAR.zones) frame.append(...zoneEls(zone, image));
+    tabbar.replaceChildren(frame);
   } else {
     tabbar.className = 'tabbar';
-    tabbar.style.aspectRatio = '';
+    tabbar.dataset.anchor = 'tabbar';
     tabbar.innerHTML = TABS.map(t => `
       <button class="tab ${t.id === activeTab ? 'is-active' : ''}" data-tab="${t.id}" ${t.disabled ? 'disabled' : ''}>
         ${ICONS[t.icon]}<span>${t.label}</span>
       </button>`).join('');
   }
-  tabbar.dataset.anchor = 'tabbar';
+}
+
+// Активная вкладка: кусочки других экранов поверх tabbar.png (см. TABBAR.active в screens.js).
+function activeTabSlices(activeTab) {
+  return (TABBAR.active[activeTab] || []).flatMap(part => {
+    const source = imageCache.get(part.from)?.result;
+    if (!source) {
+      loadImage(part.from).then(img => img && SCREENS[state.screen]?.tab === activeTab && renderTabbar(activeTab));
+      return [];
+    }
+    const sourceHeight = (source.height / source.width) * DESIGN_WIDTH;
+    const top = sourceHeight - TABBAR.height + part.y;
+    const el = document.createElement('div');
+    el.className = 'tabbar__slice';
+    const w = (part.w / DESIGN_WIDTH) * 100; // ширина одинакова у таббара и источника (оба 375 pt)
+    const sliceH = (part.h / sourceHeight) * 100;
+    Object.assign(el.style, {
+      left: widthPct(part.toX ?? part.x),
+      top: `${(part.y / TABBAR.height) * 100}%`,
+      width: `${w}%`,
+      height: `${(part.h / TABBAR.height) * 100}%`,
+      backgroundImage: `url("${source.src}")`,
+      backgroundSize: `${10000 / w}% ${10000 / sliceH}%`,
+      backgroundPosition: `${slicePos((part.x / DESIGN_WIDTH) * 100, w)}% ${slicePos((top / sourceHeight) * 100, sliceH)}%`,
+    });
+    return [el];
+  });
 }
 
 function imageEl(image, alt) {
@@ -175,14 +230,17 @@ function imageEl(image, alt) {
 }
 
 function zoneEls(zone, image) {
+  if (zone.x == null) return []; // зона есть только в заглушке / HTML-дополнении
   const actionable = Boolean(zone.go || zone.tap || zone.tab);
   const el = document.createElement(actionable ? 'button' : 'div');
+  const box = { left: `${zone.x}%`, top: `${zone.y}%`, width: `${zone.w}%`, height: `${zone.h}%` };
   el.className = 'zone';
-  Object.assign(el.style, { left: `${zone.x}%`, top: `${zone.y}%`, width: `${zone.w}%`, height: `${zone.h}%` });
+  Object.assign(el.style, box);
   if (zone.tab) el.dataset.tab = zone.tab;
   else if (actionable) el.dataset.zone = zone.id;
   if (zone.anchor) el.dataset.anchor = zone.anchor;
   if (actionable) el.setAttribute('aria-label', zone.label || zone.id);
+  if (zone.done?.(state)) el.classList.add('is-done');
   if (!zone.lift) return [el];
 
   // «Поднимаемый» якорь: кусочек картинки поверх подложки, чтобы его можно было анимировать.
@@ -192,7 +250,7 @@ function zoneEls(zone, image) {
   el.style.backgroundPosition = `${slicePos(zone.x, zone.w)}% ${slicePos(zone.y, zone.h)}%`;
   const hole = document.createElement('div');
   hole.className = 'zone zone--hole';
-  Object.assign(hole.style, el.style, { backgroundImage: 'none', background: zone.fill || sampleFill(image, zone) });
+  Object.assign(hole.style, box, { background: zone.fill || cornerColor(image, zone) });
   return [hole, el];
 }
 
@@ -201,25 +259,26 @@ function slicePos(offset, size) {
 }
 
 // Средний цвет углов зоны — подложка под «поднятым» кусочком картинки.
-function sampleFill(image, zone) {
+function cornerColor(image, zone) {
+  const xs = [zone.x + zone.w * 0.04, zone.x + zone.w * 0.96];
+  const ys = [zone.y + zone.h * 0.04, zone.y + zone.h * 0.96];
+  return sampleColor(image, xs.flatMap(x => ys.map(y => [x, y])));
+}
+
+// Средний цвет картинки в точках (в % от её размеров).
+function sampleColor(image, points) {
   try {
     const canvas = document.createElement('canvas');
     canvas.width = canvas.height = 1;
     const g = canvas.getContext('2d', { willReadFrequently: true });
-    const { width: W, height: H } = image;
-    const inset = 0.04;
-    const xs = [zone.x + zone.w * inset, zone.x + zone.w * (1 - inset)];
-    const ys = [zone.y + zone.h * inset, zone.y + zone.h * (1 - inset)];
     const sum = [0, 0, 0];
-    for (const x of xs) {
-      for (const y of ys) {
-        g.clearRect(0, 0, 1, 1);
-        g.drawImage(image.img, (x / 100) * W - 1, (y / 100) * H - 1, 3, 3, 0, 0, 1, 1);
-        const d = g.getImageData(0, 0, 1, 1).data;
-        sum[0] += d[0]; sum[1] += d[1]; sum[2] += d[2];
-      }
+    for (const [x, y] of points) {
+      g.clearRect(0, 0, 1, 1);
+      g.drawImage(image.img, (x / 100) * image.width - 1, (y / 100) * image.height - 1, 3, 3, 0, 0, 1, 1);
+      const d = g.getImageData(0, 0, 1, 1).data;
+      sum[0] += d[0]; sum[1] += d[1]; sum[2] += d[2];
     }
-    return `rgb(${sum.map(v => Math.round(v / 4)).join(',')})`;
+    return `rgb(${sum.map(v => Math.round(v / points.length)).join(',')})`;
   } catch {
     return 'var(--bg)';
   }
@@ -248,9 +307,9 @@ function loadImage(name) {
   return imageCache.get(name).promise;
 }
 
-function preloadImages() {
-  loadImage('tabbar').then(img => img && state.screen && renderTabbar(SCREENS[state.screen].tab));
-  READY_IMAGES.forEach(loadImage);
+// Остальные картинки — после первого экрана и по одной, чтобы не отнимать у него сеть.
+async function preloadImages() {
+  for (const name of READY_IMAGES) await loadImage(name);
 }
 
 // ——— Ввод ———
@@ -321,9 +380,9 @@ function announceFirstOpenToday() {
 }
 
 if (!location.hash) history.replaceState(null, '', `#${START_SCREEN}`);
-preloadImages();
 render(screenFromHash()).then(() => {
   requestAnimationFrame(() => setTimeout(loadEngine, 0));
   setTimeout(loadEngine, 300); // rAF не приходит в фоновой вкладке
+  setTimeout(preloadImages, 500);
 });
 if (DEBUG) window.sberKids = shell;
