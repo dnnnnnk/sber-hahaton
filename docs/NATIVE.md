@@ -91,3 +91,19 @@ protocol EffectHandle { func stop(); func update(_ payload: [String: Any]) }
 сохранить в локальные WAV; они не требуют сервиса или новых разрешений. Ни один эффект не читает сумму,
 не меняет накопления и не добавляет вознаграждений. Срок жизни и очистка при красной зоне остаются общими
 гарантиями движка, а не обязанностью каждого экрана приложения.
+
+## Дополнение: геройские моменты демо (18 октября)
+
+| Пункт | Android (Compose) | iOS (SwiftUI) | Дней |
+|---|---|---|---|
+| Капля — постоянный жилец (`presence`, реакции из конфига) | composable в оверлее над таббаром: `Animatable` для пружин (сквош, прыжок, катание), выражения лица — состояния векторного рисунка; `Modifier.pointerInput` только на круге тела | view в `.overlay` над `TabView`; `spring`/`keyframeAnimator`, `Canvas` или `Shape`-лицо; `.contentShape(Circle())` + `allowsHitTesting` только для тела | 2–2,5 |
+| Таблица реакций «событие → реакция» | тот же JSON в `Map<String, Reaction>`, подписка на `SharedFlow` событий и сенсоры | `[String: Reaction]`, `AsyncStream` событий и `CMMotionManager` | 0,5 |
+| Голограмма-фольга | 4 слоя `Brush` с `BlendMode.HardLight/Screen/Overlay` в `drawWithContent` карты, сдвиг от `rotation vector` | `LinearGradient`/`RadialGradient` с `.blendMode`, сдвиг от `attitude` | 0,5–1 |
+| Кувырок (ночь/рассвет) | полноэкранный `Box` с градиентами и звёздами, `flip` по `gravity.z`; рассвет — `animateFloatAsState` | `ZStack` с градиентами, `TimelineView` для мерцания, `flip` по `gravity.z` | 1 |
+| Смахивание погоды | `pointerInput(PointerEventPass.Initial)` на корне без consume — палец виден и во время прокрутки | `simultaneousGesture(DragGesture(minimumDistance: 0))` на корне | 0,5 |
+| Снежинки-кристаллы, летние блики | спрайты `Path` в `ImageBitmap` (с тенью), бегущий `Brush` по якорям | `Path` → `GraphicsContext.resolve`, `LinearGradient` по якорям | 0,5–1 |
+| **Дополнительно** | | | **5–6,5** |
+
+Итого с P2 и геройскими моментами — около **21–25 дней на платформу**. Синтезированные тембры Капли и переливов
+можно заранее записать в локальные WAV. Всё по-прежнему управляется одним JSON по CMS-ключу: реакции Капли,
+сезоны и включение приколов меняются без релиза.
