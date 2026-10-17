@@ -193,7 +193,7 @@ function renderTabbar(activeTab) {
   }
 }
 
-// Активная вкладка: кусочки других экранов поверх tabbar.png (см. TABBAR.active в screens.js).
+// Активная вкладка: кусочки других экранов поверх tabbar.webp (см. TABBAR.active в screens.js).
 function activeTabSlices(activeTab) {
   return (TABBAR.active[activeTab] || []).flatMap(part => {
     const source = imageCache.get(part.from)?.result;
@@ -284,15 +284,18 @@ function sampleColor(image, points) {
   }
 }
 
-// ——— PNG экранов: грузим только перечисленные в READY_IMAGES (без лишних 404), один раз ———
+// ——— Картинки экранов: грузим только перечисленные в READY_IMAGES (без лишних 404), один раз ———
 
 const imageCache = new Map();
+// id картинки (имя без расширения) → файл в screens/: 'content' → 'content.webp'
+const imageFiles = new Map(READY_IMAGES.map(file => [file.replace(/\.[^.]+$/, ''), file]));
 
 function loadImage(name) {
-  if (!READY_IMAGES.includes(name)) return Promise.resolve(null);
+  const file = imageFiles.get(name);
+  if (!file) return Promise.resolve(null);
   if (!imageCache.has(name)) {
     const entry = { result: null };
-    const src = `screens/${name}.png`;
+    const src = `screens/${file}`;
     entry.promise = new Promise(resolve => {
       const img = new Image();
       img.onload = () => resolve((entry.result = { src, img, width: img.naturalWidth, height: img.naturalHeight }));
@@ -309,7 +312,7 @@ function loadImage(name) {
 
 // Остальные картинки — после первого экрана и по одной, чтобы не отнимать у него сеть.
 async function preloadImages() {
-  for (const name of READY_IMAGES) await loadImage(name);
+  for (const name of imageFiles.keys()) await loadImage(name);
 }
 
 // ——— Ввод ———

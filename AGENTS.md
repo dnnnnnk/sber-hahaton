@@ -31,10 +31,10 @@ engine/triggers/  index.js (реестр) + по файлу на тип
 engine/effects/   index.js (реестр) + по файлу на тип
 content/    config.json · effects/ (Lottie, картинки) · sounds/
 cms/        cms.js · cms.css
-screens/    PNG экранов из Figma, кадр 375 pt @2x + tabbar.png (см. screens/README.md)
+screens/    экраны из Figma в WebP, кадр 375 pt @2x + tabbar.webp (см. screens/README.md)
 vendor/     lottie.min.js (единственная внешняя библиотека, локальная копия)
 docs/       ARCHITECTURE.md (слои, конвейер решений) · CONFIG.md (формат конфига) · NATIVE.md (Kotlin/Swift)
-tools/      генераторы собственных звуков и Lottie (Python, нужны только для пересборки ассетов)
+tools/      генераторы звуков и Lottie (Python), перекодировщик экранов в WebP — только для пересборки ассетов
 ```
 
 ## Контракт событий (оболочка → движок)

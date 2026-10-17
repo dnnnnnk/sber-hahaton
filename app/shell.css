@@ -145,7 +145,7 @@ h1, h2, p { margin: 0; }
   box-shadow: 0 4px 10px rgba(33, 160, 56, 0.3);
 }
 
-/* Дела, которых нет на tasks.png: HTML-строки в стиле макета */
+/* Дела, которых нет на tasks.webp: HTML-строки в стиле макета */
 .png-tasks {
   display: grid;
   gap: calc(16 * var(--pt));

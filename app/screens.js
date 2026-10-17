@@ -1,6 +1,6 @@
 // Экраны оболочки «СберKids».
 //
-// Экран рисуется картинкой screens/<id>.png (экспорт из Figma @2x, кадр 375 pt), а если её нет в READY_IMAGES —
+// Экран рисуется картинкой screens/<id>.webp (экспорт из Figma @2x, кадр 375 pt), а если её нет в READY_IMAGES —
 // HTML-заглушкой stub(). Зоны (zones) — в процентах от размеров картинки: { x, y, w, h }.
 // В заглушке те же зоны — это элементы с data-zone="<id>" и data-anchor="<имя>"; зона без x/y есть только
 // в заглушке (или в HTML-дополнении afterImage).
@@ -22,13 +22,15 @@ export const START_SCREEN = 'home';
 // Ширина кадра в Figma, pt. Всё в pt ниже — в этой системе координат.
 export const DESIGN_WIDTH = 375;
 
-// Какие PNG лежат в screens/. Положили новую — допишите имя без .png.
+// Какие картинки лежат в screens/ — имя файла с расширением; id картинки = имя без расширения.
+// Положили новую — допишите сюда (WebP: tools/encode_screens.mjs; PNG/JPEG тоже годятся).
 // Явный список вместо «пробных» запросов: без 404 в консоли и лишних запросов при каждом запуске.
 export const READY_IMAGES = [
-  'home', 'tasks', 'tasks_done', 'moneybox', 'moneybox_goal', 'topup_success', 'content', 'transfer', 'tabbar',
+  'home.webp', 'tasks.webp', 'tasks_done.webp', 'moneybox.webp', 'moneybox_goal.webp', 'topup_success.webp',
+  'content.webp', 'transfer.webp', 'tabbar.webp',
 ];
 
-// «Хром» телефона, нарисованный на каждом PNG (pt). На настоящем телефоне он свой, поэтому на мобильном
+// «Хром» телефона, нарисованный на каждой картинке (pt). На настоящем телефоне он свой, поэтому на мобильном
 // его срезаем; в рамке телефона на десктопе — оставляем для реалистичности.
 export const IMAGE_CHROME = { statusBar: 44, homeIndicator: 34 };
 
@@ -40,7 +42,7 @@ export const TABS = [
   { id: 'content', label: 'Контент', icon: 'play' },
 ];
 
-// Закреплённый таббар: screens/tabbar.png (375×162 pt, с прозрачным градиентом) поверх экрана.
+// Закреплённый таббар: screens/tabbar.webp (375×162 pt, с прозрачным градиентом) поверх экрана.
 // На нём активна «Главный», поэтому для других вкладок поверх кладём кусочки их собственных экранов,
 // где эта вкладка нарисована активной. Кусочки — в pt от верха нижних 162 pt картинки-источника.
 export const TABBAR = {
@@ -64,7 +66,7 @@ export const TABBAR = {
       { from: 'content', x: 30, y: 36, w: 62, h: 60 },
       { from: 'content', x: 284, y: 36, w: 62, h: 60 },
     ],
-    // В tasks.png таббар старый (4 вкладки): берём оттуда только активную «Дела» и сдвигаем на её место.
+    // В tasks.webp таббар старый (4 вкладки): берём оттуда только активную «Дела» и сдвигаем на её место.
     tasks: [
       { from: 'moneybox', x: 30, y: 36, w: 62, h: 60 },
       { from: 'tasks', x: 212, y: 34, w: 46, h: 62, toX: 226 },
@@ -89,7 +91,7 @@ export const MONEYBOXES = [
   { id: 'robot', title: 'Робот Макс', icon: '🤖', goal: 12000, saved: 3950 },
 ];
 
-// Зоны копилок на moneybox.png (карточки сверху вниз).
+// Зоны копилок на moneybox.webp (карточки сверху вниз).
 const MONEYBOX_Y = { slides: 26.91, neon: 37.83, slime: 43.6, markers: 49.22, band: 54.84, robot: 60.45 };
 
 export const SCREENS = {
