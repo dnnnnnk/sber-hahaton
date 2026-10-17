@@ -109,7 +109,8 @@ for (const browserType of [chromium, webkit].filter(b => !process.env.ONLY_BROWS
     await page.evaluate(() => {
       const s = window.sberKids;
       s.state.moneyboxes.forEach(m => { m.saved = 0; });
-      s.state.moneyboxes[0].saved = s.state.moneyboxes[0].goal;
+      const slides = s.state.moneyboxes.find(m => m.id === 'slides');
+      slides.saved = slides.goal;
       s.refresh();
       document.getElementById('viewport').scrollTop = 490;
     });
