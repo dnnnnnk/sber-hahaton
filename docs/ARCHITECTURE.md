@@ -58,9 +58,10 @@
 | `home` | `avatar` (поднимаемый, круглый), `card` (собственное зелёное HTML-лицо карты), `balance` (HTML-сумма на карте) |
 | `tasks` | `avatar`, `task-dog_walk`, `task-dishes`, `task-multiplication`, `task-clean_room`, `task-read_book` |
 | `tasks_done` | `trophy` |
-| `moneybox` | `avatar`, `moneybox-slides`, `moneybox-neon`, `moneybox-slime`, `moneybox-markers`, `moneybox-band`, `moneybox-robot` |
+| `moneybox` | `avatar`, `moneybox-robot`, `moneybox-slides` (обе видны без прокрутки), `moneybox-neon`, `moneybox-slime`, `moneybox-markers`, `moneybox-band`, `moneybox-bike`, `moneybox-headphones` |
 | `moneybox_goal` | `goal` |
-| `topup_success` | `success` (+ `progress` в заглушке) |
+| `topup_success` | `success`, `progress` (полоска копилки в HTML-плашке «Копилка пополнена») |
+| все с таббаром | `tabbar` — «таблетка» таббара; в её центре живёт Капля |
 
 «Поднимаемый» якорь (`lift: true`) на PNG-экране — это кусочек картинки поверх подложки цвета фона:
 его можно анимировать (сальто, прыжок), и под ним не остаётся «двойника».
