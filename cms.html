@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Приколы · CMS</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="cms/cms.css">
+</head>
+<body>
+  <header class="top">
+    <div class="top__title">Приколы <span>· контент без релиза</span></div>
+    <span class="badge" id="source">…</span>
+    <a class="top__link" href="index.html?debug=1" target="_blank" rel="noopener">Открыть приложение ↗</a>
+  </header>
+
+  <main class="layout">
+    <section class="editor">
+      <nav class="tabs" role="tablist">
+        <button type="button" role="tab" class="tab is-active" data-tab="list">Приколы</button>
+        <button type="button" role="tab" class="tab" data-tab="json">JSON</button>
+      </nav>
+
+      <div class="panel" data-panel="list">
+        <section class="card settings">
+          <h2>Общие настройки</h2>
+          <div class="field">
+            <span class="field__label">Сезон для осадков</span>
+            <div class="segmented" id="season">
+              <label><input type="radio" name="season" value="auto"><span>По календарю</span></label>
+              <label><input type="radio" name="season" value="autumn"><span>🍂 Осень</span></label>
+              <label><input type="radio" name="season" value="winter"><span>❄️ Зима</span></label>
+              <label><input type="radio" name="season" value="spring"><span>🌸 Весна</span></label>
+            </div>
+          </div>
+          <div class="settings__row">
+            <label class="check"><input type="checkbox" data-setting="sound"> Звук</label>
+            <label class="check"><input type="checkbox" data-setting="haptics"> Вибрация</label>
+            <label class="field field--inline">
+              <span class="field__label">Пауза между полноэкранными, мс</span>
+              <input type="number" min="0" step="500" data-setting="globalCooldownMs">
+            </label>
+          </div>
+        </section>
+        <div class="list" id="list"></div>
+      </div>
+
+      <div class="panel" data-panel="json" hidden>
+        <p class="hint">Полный конфиг. Формат — docs/CONFIG.md. Проверка идёт по тем же правилам, что и в движке.</p>
+        <textarea id="json" spellcheck="false" autocomplete="off" autocapitalize="off"></textarea>
+        <div class="report" id="report"></div>
+      </div>
+    </section>
+
+    <aside class="preview">
+      <div class="preview__bar">
+        <b>Превью</b>
+        <button type="button" data-preview="home">🏠 Главный</button>
+        <button type="button" data-preview="tasks">✅ Дела</button>
+        <button type="button" data-preview="shake">📳 Тряхнуть</button>
+      </div>
+      <iframe id="preview" src="index.html?debug=1#home" title="Приложение СберKids"></iframe>
+      <p class="hint">Превью подхватывает сохранённый конфиг сразу, как и приложение в соседней вкладке.</p>
+    </aside>
+  </main>
+
+  <footer class="actions">
+    <button type="button" class="btn btn--primary" id="save">Сохранить</button>
+    <button type="button" class="btn" id="reset">Сбросить к config.json</button>
+    <button type="button" class="btn" id="download">Скачать JSON</button>
+    <span class="status" id="status" role="status"></span>
+  </footer>
+
+  <script type="module" src="cms/cms.js"></script>
+</body>
+</html>
