@@ -28,7 +28,7 @@ for (const browserType of [chromium, webkit].filter(b => !process.env.ONLY_BROWS
     });
     page.on('response', response => { if (response.status() >= 400) errors.push(`${response.status()} ${response.url()}`); });
     await page.goto(`${base}?debug=1#home`, { waitUntil: 'networkidle' });
-    await page.waitForFunction(() => window.sberKids?.engine?.config?.prikoly.length);
+    await page.waitForFunction(() => window.sberKids?.engine?.config?.prikoly.length, null, { timeout: 20000 });
 
     const go = async id => {
       await page.evaluate(id => window.sberKids.go(id), id);
@@ -358,6 +358,39 @@ for (const browserType of [chromium, webkit].filter(b => !process.env.ONLY_BROWS
       await page.waitForFunction(() => window.sberKids?.engine?.config?.prikoly.length);
       await page.addStyleTag({ content: '.dbg { visibility: hidden !important; }' });
       await page.waitForFunction(() => document.querySelectorAll('.prikoly-drop').length === 1);
+    });
+
+    // ——— B2: голограмма-фольга ———
+    await check('B2 card has its own green face and an HTML balance', async () => {
+      await go('home');
+      const card = await page.locator('[data-anchor="card"]').boundingBox();
+      const face = await page.locator('.screen-patch--card').boundingBox();
+      assert.ok(['x', 'y', 'width', 'height'].every(k => Math.abs(card[k] - face[k]) < 1), 'face covers the card anchor exactly');
+      await page.evaluate(() => window.sberKids.setBalance(1111));
+      assert.ok(/1\s111/.test(await page.locator('[data-anchor="balance"]').innerText()), 'balance is live HTML');
+      await page.evaluate(() => window.sberKids.setBalance(800.55));
+    });
+
+    await check('B2 foil is visible from the first ±10° and fades when still', async () => {
+      await go('home');
+      await reset();
+      for (const [x, min] of [[0.25, 0.35], [0.5, 0.6]]) {
+        await page.evaluate(x => window.sberKids.engine.simulate('tilt', { x, y: 0 }), x);
+        await page.waitForTimeout(250);
+        const opacity = await page.evaluate(() => Number(getComputedStyle(document.querySelector('.prikoly-holo--foil')).opacity));
+        assert.ok(opacity >= min, `foil opacity ${opacity} at x=${x}`);
+      }
+      const delta = await page.evaluate(() => {
+        const a = document.querySelector('[data-anchor="card"]').getBoundingClientRect();
+        return Math.max(...[...document.querySelectorAll('.prikoly-holo')].flatMap(el => {
+          const h = el.getBoundingClientRect();
+          return ['left', 'top', 'width', 'height'].map(k => Math.abs(a[k] - h[k]));
+        }));
+      });
+      assert.ok(delta < 1, 'all foil layers sit exactly on the card');
+      assert.ok(await page.locator('.prikoly-holo--sparks i').count() >= 10, 'sparkles');
+      await shot('b2-foil');
+      await page.waitForFunction(() => !document.querySelector('.prikoly-holo'), null, { timeout: 4000 });
     });
 
     assert.deepEqual(errors, [], 'console and HTTP');
