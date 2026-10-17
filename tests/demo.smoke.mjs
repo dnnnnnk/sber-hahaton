@@ -41,7 +41,10 @@ for (const browserType of [chromium, webkit].filter(b => !process.env.ONLY_BROWS
     const shot = name => page.screenshot({ path: `${output}/${browserType.name()}-${name}.png`, scale: 'css' });
     const check = async (name, fn) => {
       try { await fn(); report.checks.push({ name, passed: true }); }
-      catch (error) { report.checks.push({ name, passed: false, error: error.message }); }
+      catch (error) {
+        const log = await page.evaluate(() => window.sberKids?.engine?.getLog().slice(-6).map(l => l.info || `${l.id} ${l.ok ? 'ok' : l.reason}`)).catch(() => []);
+        report.checks.push({ name, passed: false, error: error.message, log });
+      }
       console.log(`${browserType.name()}: ${name}: ${report.checks.at(-1).passed ? 'PASS' : 'FAIL'}`);
     };
     await page.addStyleTag({ content: '.dbg { visibility: hidden !important; }' });
@@ -391,6 +394,104 @@ for (const browserType of [chromium, webkit].filter(b => !process.env.ONLY_BROWS
       assert.ok(await page.locator('.prikoly-holo--sparks i').count() >= 10, 'sparkles');
       await shot('b2-foil');
       await page.waitForFunction(() => !document.querySelector('.prikoly-holo'), null, { timeout: 4000 });
+    });
+
+    // ——— B4: «Кувырок» — ночь лицом вниз и рассвет ———
+    const face = beta => page.evaluate(beta => window.sberKids.engine.sensors.inject('orientation', { alpha: 0, beta, gamma: 0 }), beta);
+    const faceDown = async () => { await face(179); await page.waitForTimeout(450); await face(179); };
+
+    await check('B4 face down → night with sleeping Drop; face up → dawn, greeting, stretch', async () => {
+      await go('content');
+      await go('home');
+      await reset();
+      await page.waitForFunction(() => document.querySelectorAll('.prikoly-drop').length === 1);
+      await faceDown();
+      await page.waitForFunction(() => document.querySelector('.prikoly-night.is-on'));
+      await page.waitForFunction(() => document.querySelector('.prikoly-drop')?.dataset.face === 'sleep');
+      assert.equal(await page.locator('.prikoly-night').evaluate(el => getComputedStyle(el).pointerEvents), 'none');
+      // Ночь не мешает: вкладка нажимается, ночь остаётся.
+      const tab = await page.locator('#tabbar [data-tab="content"]').boundingBox();
+      await page.touchscreen.tap(tab.x + tab.width / 2, tab.y + tab.height / 2);
+      await page.waitForFunction(() => window.sberKids.current() === 'content');
+      assert.equal(await page.locator('.prikoly-night').count(), 1);
+      await page.waitForTimeout(1200);
+      await shot('b4-night');
+      await face(12);
+      await page.waitForFunction(() => document.querySelector('.prikoly-night.is-dawn'));
+      await page.waitForFunction(() => document.querySelector('.prikoly-drop')?.dataset.face === 'yawn');
+      await page.waitForFunction(() => document.querySelector('.prikoly-night.is-hello'));
+      await shot('b4-dawn');
+      await page.waitForFunction(() => !document.querySelector('.prikoly-night'), null, { timeout: 4000 });
+    });
+
+    await check('B4 a long night is not cut short, red zone ends it at once', async () => {
+      await go('home');
+      await reset();
+      await faceDown();
+      await page.waitForFunction(() => document.querySelector('.prikoly-night.is-on'));
+      await page.waitForTimeout(7200);
+      assert.equal(await page.locator('.prikoly-night:not(.is-dawn)').count(), 1, 'still night after 7 s');
+      await go('transfer');
+      assert.equal(await page.locator('.prikoly-night').count(), 0);
+      await face(12);
+      await go('home');
+    });
+
+    // ——— B3: погода, с которой можно играть ———
+    await check('B3 finger sweeps settled leaves without blocking touches', async () => {
+      await go('content');
+      await go('home');
+      await reset();
+      await page.evaluate(() => { window.sberKids.engine.setSeason('autumn'); window.sberKids.engine.simulate('shake'); });
+      await page.waitForFunction(() => window.sberKids.engine.stats().settled >= 6, null, { timeout: 6000 });
+      // Ждём, пока листопад долетит (emitMs + падение), чтобы новые листья не ложились во время смахивания.
+      await page.waitForTimeout(2600);
+      const before = await page.evaluate(() => window.sberKids.engine.stats().settled);
+      await shot('b3-leaves');
+      const card = await page.locator('[data-anchor="card"]').boundingBox();
+      const tab = await page.locator('[data-anchor="tabbar"]').boundingBox();
+      // Палец проходит по верху карты и по таббару (touchmove, пассивно; прокрутка не мешает).
+      // В Chromium — настоящий touchmove через CDP, в WebKit — движение указателя (оба слушаются пассивно).
+      const cdp = browserType === chromium ? await context.newCDPSession(page) : null;
+      for (const [y, x0, x1] of [[card.y + 2, card.x + card.width - 8, card.x + 8], [tab.y + 2, tab.x + 8, tab.x + tab.width - 8]]) {
+        if (cdp) await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: x0, y }] });
+        else await page.mouse.move(x0, y);
+        for (let i = 1; i <= 16; i++) {
+          const point = { x: x0 + (x1 - x0) * i / 16, y: y + (i % 2) * 3 };
+          if (cdp) await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [point] });
+          else await page.mouse.move(point.x, point.y);
+          await page.waitForTimeout(16);
+        }
+        if (cdp) await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+      }
+      await page.waitForTimeout(150);
+      const after = await page.evaluate(() => window.sberKids.engine.stats().settled);
+      assert.ok(after <= before - 4, `swept ${before} → ${after}`);
+      assert.equal(await page.evaluate(() => window.sberKids.current()), 'home');
+      // Касание после смахивания по-прежнему доходит до интерфейса.
+      const tasksTab = await page.locator('#tabbar [data-tab="tasks"]').boundingBox();
+      await page.touchscreen.tap(tasksTab.x + tasksTab.width / 2, tasksTab.y + tasksTab.height / 2);
+      await page.waitForFunction(() => window.sberKids.current() === 'tasks');
+      await stop();
+    });
+
+    await check('B3 winter flakes are white crystals, summer runs glints over cards', async () => {
+      await stop();
+      const config = await page.evaluate(() => window.sberKids.engine.config.prikoly);
+      const snow = config.find(p => p.id === 'season-winter-snow').effect.params;
+      assert.ok(snow.shapes.includes('flake') && snow.colors.every(c => /^#f{6}$/i.test(c)), 'white crystal flakes');
+      await go('tasks');
+      await reset();
+      await page.evaluate(() => { window.sberKids.engine.setSeason('summer'); window.sberKids.engine.simulate('shake'); });
+      await page.waitForFunction(() => window.sberKids.engine.stats().active.includes('season-summer-sunbeams'));
+      assert.ok(await page.locator('.prikoly-sun__glint').count() >= 3, 'glints over task rows and tabbar');
+      assert.ok(await page.locator('.prikoly-sun__spot').count() >= 3, 'sun bunnies');
+      const misaligned = await page.evaluate(() => [...document.querySelectorAll('.prikoly-sun__glint:not([hidden])')].length);
+      assert.ok(misaligned >= 3);
+      await page.waitForTimeout(900);
+      await shot('b3-summer');
+      await page.waitForFunction(() => !document.querySelector('.prikoly-sun'), null, { timeout: 6000 });
+      await page.evaluate(() => window.sberKids.engine.setSeason('auto'));
     });
 
     assert.deepEqual(errors, [], 'console and HTTP');

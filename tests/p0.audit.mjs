@@ -208,6 +208,11 @@ for (const browserType of [chromium, webkit].filter(b => !process.env.ONLY_BROWS
               await stop();
               return;
             }
+            // Ночь «Кувырка» длится, пока телефон лежит экраном вниз: поднимаем его — рассвет и конец.
+            if (spec.type === 'night') {
+              await page.waitForFunction(() => document.querySelector('.prikoly-night'));
+              await page.evaluate(() => window.sberKids.engine.sensors.inject('orientation', { alpha: 0, beta: 12, gamma: 0 }));
+            }
             // Постоянный жилец не заканчивается сам: проверяем, что он стоит без цикла и гаснет по stopAll.
             if (spec.type === 'resident' && spec.params?.durationMs == null) {
               await page.waitForFunction(() => !window.sberKids.engine.stats().running);
