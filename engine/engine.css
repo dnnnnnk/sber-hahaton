@@ -482,6 +482,7 @@
 .prikoly-album__grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
+  grid-auto-rows: max-content; /* загадки в 3–4 строки: строка сетки растёт по тексту, а не режет его */
   gap: 8px;
   margin: 0;
   padding: 0;
