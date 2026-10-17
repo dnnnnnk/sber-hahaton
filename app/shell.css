@@ -160,6 +160,7 @@ button:focus-visible, [role="button"]:focus-visible {
 
 .zone--hole { pointer-events: none; }
 .zone--lift { background-repeat: no-repeat; }
+.zone--round { border-radius: 50%; }
 
 /* Локальные плашки скрывают сторонние образы в исходных демонстрационных макетах. */
 .screen-patch {
@@ -206,7 +207,7 @@ button:focus-visible, [role="button"]:focus-visible {
 
 .screen-patch--goal-copy {
   gap: calc(12 * var(--pt));
-  background: #1fba43;
+  background: #24b23e;
   color: #fff;
 }
 
@@ -305,6 +306,85 @@ button:focus-visible, [role="button"]:focus-visible {
 }
 .bank-choice b { font-size: calc(11.5 * var(--pt)); line-height: 1.15; overflow-wrap: anywhere; }
 .bank-choice small { overflow: hidden; color: #8b949f; font-size: calc(11 * var(--pt)); white-space: nowrap; text-overflow: ellipsis; }
+
+/* Итог дел: те же пять дел, что на экране «Дела» */
+.screen-patch--done-list {
+  display: grid;
+  grid-template-rows: repeat(5, 1fr);
+  padding: 0 calc(20 * var(--pt));
+  border-radius: calc(24 * var(--pt));
+  background: #fff;
+}
+
+.done-row { display: flex; align-items: center; gap: calc(10 * var(--pt)); min-width: 0; }
+.done-row + .done-row { border-top: 1px solid #eef1f4; }
+.done-row i { font-size: calc(18 * var(--pt)); font-style: normal; }
+.done-row b { flex: 1; overflow: hidden; font-size: calc(15 * var(--pt)); font-weight: 500; white-space: nowrap; text-overflow: ellipsis; }
+.done-row em {
+  flex: none;
+  width: calc(24 * var(--pt));
+  height: calc(24 * var(--pt));
+  border-radius: 50%;
+  background: #e9edf1;
+}
+.done-row.is-done em {
+  background: #5dd68b center / 60% no-repeat
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12l5 5 9-10'/%3E%3C/svg%3E");
+}
+
+/* Пополнение копилки вместо растрового чека магазина */
+.screen-patch--topup {
+  display: flex;
+  flex-direction: column;
+  gap: calc(14 * var(--pt));
+  padding: calc(16 * var(--pt)) calc(16 * var(--pt)) 0;
+  background: #f3f5f7;
+}
+
+.topup-patch__title { padding: 0 calc(16 * var(--pt)) calc(10 * var(--pt)); font-size: calc(30 * var(--pt)); line-height: 1.1; }
+
+.topup-patch__card {
+  display: flex;
+  align-items: center;
+  gap: calc(16 * var(--pt));
+  padding: calc(20 * var(--pt)) calc(24 * var(--pt));
+  border-radius: calc(24 * var(--pt));
+  background: #fff;
+}
+
+.topup-patch__card > i {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: calc(56 * var(--pt));
+  height: calc(56 * var(--pt));
+  border-radius: calc(16 * var(--pt));
+  background: linear-gradient(145deg, #f0f6ff, #f7efff);
+  font-size: calc(28 * var(--pt));
+  font-style: normal;
+}
+
+.topup-patch__card > span { display: grid; gap: calc(4 * var(--pt)); min-width: 0; }
+.topup-patch__card b { font-size: calc(17 * var(--pt)); }
+.topup-patch__card small { color: var(--green-dark); font-size: calc(15 * var(--pt)); font-weight: 600; }
+.topup-patch__card--progress { flex-direction: column; align-items: stretch; gap: calc(10 * var(--pt)); }
+.topup-patch__sum { display: flex !important; justify-content: space-between; align-items: baseline; }
+.topup-patch__sum small { color: #a8b1bc; font-weight: 500; }
+.topup-patch__bar { display: block; height: calc(10 * var(--pt)); overflow: hidden; border-radius: 999px; background: #e9edf1; }
+.topup-patch__bar i { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #21a038, #7fd858); }
+
+/* Мечта: слова ребёнка вместо товарного описания */
+.screen-patch--goal-note {
+  display: flex;
+  flex-direction: column;
+  gap: calc(8 * var(--pt));
+  padding: calc(24 * var(--pt));
+  border-radius: calc(24 * var(--pt));
+  background: #fff;
+}
+
+.screen-patch--goal-note small { color: #a8b1bc; font-size: calc(12 * var(--pt)); }
+.screen-patch--goal-note span { font-size: calc(15 * var(--pt)); line-height: 1.4; }
 
 /* Галочка «сделано» на зоне PNG */
 .zone.is-done::after,

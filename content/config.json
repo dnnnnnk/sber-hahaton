@@ -401,7 +401,10 @@
       "effect": {
         "type": "coins",
         "params": {
-          "anchors": ["moneybox-slides", "moneybox-neon", "moneybox-slime", "moneybox-markers", "moneybox-band", "moneybox-robot"],
+          "anchors": [
+            "moneybox-robot", "moneybox-slides", "moneybox-neon", "moneybox-slime",
+            "moneybox-markers", "moneybox-band", "moneybox-bike", "moneybox-headphones"
+          ],
           "coinsPerCard": 14, "durationMs": 2800
         }
       },

@@ -270,11 +270,12 @@ function zoneEls(zone, image) {
 
   // «Поднимаемый» якорь: кусочек картинки поверх подложки, чтобы его можно было анимировать.
   el.classList.add('zone--lift');
+  el.classList.toggle('zone--round', Boolean(zone.round));
   el.style.backgroundImage = `url("${image.src}")`;
   el.style.backgroundSize = `${10000 / zone.w}% ${10000 / zone.h}%`;
   el.style.backgroundPosition = `${slicePos(zone.x, zone.w)}% ${slicePos(zone.y, zone.h)}%`;
   const hole = document.createElement('div');
-  hole.className = 'zone zone--hole';
+  hole.className = `zone zone--hole${zone.round ? ' zone--round' : ''}`;
   Object.assign(hole.style, box, { background: zone.fill || cornerColor(image, zone) });
   return [hole, el];
 }
