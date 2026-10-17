@@ -144,6 +144,20 @@ export function createStage(host) {
     // Элемент якоря — только для эффектов, которые анимируют сам якорь (cssAnimate).
     getAnchorElement: findAnchor,
 
+    // Имена видимых якорей с префиксом: "task-" → ["task-dog_walk", …]. Для шаблонов вида "task-*".
+    anchorNames(prefix) {
+      const names = new Set();
+      for (const el of host.querySelectorAll(`[data-anchor^="${CSS.escape(prefix)}"]`)) {
+        if (!root.contains(el) && el.getClientRects().length) names.add(el.dataset.anchor);
+      }
+      return [...names];
+    },
+
+    // "card", "task-*" → конкретные имена видимых якорей.
+    resolveAnchors(patterns) {
+      return [...new Set(patterns.flatMap(n => (n.endsWith('*') ? this.anchorNames(n.slice(0, -1)) : [n])))];
+    },
+
     // Только публичные данные якоря, без доступа к состоянию оболочки.
     getAnchorData(name) {
       const el = findAnchor(name);
@@ -159,8 +173,12 @@ export function createStage(host) {
 
     stats() {
       let particles = 0;
-      for (const r of renderers) particles += r.count || 0;
-      return { fps: raf ? fps : 0, particles, renderers: renderers.size, running: Boolean(raf) };
+      let settled = 0;
+      for (const r of renderers) {
+        particles += r.count || 0;
+        settled += r.settled || 0;
+      }
+      return { fps: raf ? fps : 0, particles, settled, renderers: renderers.size, running: Boolean(raf) };
     },
   };
 }

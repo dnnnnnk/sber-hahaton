@@ -242,10 +242,10 @@
       "effect": {
         "type": "particles",
         "params": {
-          "spawn": "top", "emoji": ["🍁", "🍂", "🍃"], "count": 34, "size": [22, 34],
+          "spawn": "top", "emoji": ["🍁", "🍂", "🍃"], "count": 40, "size": [22, 34],
           "speed": [40, 90], "gravity": 200, "drag": 0.9, "sway": 30, "rotation": 120,
-          "emitMs": 1800, "lifeMs": [4200, 5200], "durationMs": 8000,
-          "settleOn": ["card", "tabbar"], "settleChance": 0.6, "settleMs": 2000
+          "emitMs": 1800, "lifeMs": [4200, 5200], "durationMs": 12000,
+          "settleOn": ["card", "tabbar", "task-*", "moneybox-*", "feed-*"], "settleChance": 0.8, "settleMs": 6500
         }
       },
       "haptic": "medium",
@@ -266,11 +266,11 @@
       "effect": {
         "type": "particles",
         "params": {
-          "spawn": "top", "emoji": ["❄️"], "shapes": ["snow", "snow", "snow"],
-          "colors": ["#8EC8FF", "#A9D5FF", "#74B9FF"], "count": 70, "size": [10, 24],
-          "speed": [30, 70], "gravity": 180, "drag": 1, "sway": 20, "rotation": 40,
-          "emitMs": 2000, "lifeMs": [4500, 5500], "durationMs": 8000,
-          "settleOn": ["card", "tabbar"], "settleChance": 0.7, "settleMs": 2200
+          "spawn": "top", "shapes": ["flake", "crystal", "flake", "puff", "puff"],
+          "colors": ["#FFFFFF"], "count": 70, "size": [10, 26],
+          "speed": [30, 70], "gravity": 160, "drag": 1, "sway": 22, "rotation": 50,
+          "emitMs": 2200, "lifeMs": [4500, 5600], "durationMs": 12000,
+          "settleOn": ["card", "tabbar", "task-*", "moneybox-*", "feed-*"], "settleChance": 0.8, "settleMs": 6500
         }
       },
       "haptic": "medium",
@@ -294,8 +294,8 @@
           "spawn": "top", "emoji": ["🌸"], "shapes": ["petal", "petal"],
           "colors": ["#FFB3C7", "#FF8FB1", "#FFC9D6"], "count": 40, "size": [16, 28],
           "speed": [40, 90], "gravity": 190, "drag": 0.9, "sway": 28, "rotation": 140, "flutter": true,
-          "emitMs": 1800, "lifeMs": [4200, 5200], "durationMs": 8000,
-          "settleOn": ["card", "tabbar"], "settleChance": 0.5, "settleMs": 2000
+          "emitMs": 1800, "lifeMs": [4200, 5200], "durationMs": 11000,
+          "settleOn": ["card", "tabbar", "task-*", "moneybox-*", "feed-*"], "settleChance": 0.5, "settleMs": 5500
         }
       },
       "haptic": "medium",
@@ -314,26 +314,8 @@
       "cooldownMs": 6000,
       "maxPerDay": null,
       "effect": {
-        "variants": [
-          {
-            "type": "particles",
-            "params": {
-              "spawn": "center", "emoji": ["☀️", "✨"], "shapes": ["circle", "spark"],
-              "colors": ["#FFD43B", "#FFF08A", "#FFB84D", "#7FDBFF"], "count": 42,
-              "size": [12, 30], "speed": [160, 340], "gravity": 80, "drag": 1.4,
-              "rotation": 90, "lifeMs": [1800, 2800], "durationMs": 3400
-            }
-          },
-          {
-            "type": "particles",
-            "params": {
-              "spawn": "bottom", "emoji": ["🫧", "☀️"], "shapes": ["bubble"],
-              "colors": ["#73D9FF", "#FFE36E", "#A8EDC2"], "count": 30,
-              "size": [16, 36], "speed": [90, 180], "gravity": -55, "drag": 0.5,
-              "sway": 24, "emitMs": 900, "lifeMs": [2400, 3400], "durationMs": 4000
-            }
-          }
-        ]
+        "type": "sunbeams",
+        "params": { "anchors": ["card", "tabbar", "task-*", "moneybox-*", "feed-*"], "spots": 4, "durationMs": 4600 }
       },
       "haptic": "medium",
       "sound": "sounds/sparkle.wav"
@@ -478,23 +460,20 @@
       "id": "flip-phone",
       "title": "Кувырок",
       "icon": "🙃",
-      "hint": "А что, если перевернуть телефон?",
-      "enabled": false,
-      "priority": 6,
-      "trigger": { "type": "flip", "holdMs": 300, "maxMs": 5000 },
+      "hint": "Что будет, если телефон ляжет спать лицом в подушку?",
+      "enabled": true,
+      "priority": 7,
+      "trigger": { "type": "flip", "on": "down", "holdMs": 400 },
       "screens": null,
       "schedule": null,
-      "cooldownMs": 10000,
+      "cooldownMs": 6000,
       "maxPerDay": null,
       "effect": {
-        "type": "particles",
-        "params": {
-          "spawn": "center", "emoji": ["⭐", "🌟", "✨"], "count": 40, "size": [18, 30],
-          "rotation": 200, "lifeMs": [1500, 2200], "durationMs": 2600
-        }
+        "type": "night",
+        "params": { "stars": 46, "maxNightMs": 45000, "dawnMs": 2600, "greeting": "Доброе утро!" }
       },
-      "haptic": "medium",
-      "sound": "sounds/boing.wav"
+      "haptic": null,
+      "sound": null
     },
     {
       "id": "still-sleep",

@@ -1,5 +1,7 @@
 // Универсальный canvas-рендерер частиц: снег, листья, лепестки, пузыри, цифры, конфетти, искорки,
 // а в режиме mode: "trail" — следы (лапки) цепочкой по траектории. Параметры — docs/CONFIG.md.
+// Осадки ложатся на якоря (settleOn, можно "task-*"), а пальцем их можно смахнуть: палец слушается пассивно
+// на уровне документа, ничего не блокирует — касание по-прежнему уходит в интерфейс.
 
 const PRESETS = {
   top: { direction: 90, spread: 20, speed: [30, 70], gravity: 60, drag: 0.8 },
@@ -30,13 +32,17 @@ const DEFAULTS = {
   settleChance: 0.5,
   settleMs: 2000,
   stepMs: 160,
+  sweep: true,
 };
+
+const SWEEP_RADIUS = 38;
+const SWEEP_FRESH_MS = 90;
 
 const FADE_OUT_MS = 400;
 const MELT_MS = 700;
 const MODES = ['normal', 'trail'];
 const SPAWNS = ['top', 'bottom', 'center', 'anchor'];
-const SHAPES = ['circle', 'rect', 'star', 'spark', 'bubble', 'snow', 'petal'];
+const SHAPES = ['circle', 'rect', 'star', 'spark', 'bubble', 'snow', 'petal', 'flake', 'crystal', 'puff'];
 const sprites = new Map();
 const images = new Map();
 
@@ -71,7 +77,7 @@ export default {
     if (params.shapes != null && (!stringArray(params.shapes) || params.shapes.some(shape => !SHAPES.includes(shape)))) {
       return `shapes: допустимы ${SHAPES.join(', ')}`;
     }
-    for (const key of ['flutter', 'fade']) {
+    for (const key of ['flutter', 'fade', 'sweep']) {
       if (params[key] != null && typeof params[key] !== 'boolean') return `${key}: нужно true или false`;
     }
     return null;
@@ -93,7 +99,20 @@ export default {
       return { stop: finish };
     }
     const pool = buildPool(p, ctx);
-    const system = p.mode === 'trail' ? createTrail(p, total, pool, stage) : createFlow(p, total, pool, stage, ctx);
+    // Палец: последняя точка и скорость в координатах слоя. Только для осадков, которые ложатся на якоря.
+    const finger = { x: 0, y: 0, vx: 0, vy: 0, at: -Infinity };
+    const sweepable = p.mode !== 'trail' && p.sweep && Array.isArray(p.settleOn) && p.settleOn.length && !ctx.reducedMotion;
+    const offFinger = sweepable ? ctx.sensors.subscribe('finger', e => {
+      const host = stage.root.getBoundingClientRect();
+      const x = e.x - host.left;
+      const y = e.y - host.top;
+      const dt = Math.max(8, e.t - finger.t || 16);
+      const fresh = e.t - finger.t < 120;
+      finger.vx = fresh ? (x - finger.x) / dt * 1000 : 0;
+      finger.vy = fresh ? (y - finger.y) / dt * 1000 : 0;
+      Object.assign(finger, { x, y, t: e.t, at: performance.now() });
+    }) : null;
+    const system = p.mode === 'trail' ? createTrail(p, total, pool, stage) : createFlow(p, total, pool, stage, ctx, finger);
 
     let elapsed = 0;
     let finished = false;
@@ -104,9 +123,11 @@ export default {
         elapsed += dt * 1000;
         const alive = system.step(dt, elapsed, g, stage.dpr);
         renderer.count = system.count();
+        renderer.settled = system.settled?.() ?? 0;
         if (elapsed >= p.durationMs) system.expire(elapsed);
         if (!alive && !finished) {
           finished = true;
+          offFinger?.();
           ctx.end();
         }
         return alive;
@@ -122,6 +143,7 @@ export default {
       },
       stop() {
         remove();
+        offFinger?.();
         if (!finished) {
           finished = true;
           ctx.end();
@@ -133,9 +155,12 @@ export default {
 
 // ——— Поток частиц: падают сверху, всплывают снизу, разлетаются из центра или якоря ———
 
-function createFlow(p, total, pool, stage, ctx) {
+function createFlow(p, total, pool, stage, ctx, finger) {
   const particles = [];
   const settleRoll = Array.isArray(p.settleOn) && p.settleOn.length ? p.settleChance : 0;
+  let settleNames = [];
+  let namesAt = -Infinity;
+  let swishAt = -Infinity;
   const rotation = ctx.reducedMotion ? 0 : p.rotation;
   const sway = ctx.reducedMotion ? 0 : p.sway;
   let spawned = 0;
@@ -182,6 +207,7 @@ function createFlow(p, total, pool, stage, ctx) {
 
   return {
     count: () => particles.length,
+    settled: () => particles.reduce((n, q) => n + (q.settled ? 1 : 0), 0),
     expire(now) {
       if (expired) return;
       expired = true;
@@ -197,7 +223,15 @@ function createFlow(p, total, pool, stage, ctx) {
 
       const W = stage.width;
       const H = stage.height;
-      const rects = settleRoll ? p.settleOn.map(name => [name, stage.getAnchorRect(name)]) : [];
+      // Шаблоны вида "task-*" раскрываются в имена видимых якорей (не чаще раза в 300 мс).
+      if (settleRoll && now - namesAt > 300) {
+        settleNames = stage.resolveAnchors(p.settleOn);
+        namesAt = now;
+      }
+      const rects = settleRoll ? settleNames.map(name => [name, stage.getAnchorRect(name)]) : [];
+      const wall = performance.now();
+      const sweep = finger && wall - finger.at < SWEEP_FRESH_MS && Math.hypot(finger.vx, finger.vy) > 60 ? finger : null;
+      let swept = false;
 
       for (let i = particles.length - 1; i >= 0; i--) {
         const q = particles[i];
@@ -207,6 +241,7 @@ function createFlow(p, total, pool, stage, ctx) {
         let alpha = 1;
         let scale = 1;
 
+        if (sweep && blow(q, sweep, age)) swept = true;
         if (q.settled) {
           const rect = rects.find(([name]) => name === q.settled.anchor)?.[1];
           if (!rect) q.life = Math.min(q.life, age + 250);
@@ -243,9 +278,38 @@ function createFlow(p, total, pool, stage, ctx) {
         if (q.settled && age > q.life - FADE_OUT_MS) alpha = Math.min(alpha, (q.life - age) / FADE_OUT_MS);
         draw(g, dpr, q, x, y, alpha, scale);
       }
+      if (swept && wall - swishAt > 450) {
+        swishAt = wall;
+        ctx.sound.synth('swish');
+      }
       return particles.length > 0 || spawned < total;
     },
   };
+
+  // Смахивание: лежащая частица под пальцем срывается и улетает по ходу пальца, летящая — отклоняется.
+  function blow(q, f, age) {
+    const qx = q.settled ? q.x : q.x;
+    const dx = qx - f.x;
+    const dy = q.y - f.y;
+    const radius = SWEEP_RADIUS + q.size * 0.5;
+    const d = Math.hypot(dx, dy);
+    if (d > radius) return false;
+    const push = 1 - d / radius;
+    const nx = d ? dx / d : 0;
+    const ny = d ? dy / d : -1;
+    const wasSettled = Boolean(q.settled);
+    if (wasSettled) {
+      q.settled = null;
+      q.life = age + 1500;
+      q.prevY = q.y;
+      q.phase = -(age / 1000) * q.swayFreq; // без скачка покачивания в момент срыва
+    }
+    q.canSettle = false;
+    q.vx += f.vx * 0.45 * push + nx * 240 * push;
+    q.vy += f.vy * 0.45 * push + ny * 140 * push - 160 * push;
+    q.spin += (Math.random() - 0.5) * 10;
+    return wasSettled;
+  }
 
   function trySettle(q, x, rects, age, H) {
     const foot = q.size * 0.3;
@@ -424,6 +488,59 @@ function drawShape(g, shape, color, r) {
       g.fill();
       break;
     }
+    case 'flake':
+    case 'crystal': {
+      // Белая снежинка-кристалл с мягкой тенью: видна и на белых карточках.
+      withShadow(g, r);
+      g.strokeStyle = '#ffffff';
+      g.lineCap = 'round';
+      g.lineWidth = Math.max(1, r * (shape === 'flake' ? 0.14 : 0.12));
+      const arm = r * 0.86;
+      g.beginPath();
+      for (let i = 0; i < 6; i++) {
+        const a = (i * Math.PI) / 3;
+        const cos = Math.cos(a);
+        const sin = Math.sin(a);
+        const point = (t, side) => {
+          const bx = cos * arm * t;
+          const by = sin * arm * t;
+          const len = arm * (shape === 'flake' ? 0.3 : 0.22);
+          const ba = a + side * 0.75;
+          return [bx, by, bx + Math.cos(ba) * len, by + Math.sin(ba) * len];
+        };
+        g.moveTo(0, 0);
+        g.lineTo(cos * arm, sin * arm);
+        for (const t of shape === 'flake' ? [0.55] : [0.45, 0.75]) {
+          for (const side of [-1, 1]) {
+            const [bx, by, ex, ey] = point(t, side);
+            g.moveTo(bx, by);
+            g.lineTo(ex, ey);
+          }
+        }
+      }
+      g.stroke();
+      if (shape === 'crystal') {
+        g.beginPath();
+        for (let i = 0; i <= 6; i++) {
+          const a = (i * Math.PI) / 3 + Math.PI / 6;
+          g.lineTo(Math.cos(a) * r * 0.26, Math.sin(a) * r * 0.26);
+        }
+        g.fillStyle = '#ffffff';
+        g.fill();
+      }
+      break;
+    }
+    case 'puff': {
+      withShadow(g, r);
+      const grad = g.createRadialGradient(-r * 0.15, -r * 0.15, 0, 0, 0, r * 0.7);
+      grad.addColorStop(0, '#ffffff');
+      grad.addColorStop(0.6, 'rgba(255,255,255,0.95)');
+      grad.addColorStop(1, 'rgba(255,255,255,0.0)');
+      g.fillStyle = grad;
+      circle(g, r * 0.7);
+      g.fill();
+      break;
+    }
     case 'petal': {
       const grad = g.createLinearGradient(0, -r, 0, r);
       grad.addColorStop(0, '#ffffff');
@@ -443,6 +560,12 @@ function drawShape(g, shape, color, r) {
       circle(g, r * 0.8);
       g.fill();
   }
+}
+
+function withShadow(g, r) {
+  g.shadowColor = 'rgba(52, 84, 130, 0.42)';
+  g.shadowBlur = Math.max(1.5, r * 0.28);
+  g.shadowOffsetY = Math.max(0.5, r * 0.06);
 }
 
 function circle(g, r) {

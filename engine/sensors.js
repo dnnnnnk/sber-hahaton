@@ -14,6 +14,17 @@ const SOURCES = {
       .map(type => listen(document, type, handler, { capture: true, passive: true }));
     return () => offs.forEach(off => off());
   },
+  // Палец/курсор в движении — для «смахивания». pointermove прекращается, когда браузер забирает жест под
+  // прокрутку (pointercancel), а touchmove приходит и во время прокрутки: слушаем оба, пассивно.
+  finger: emit => {
+    const offs = [
+      listen(document, 'pointermove', e => emit({ x: e.clientX, y: e.clientY, t: e.timeStamp }), { capture: true, passive: true }),
+      listen(document, 'touchmove', e => {
+        for (const touch of e.changedTouches) emit({ x: touch.clientX, y: touch.clientY, t: e.timeStamp });
+      }, { capture: true, passive: true }),
+    ];
+    return () => offs.forEach(off => off());
+  },
   keyboard: emit => listen(document, 'keydown', e => {
     if (e.key !== 'Enter' && e.key !== ' ') return;
     const anchor = e.target.closest?.('[data-anchor]')?.dataset.anchor;
