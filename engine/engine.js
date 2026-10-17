@@ -263,7 +263,7 @@ export function init(rawConfig, bus, stage, { baseUrl = document.baseURI } = {})
       if (!run.handle.persistent) {
         run.timer = setTimeout(
           () => stopEffect(prikol.id, 'не уложился в durationMs'),
-          (params.durationMs ?? DEFAULT_DURATION_MS) + SAFETY_EXTRA_MS,
+          (run.handle.durationMs ?? params.durationMs ?? DEFAULT_DURATION_MS) + SAFETY_EXTRA_MS,
         );
       }
     }

@@ -56,7 +56,13 @@ export function mountDebug({ shell, bus, engine }) {
   const actions = {
     toggle: () => setCollapsed(!panel.classList.contains('is-collapsed')),
     shake: () => engine.simulate('shake', { strength: 1 }),
-    flip: () => engine.simulate('flip', { downMs: 800 }),
+    // Кувырок как с телефона: экраном вниз (ночь, Капля засыпает), через 2,5 с — обратно (рассвет).
+    flip: () => {
+      const face = beta => engine.sensors.inject('orientation', { alpha: 0, beta, gamma: 0 });
+      face(179);
+      setTimeout(() => face(179), 450);
+      setTimeout(() => face(12), 2900);
+    },
     still: () => engine.simulate('still', { seconds: 10 }),
     coins: () => engine.simulateEntry('moneybox-rattle', { strength: 0.8 }),
     resident: () => engine.simulateEntry('screen-resident', { summon: true }),

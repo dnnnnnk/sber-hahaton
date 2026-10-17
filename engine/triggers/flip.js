@@ -1,5 +1,6 @@
 // Телефон перевернули экраном вниз (держали holdMs) и вернули обратно не позже чем через maxMs.
-// Эффект играет, когда экран снова виден.
+// on: "up" (по умолчанию) — срабатывает, когда экран снова виден; on: "down" — сразу, как телефон лёг
+// экраном вниз (эффект сам следит за возвращением — так устроена «ночь» в «Кувырке»).
 
 export default {
   type: 'flip',
@@ -10,6 +11,7 @@ export default {
       if (spec[key] != null && !nonNegative(spec[key])) return `${key}: нужно число ≥ 0`;
     }
     if (spec.holdMs != null && spec.maxMs != null && spec.maxMs < spec.holdMs) return 'maxMs не может быть меньше holdMs';
+    if (spec.on != null && !['up', 'down'].includes(spec.on)) return 'on: "up" или "down"';
     return null;
   },
 
@@ -30,10 +32,11 @@ export default {
         else if (o.t - since >= holdMs) {
           state = 'down';
           since = o.t;
+          if (spec.on === 'down') fire({ phase: 'down' });
         }
       } else if (state === 'down' && faceUp) {
         state = 'up';
-        if (o.t - since <= maxMs) fire({ downMs: Math.round(o.t - since) });
+        if (spec.on !== 'down' && o.t - since <= maxMs) fire({ downMs: Math.round(o.t - since) });
       }
     });
   },
