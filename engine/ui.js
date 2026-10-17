@@ -27,6 +27,11 @@ export function createUi(stage) {
     toastTimer = setTimeout(() => toastEl.classList.remove('is-shown'), TOAST_MS);
   }
 
+  function hideToast() {
+    clearTimeout(toastTimer);
+    toastEl?.classList.remove('is-shown');
+  }
+
   function showChip(onTap) {
     if (!chipEl) {
       chipEl = document.createElement('button');
@@ -147,7 +152,7 @@ export function createUi(stage) {
     restoreFocus = null;
   }
 
-  return { toast, showChip, hideChip, positionChip, openAlbum, closeAlbum, isAlbumOpen: () => Boolean(album) };
+  return { toast, hideToast, showChip, hideChip, positionChip, openAlbum, closeAlbum, isAlbumOpen: () => Boolean(album) };
 }
 
 function escape(text) {

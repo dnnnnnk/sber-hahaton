@@ -92,6 +92,38 @@ h1, h2, p { margin: 0; }
 
 .screen { position: relative; min-height: 100%; }
 
+/* Новый экран сразу принимает касания; анимируется только его появление. */
+.screen--enter { animation: screen-enter 220ms cubic-bezier(.2, .75, .25, 1) both; }
+@keyframes screen-enter {
+  from { opacity: .65; transform: translateX(var(--enter-x, 12px)); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+.png-task, .mbox, .btn, .quick__item, .tab {
+  transition: transform 130ms ease-out, background-color 130ms ease-out;
+}
+.png-task:active, .mbox:active, .btn:active, .quick__item:active, .tab:active {
+  transform: scale(.98);
+}
+button.zone:active::before {
+  content: '';
+  position: absolute;
+  inset: 2px;
+  border-radius: 18px;
+  background: rgba(33, 160, 56, .08);
+  box-shadow: inset 0 0 0 1px rgba(33, 160, 56, .12);
+  pointer-events: none;
+}
+button:focus-visible, [role="button"]:focus-visible {
+  outline: 3px solid #247a53;
+  outline-offset: -3px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .screen--enter { animation: none; }
+  .png-task, .mbox, .btn, .quick__item, .tab { transition: none; }
+  .png-task:active, .mbox:active, .btn:active, .quick__item:active, .tab:active { transform: none; }
+}
+
 .screen--image { min-height: 0; width: 100%; }
 .screen__crop { overflow: hidden; }
 
@@ -137,6 +169,15 @@ h1, h2, p { margin: 0; }
 }
 
 .screen-patch--avatar { border-radius: 50%; background-repeat: no-repeat; }
+
+.screen-patch--home-mark {
+  display: grid;
+  place-items: center;
+  border-radius: calc(20 * var(--pt));
+  background: #fff;
+  color: #4cb5ff;
+  font-size: calc(30 * var(--pt));
+}
 
 .screen-patch--tasks-copy,
 .screen-patch--tasks-done-copy,

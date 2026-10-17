@@ -10,7 +10,7 @@ import { createSound } from './sound.js';
 import { createSensors, PERMISSION_SOURCES } from './sensors.js';
 import { createUi } from './ui.js';
 import { createCollection } from './collection.js';
-import { fetchConfig, readOverride, validateConfig, OVERRIDE_KEY, DEFAULT_SETTINGS } from './config.js';
+import { fetchConfig, readOverride, validateConfig, isContentPath, OVERRIDE_KEY, DEFAULT_SETTINGS } from './config.js';
 
 const LOG_LIMIT = 60;
 const DEFAULT_DURATION_MS = 5000;
@@ -70,7 +70,12 @@ export function init(rawConfig, bus, stage, { baseUrl = document.baseURI } = {})
     if (screen.zone === 'red') {
       pending = [];
       stopAll('красная зона');
-      ui.closeAlbum();
+      ui.hideToast();
+      ui.closeAlbum(true);
+    } else {
+      for (const [key, run] of active) {
+        if (run.screens && !run.screens.includes(id)) stopEffect(key, 'другой экран');
+      }
     }
   });
 
@@ -98,6 +103,7 @@ export function init(rawConfig, bus, stage, { baseUrl = document.baseURI } = {})
   }
 
   function openAlbum() {
+    if (screen.zone === 'red') return;
     const found = new Set(collection.ids());
     const items = config.prikoly
       .filter(p => p.enabled || found.has(p.id))
@@ -117,6 +123,7 @@ export function init(rawConfig, bus, stage, { baseUrl = document.baseURI } = {})
     const result = validateConfig(raw);
     result.warnings.forEach(w => console.warn(`[prikoly] ${w}`));
     if (result.errors.length) console.warn(`[prikoly] конфиг не принят: ${result.errors.join('; ')} — приколы выключены`);
+    pending = [];
     stopAll('конфиг обновлён');
     config = result.config;
     source = from;
@@ -129,7 +136,11 @@ export function init(rawConfig, bus, stage, { baseUrl = document.baseURI } = {})
   // ——— Разрешение датчиков (iOS) и разблокировка звука: первым же касанием или чипом ———
 
   function usesMotion() {
-    return entries.some(e => triggers[e.prikol.trigger.type].sensors?.some(s => PERMISSION_SOURCES.includes(s)));
+    return entries.some(e => {
+      const variants = e.prikol.effect.variants ?? [e.prikol.effect];
+      const sources = [triggers[e.prikol.trigger.type], ...variants.map(v => effects[v.type])];
+      return sources.some(def => def.sensors?.some(s => PERMISSION_SOURCES.includes(s)));
+    });
   }
 
   function updatePermissionUi() {
@@ -192,7 +203,7 @@ export function init(rawConfig, bus, stage, { baseUrl = document.baseURI } = {})
     const spec = pickVariant(prikol.effect);
     const def = effects[spec.type];
     const params = fillTemplate(spec.params || {}, c.payload);
-    const run = { handle: null, fullscreen, priority: prikol.priority, timer: 0 };
+    const run = { handle: null, fullscreen, priority: prikol.priority, screens: prikol.screens, timer: 0 };
     let ended = false;
     const end = () => {
       if (ended) return;
@@ -204,9 +215,13 @@ export function init(rawConfig, bus, stage, { baseUrl = document.baseURI } = {})
       stage,
       settings: settings(),
       reducedMotion: matchMedia('(prefers-reduced-motion: reduce)').matches,
-      asset: src => new URL(src, baseUrl).href,
+      asset: src => {
+        if (!isContentPath(src)) throw new Error('ассет должен находиться внутри content/');
+        return new URL(src, baseUrl).href;
+      },
       haptics,
       sound,
+      sensors,
       payload: c.payload,
       end,
     };
@@ -231,7 +246,7 @@ export function init(rawConfig, bus, stage, { baseUrl = document.baseURI } = {})
 
     rules.commit(prikol, fullscreen, now);
     haptics.play(prikol.haptic);
-    if (prikol.sound) sound.play(ctx.asset(prikol.sound));
+    if (prikol.sound) run.stopSound = sound.play(ctx.asset(prikol.sound));
     decision(c, true);
     if (collection.add(prikol.id)) ui.toast(`✨ Новая находка: ${prikol.title}`);
   }
@@ -241,12 +256,15 @@ export function init(rawConfig, bus, stage, { baseUrl = document.baseURI } = {})
     if (!run) return;
     active.delete(id);
     clearTimeout(run.timer);
+    run.stopSound?.();
     safely(() => run.handle.stop());
     info(`⏹ ${id}: ${reason}`);
   }
 
   function stopAll(reason) {
     for (const id of [...active.keys()]) stopEffect(id, reason);
+    sound.stopAll();
+    haptics.stop();
   }
 
   // ——— Лог решений (для debug-панели) ———
@@ -285,6 +303,13 @@ export function init(rawConfig, bus, stage, { baseUrl = document.baseURI } = {})
       const matching = entries.filter(e => e.prikol.trigger.type === type);
       if (!matching.length) info(`${type}: нет включённых приколов с таким триггером`);
       matching.forEach(entry => fire(entry, payload));
+    },
+
+    // Предпросмотр одного прикола с обычными проверками зоны, экрана и кулдаунов.
+    simulateEntry(id, payload = {}) {
+      const entry = entries.find(e => e.prikol.id === id);
+      if (entry) fire(entry, payload);
+      else info(`${id}: прикол выключен или отсутствует`);
     },
 
     setSeason(value) {

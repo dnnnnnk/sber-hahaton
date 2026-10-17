@@ -131,6 +131,7 @@ function entryProblem(entry, ids) {
   for (const v of variants) {
     if (!isObject(v) || !effects[v.type]) return `неизвестный effect.type "${v?.type}"`;
     if (v.params != null && !isObject(v.params)) return 'effect.params должен быть объектом';
+    if (v.params?.src != null && !isContentPath(v.params.src)) return 'effect.params.src: нужен локальный путь внутри content/';
     const effectProblem = effects[v.type].validate?.(v.params || {});
     if (effectProblem) return `effect ${v.type}: ${effectProblem}`;
   }
@@ -148,7 +149,7 @@ function entryProblem(entry, ids) {
   if (entry.cooldownMs != null && !nonNegative(entry.cooldownMs)) return 'cooldownMs должен быть числом ≥ 0';
   if (entry.maxPerDay != null && !nonNegativeInteger(entry.maxPerDay)) return 'maxPerDay должен быть целым числом ≥ 0 или null';
   if (entry.haptic != null && !HAPTICS.includes(entry.haptic)) return `haptic: одно из ${HAPTICS.join(', ')} или null`;
-  if (entry.sound != null && (typeof entry.sound !== 'string' || !entry.sound)) return 'sound должен быть непустой строкой или null';
+  if (entry.sound != null && !isContentPath(entry.sound)) return 'sound: нужен локальный путь внутри content/ или null';
   return null;
 }
 
@@ -171,6 +172,18 @@ function normalizeEntry(entry) {
 
 function isObject(v) {
   return v !== null && typeof v === 'object' && !Array.isArray(v);
+}
+
+// CMS не может включить внешний запрос или выйти из каталога контента.
+export function isContentPath(value) {
+  if (typeof value !== 'string' || !value || /[\\\s%:?#{}]/.test(value) || value.startsWith('/')) return false;
+  try {
+    const base = new URL('https://local.invalid/content/');
+    const resolved = new URL(value, base);
+    return resolved.origin === base.origin && resolved.pathname.startsWith(base.pathname) && resolved.pathname !== base.pathname;
+  } catch {
+    return false;
+  }
 }
 
 function isNumber(v) {

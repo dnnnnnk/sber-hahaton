@@ -16,6 +16,9 @@
   height: 100%;
 }
 
+/* Положение персонажа для проверки геометрии; рисунок живёт на общем canvas. */
+.prikoly-resident { position: absolute; pointer-events: none; }
+
 .prikoly-ui {
   position: absolute;
   inset: 0;

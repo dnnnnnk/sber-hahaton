@@ -31,6 +31,8 @@ export function mountDebug({ shell, bus, engine }) {
         <button type="button" data-act="resetCollection">🧹 Сбросить коллекцию</button>
         <button type="button" data-act="cooldowns">⏱ Сбросить кулдауны</button>
         <button type="button" data-act="mute">🔊 Звук</button>
+        <button type="button" data-act="coins">🪙 Звенящие копилки</button>
+        <button type="button" data-act="resident">💧 Позвать Каплю</button>
       </div>
       <fieldset class="dbg__tilt">
         <legend>Наклон (держите и двигайте)</legend>
@@ -56,6 +58,8 @@ export function mountDebug({ shell, bus, engine }) {
     shake: () => engine.simulate('shake', { strength: 1 }),
     flip: () => engine.simulate('flip', { downMs: 800 }),
     still: () => engine.simulate('still', { seconds: 10 }),
+    coins: () => engine.simulateEntry('moneybox-rattle', { strength: 0.8 }),
+    resident: () => engine.simulateEntry('screen-resident'),
     balance: () => shell.setBalance(1111),
     allDone: () => shell.completeAllTasks(),
     album: () => engine.openAlbum?.(),

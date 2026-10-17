@@ -80,7 +80,7 @@ export default {
   play(input, ctx) {
     const p = { ...DEFAULTS, ...PRESETS[input.spawn] || PRESETS.top, ...input };
     const { stage } = ctx;
-    const budget = Math.max(0, Math.min(Math.floor(p.count), Math.floor(ctx.settings.maxParticles)));
+    const budget = Math.min(Math.floor(p.count), stage.availableParticles(ctx.settings.maxParticles));
     const total = ctx.reducedMotion ? Math.ceil(budget * 0.35) : budget;
     if (total === 0 || p.durationMs === 0) {
       let finished = false;
@@ -98,6 +98,7 @@ export default {
     let elapsed = 0;
     let finished = false;
     const renderer = {
+      budget: total,
       count: 0,
       frame(dt, now, g) {
         elapsed += dt * 1000;

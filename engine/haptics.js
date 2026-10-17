@@ -13,6 +13,10 @@ export function createHaptics(isEnabled) {
 
   return {
     supported,
+    stop() {
+      if (!supported || (navigator.userActivation && !navigator.userActivation.hasBeenActive)) return;
+      try { navigator.vibrate(0); } catch { /* вибрация необязательна */ }
+    },
     play(kind) {
       if (!kind || !supported || !isEnabled()) return;
       // Без жеста пользователя Chrome всё равно не завибрирует, а только напишет предупреждение.

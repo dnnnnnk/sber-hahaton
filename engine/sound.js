@@ -8,6 +8,15 @@ export function createSound(isEnabled) {
   const buffers = new Map();
   let audio = null;
   let muted = readMuted();
+  const voices = new Set();
+
+  function stopAll() {
+    for (const stop of [...voices]) stop();
+  }
+
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) stopAll();
+  });
 
   function context(fromGesture) {
     if (audio || !AudioCtx) return audio;
@@ -43,25 +52,92 @@ export function createSound(isEnabled) {
     },
 
     play(url, volume = 0.5) {
-      if (!url || muted || !isEnabled()) return;
+      if (!url || muted || !isEnabled() || document.hidden) return;
       const ctx = context(false);
       if (!ctx) return;
       if (ctx.state === 'suspended') ctx.resume().catch(() => {});
+      let source = null;
+      let gain = null;
+      let stopped = false;
+      const stop = () => {
+        if (stopped) return;
+        stopped = true;
+        if (source) {
+          source.onended = null;
+          try { source.stop(); } catch { /* уже закончился */ }
+          source.disconnect();
+          gain.disconnect();
+        }
+        voices.delete(stop);
+      };
+      // Резервируем отмену до fetch/decode: поздняя загрузка уже не запустит звук.
+      voices.add(stop);
       load(url)
         .then(buffer => {
-          const source = ctx.createBufferSource();
-          const gain = ctx.createGain();
+          if (stopped) return;
+          if (muted || !isEnabled() || document.hidden) return stop();
+          source = ctx.createBufferSource();
+          gain = ctx.createGain();
           gain.gain.value = volume;
           source.buffer = buffer;
           source.connect(gain).connect(ctx.destination);
+          source.onended = stop;
           source.start();
         })
-        .catch(err => console.warn(`[prikoly] звук ${url} не проигрался`, err));
+        .catch(err => {
+          const cancelled = stopped;
+          stop();
+          if (!cancelled) console.warn(`[prikoly] звук ${url} не проигрался`, err);
+        });
+      return stop;
+    },
+
+    // Собственные короткие тембры. На появление персонажа звук не вызывается.
+    synth(kind) {
+      if (muted || !isEnabled() || document.hidden) return null;
+      const ctx = context(false);
+      if (!ctx || ctx.state !== 'running') return null;
+      const notes = {
+        coins: [[0, 1568, 0.08], [0.07, 2093, 0.07], [0.15, 1760, 0.09], [0.23, 2637, 0.12]],
+        giggle: [[0, 620, 0.08], [0.1, 820, 0.07], [0.2, 1060, 0.12]],
+        wobble: [[0, 440, 0.12], [0.12, 370, 0.12], [0.24, 330, 0.16]],
+      }[kind];
+      if (!notes) return null;
+      const nodes = [];
+      let stopped = false;
+      const stop = () => {
+        if (stopped) return;
+        stopped = true;
+        for (const [osc, gain] of nodes) {
+          try { osc.stop(); } catch { /* уже закончился */ }
+          osc.disconnect(); gain.disconnect();
+        }
+        voices.delete(stop);
+      };
+      for (const [offset, frequency, duration] of notes) {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        const at = ctx.currentTime + offset;
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(frequency, at);
+        osc.frequency.exponentialRampToValueAtTime(frequency * 0.82, at + duration);
+        gain.gain.setValueAtTime(0, at);
+        gain.gain.linearRampToValueAtTime(0.065, at + 0.008);
+        gain.gain.exponentialRampToValueAtTime(0.001, at + duration);
+        osc.connect(gain).connect(ctx.destination);
+        osc.start(at); osc.stop(at + duration + 0.01);
+        nodes.push([osc, gain]);
+      }
+      voices.add(stop);
+      nodes[nodes.length - 1][0].onended = stop;
+      return stop;
     },
 
     isMuted: () => muted,
+    stopAll,
     setMuted(value) {
       muted = Boolean(value);
+      if (muted) stopAll();
       try {
         localStorage.setItem(MUTE_KEY, muted ? '1' : '0');
       } catch {

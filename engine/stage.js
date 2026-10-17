@@ -105,6 +105,13 @@ export function createStage(host) {
     get height() { return height; },
     get dpr() { return dpr; },
 
+    // Резерв учитывается ещё до первого кадра, включая отложенный выпуск частиц.
+    availableParticles(limit) {
+      let reserved = 0;
+      for (const r of renderers) reserved += r.budget ?? r.count ?? 0;
+      return Math.max(0, limit - reserved);
+    },
+
     // renderer: { frame(dt, now, g) → false, когда закончил; count?: число частиц; onDone?() }
     addRenderer(renderer) {
       renderers.add(renderer);
@@ -136,6 +143,12 @@ export function createStage(host) {
 
     // Элемент якоря — только для эффектов, которые анимируют сам якорь (cssAnimate).
     getAnchorElement: findAnchor,
+
+    // Только публичные данные якоря, без доступа к состоянию оболочки.
+    getAnchorData(name) {
+      const el = findAnchor(name);
+      return el ? { ...el.dataset } : null;
+    },
 
     hitAnchor(name, clientX, clientY) {
       const el = findAnchor(name);

@@ -96,6 +96,9 @@ let renderToken = 0;
 async function render(id) {
   const token = ++renderToken;
   const screen = SCREENS[id];
+  const previous = state.screen;
+  // Финансовый экран гасит эффекты до ожидания картинки, включая холодный переход.
+  if (screen.zone === 'red') bus.emit('screen:open', { screen: id, zone: screen.zone });
   const probe = screen.preferStub ? Promise.resolve(null) : loadImage(id);
   // Картинку экрана (и таббара) ждём недолго — иначе рисуем заглушку и подменяем, когда догрузится.
   const ready = Promise.all([probe, screen.tab ? loadImage(TABBAR.image) : null]);
@@ -106,6 +109,13 @@ async function render(id) {
   phone.dataset.screen = id;
   phone.dataset.screenZone = screen.zone;
   mountScreen(screen, image);
+  if (previous && previous !== id && screen.zone !== 'red') {
+    const from = TABS.findIndex(t => t.id === SCREENS[previous].tab);
+    const to = TABS.findIndex(t => t.id === screen.tab);
+    const root = viewport.firstElementChild;
+    root.style.setProperty('--enter-x', `${from >= 0 && to >= 0 && to < from ? -12 : 12}px`);
+    root.classList.add('screen--enter');
+  }
   renderTabbar(screen.tab);
   viewport.scrollTop = 0;
   announce();
@@ -241,6 +251,7 @@ function zoneEls(zone, image) {
   if (zone.tab) el.dataset.tab = zone.tab;
   else if (actionable) el.dataset.zone = zone.id;
   if (zone.anchor) el.dataset.anchor = zone.anchor;
+  if (zone.progress) el.dataset.progress = String(zone.progress(state));
   if (actionable) {
     el.setAttribute('aria-label', zone.label || zone.id);
     if (zone.tab && TABS.find(tab => tab.id === zone.tab)?.disabled) el.disabled = true;

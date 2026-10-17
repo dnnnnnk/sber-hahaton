@@ -120,6 +120,10 @@ export const SCREENS = {
     zone: 'green',
     tab: 'home',
     cropBottom: 162,
+    patches: [{
+      x: 78.4, y: 6.03, w: 14.93, h: 5.63,
+      className: 'screen-patch--home-mark', html: '<span>✦</span>',
+    }],
     zones: [
       { id: 'avatar', anchor: 'avatar', label: 'Аватар. Нажмите, чтобы открыть альбом находок', keyboardAction: true, lift: true, x: 6.4, y: 6.03, w: 14.93, h: 5.63 },
       { id: 'card', anchor: 'card', label: 'Детская карта', x: 4.27, y: 17.29, w: 91.47, h: 12.06 },
@@ -270,6 +274,10 @@ export const SCREENS = {
       ...MONEYBOXES.map(m => ({
         id: `topup-${m.id}`,
         anchor: `moneybox-${m.id}`,
+        progress: state => {
+          const box = state.moneyboxes.find(item => item.id === m.id);
+          return box ? Math.max(0, Math.min(1, box.saved / box.goal)) : 0;
+        },
         label: `Пополнить копилку «${m.title}»`,
         tap: shell => shell.topup(m.id),
         x: 4.27, y: MONEYBOX_Y[m.id], w: 91.47, h: 5.15,
@@ -291,7 +299,7 @@ export const SCREENS = {
         <div class="page-hdr__sub">Коплю на мечту · нажми на копилку, чтобы пополнить</div>
       </header>
       ${s.moneyboxes.map(m => `
-        <button class="mbox" data-zone="topup-${m.id}" data-anchor="moneybox-${m.id}">
+        <button class="mbox" data-zone="topup-${m.id}" data-anchor="moneybox-${m.id}" data-progress="${Math.max(0, Math.min(1, m.saved / m.goal))}">
           <div class="mbox__top">
             <span class="mbox__icon">${m.icon}</span>
             <div>

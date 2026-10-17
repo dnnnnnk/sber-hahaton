@@ -387,6 +387,44 @@
       "sound": "sounds/sparkle.wav"
     },
     {
+      "id": "moneybox-rattle",
+      "title": "Звенящие копилки",
+      "icon": "🪙",
+      "hint": "Тряхни телефон в копилках — мечты зазвенят",
+      "enabled": true,
+      "priority": 12,
+      "trigger": { "type": "shake" },
+      "screens": ["moneybox"],
+      "schedule": null,
+      "cooldownMs": 3200,
+      "maxPerDay": null,
+      "effect": {
+        "type": "coins",
+        "params": {
+          "anchors": ["moneybox-slides", "moneybox-neon", "moneybox-slime", "moneybox-markers", "moneybox-band", "moneybox-robot"],
+          "coinsPerCard": 14, "durationMs": 2800
+        }
+      },
+      "haptic": "double",
+      "sound": null
+    },
+    {
+      "id": "screen-resident",
+      "title": "Капля на карте",
+      "icon": "💧",
+      "hint": "Дважды коснись карты. Кто там прячется?",
+      "enabled": true,
+      "priority": 9,
+      "trigger": { "type": "multitap", "anchor": "card", "count": 2, "withinMs": 500 },
+      "screens": ["home"],
+      "schedule": null,
+      "cooldownMs": 10000,
+      "maxPerDay": null,
+      "effect": { "type": "resident", "params": { "anchor": "card", "size": 52, "rangeDeg": 15, "shakeThreshold": 14, "durationMs": 9000 } },
+      "haptic": "light",
+      "sound": null
+    },
+    {
       "id": "balance-pretty-number",
       "title": "Красивое число",
       "icon": "🔢",
