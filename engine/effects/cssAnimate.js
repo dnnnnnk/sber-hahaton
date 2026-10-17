@@ -56,6 +56,14 @@ export default {
   type: 'cssAnimate',
   fullscreen: false,
 
+  validate(params) {
+    if (typeof params.anchor !== 'string' || !params.anchor) return 'нужен anchor';
+    if (params.animation != null && !ANIMATIONS[params.animation]) return `неизвестная animation "${params.animation}"`;
+    if (params.durationMs != null && !nonNegative(params.durationMs)) return 'durationMs: нужно число ≥ 0';
+    if (params.repeat != null && !(Number.isInteger(params.repeat) && params.repeat > 0)) return 'repeat: нужно целое число > 0';
+    return null;
+  },
+
   play(params, ctx) {
     const el = params.anchor && ctx.stage.getAnchorElement(params.anchor);
     if (!el?.animate) return null;
@@ -79,3 +87,7 @@ export default {
     return { stop: finish };
   },
 };
+
+function nonNegative(value) {
+  return typeof value === 'number' && Number.isFinite(value) && value >= 0;
+}

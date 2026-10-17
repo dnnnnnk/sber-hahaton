@@ -140,6 +140,7 @@ const widthPct = pt => `${(pt / DESIGN_WIDTH) * 100}%`;
 function mountScreen(screen, image) {
   const root = document.createElement('div');
   root.className = 'screen';
+  root.setAttribute('aria-label', screen.title);
   if (image) {
     // Кадр — картинка целиком (зоны в % от неё); .screen обрезает нарисованные статус-бар,
     // home indicator и таббар (см. IMAGE_CHROME и cropBottom в screens.js).
@@ -154,7 +155,7 @@ function mountScreen(screen, image) {
     const frame = document.createElement('div');
     frame.className = 'screen__frame';
     frame.style.aspectRatio = `${image.width} / ${image.height}`;
-    frame.append(imageEl(image, screen.title));
+    frame.append(imageEl(image, screen.a11y || screen.title));
     for (const patch of screen.patches || []) frame.append(patchEl(patch));
     for (const zone of screen.zones) frame.append(...zoneEls(zone, image));
     const crop = document.createElement('div');
@@ -240,8 +241,20 @@ function zoneEls(zone, image) {
   if (zone.tab) el.dataset.tab = zone.tab;
   else if (actionable) el.dataset.zone = zone.id;
   if (zone.anchor) el.dataset.anchor = zone.anchor;
-  if (actionable) el.setAttribute('aria-label', zone.label || zone.id);
-  if (zone.done?.(state)) el.classList.add('is-done');
+  if (actionable) {
+    el.setAttribute('aria-label', zone.label || zone.id);
+    if (zone.tab && TABS.find(tab => tab.id === zone.tab)?.disabled) el.disabled = true;
+    if (zone.tab === state.screen) el.setAttribute('aria-current', 'page');
+  } else if (zone.label) {
+    el.setAttribute('role', zone.keyboardAction ? 'button' : 'img');
+    el.setAttribute('aria-label', zone.label);
+    if (zone.keyboardAction) el.tabIndex = 0;
+  }
+  if (zone.done) {
+    const done = zone.done(state);
+    el.classList.toggle('is-done', done);
+    if (actionable) el.setAttribute('aria-pressed', String(done));
+  }
   if (!zone.lift) return [el];
 
   // «Поднимаемый» якорь: кусочек картинки поверх подложки, чтобы его можно было анимировать.

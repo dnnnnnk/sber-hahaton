@@ -54,19 +54,24 @@
 
 .prikoly-chip {
   position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
-  padding: 8px 14px;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
   border: 0;
-  border-radius: 999px;
+  border-radius: 50%;
   background: rgba(255, 255, 255, 0.95);
   color: #1f2229;
-  font: 600 13px/1.2 -apple-system, system-ui, Roboto, sans-serif;
+  font: 600 20px/1 -apple-system, system-ui, Roboto, sans-serif;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.14);
   pointer-events: auto;
   cursor: pointer;
+  transform: translateX(-50%);
   animation: prikoly-chip-in 0.4s ease-out;
 }
+
+.prikoly-chip[hidden] { display: none; }
 
 @keyframes prikoly-chip-in {
   from { opacity: 0; transform: translate(-50%, 8px); }

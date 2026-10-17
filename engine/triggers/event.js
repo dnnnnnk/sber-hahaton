@@ -39,6 +39,11 @@ export default {
       if (cond && typeof cond === 'object' && !Array.isArray(cond)) {
         const bad = Object.keys(cond).find(op => !OPS[op]);
         if (bad) return `неизвестный оператор "${bad}" в where`;
+        for (const [op, arg] of Object.entries(cond)) {
+          if (['gt', 'gte', 'lt', 'lte'].includes(op) && !finite(arg)) return `оператор ${op} ждёт число`;
+          if (op === 'in' && (!Array.isArray(arg) || !arg.length)) return 'оператор in ждёт непустой массив';
+          if (op === 'crosses' && ![].concat(arg).every(finite)) return 'оператор crosses ждёт число или массив чисел';
+        }
       }
     }
     return null;
@@ -50,3 +55,7 @@ export default {
     });
   },
 };
+
+function finite(value) {
+  return typeof value === 'number' && Number.isFinite(value);
+}

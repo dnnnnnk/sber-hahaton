@@ -1,4 +1,4 @@
-// Источники ввода для триггеров: движение (devicemotion), ориентация (deviceorientation), касания (pointer).
+// Источники ввода для триггеров: движение, ориентация, касания и доступная клавиатурная активация якорей.
 // Слушатели окна висят, только пока у источника есть подписчики.
 // На iOS движение и ориентация требуют разрешения — его можно запросить только из жеста пользователя.
 
@@ -14,6 +14,13 @@ const SOURCES = {
       .map(type => listen(document, type, handler, { capture: true, passive: true }));
     return () => offs.forEach(off => off());
   },
+  keyboard: emit => listen(document, 'keydown', e => {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    const anchor = e.target.closest?.('[data-anchor]')?.dataset.anchor;
+    if (!anchor) return;
+    e.preventDefault();
+    emit({ key: e.key, anchor, t: e.timeStamp });
+  }),
 };
 
 // Источники, которым на iOS нужно разрешение.

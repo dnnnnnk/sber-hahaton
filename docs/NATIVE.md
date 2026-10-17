@@ -18,7 +18,7 @@
 | `holo` (`mix-blend-mode`) | `Brush.linearGradient` + `BlendMode.Overlay`/`HardLight` в `drawWithContent` | `LinearGradient` + `.blendMode(.hardLight)` поверх карты |
 | `shake`, `still` (`devicemotion`) | `SensorManager`, `TYPE_LINEAR_ACCELERATION` (+ `TYPE_GYROSCOPE`) | `CMMotionManager.deviceMotion` (`userAcceleration`, `rotationRate`) |
 | `tilt`, `flip` (`deviceorientation`) | `TYPE_ROTATION_VECTOR` → `getOrientation` (pitch/roll) | `CMMotionManager.deviceMotion.attitude` (pitch/roll) |
-| `multitap`, `longpress` (pointer на document) | `pointerInput` с `PointerEventPass.Initial` на корне, без consume; попадание — по `Rect` якоря | `simultaneousGesture` на корне или `UIWindow.sendEvent`; попадание — по `CGRect` якоря |
+| `multitap`, `longpress` (pointer на document; Enter/Space для доступного `longpress`) | `pointerInput` с `PointerEventPass.Initial` на корне, без consume; якорь альбома — семантическая кнопка | `simultaneousGesture` на корне или `UIWindow.sendEvent`; якорь альбома — accessibility action |
 | `rules.js` | чистый Kotlin, без Android-зависимостей (юнит-тесты как есть) | чистый Swift |
 | `config.json` override из CMS | CMS-ключ: произвольный JSON по ключу (уже умеет приложение) → `kotlinx.serialization` | тот же ключ → `Codable` |
 | ассеты `content/` | CDN + дисковый кэш (Coil / OkHttp cache), Lottie по URL с кэшем | CDN + `URLCache`, `LottieAnimation.loadedFrom(url:)` |
@@ -47,6 +47,9 @@ protocol EffectHandle { func stop(); func update(_ payload: [String: Any]) }
 ```
 
 Реестры — `Map<String, Trigger>` / `[String: Trigger]`; новый тип = класс + строка в реестре, как в вебе.
+Обе платформы должны повторить смысловую валидацию веб-эталона: неотрицательные длительности и лимиты,
+`maxParticles` в диапазоне `0..500`, реальные календарные диапазоны и проверки параметров каждого типа.
+`maxParticles = 0` означает отсутствие визуальных частиц, а не принудительный минимум в одну.
 
 ## Что меняется без релиза
 

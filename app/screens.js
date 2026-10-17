@@ -12,6 +12,8 @@
 //   lift: true            — якорь можно анимировать (на PNG вырезается «кусочек» картинки)
 //   fill: '#fff'          — цвет подложки под поднятым кусочком (по умолчанию берётся с картинки)
 //   done: state => bool   — показать на зоне галочку «сделано»
+//   label: '…'            — короткое русское имя для скринридера
+//   keyboardAction: true  — якорь доступен как кнопка; Enter/Space обрабатывает движок
 // Поля экрана для PNG:
 //   cropBottom: 162       — сколько pt снизу картинки скрыть всегда (нарисованный таббар — вместо него закреплённый)
 //   afterImage: state => html — HTML, который дорисовывается под картинкой (если в макете чего-то нет)
@@ -51,11 +53,11 @@ export const TABBAR = {
   height: 162,
   pill: { x: 3.2, y: 14.81, w: 93.47, h: 52.78 }, // белая «таблетка» — якорь tabbar
   zones: [
-    { id: 'tab-home', tab: 'home', x: 3.2, y: 14.81, w: 21.33, h: 52.78 },
-    { id: 'tab-moneybox', tab: 'moneybox', x: 24.53, y: 14.81, w: 17.07, h: 52.78 },
-    { id: 'tab-assistant', tab: 'assistant', x: 41.6, y: 14.81, w: 16.8, h: 52.78 },
-    { id: 'tab-tasks', tab: 'tasks', x: 58.4, y: 14.81, w: 16.27, h: 52.78 },
-    { id: 'tab-content', tab: 'content', x: 74.67, y: 14.81, w: 22, h: 52.78 },
+    { id: 'tab-home', tab: 'home', label: 'Главный', x: 3.2, y: 14.81, w: 21.33, h: 52.78 },
+    { id: 'tab-moneybox', tab: 'moneybox', label: 'Копилки', x: 24.53, y: 14.81, w: 17.07, h: 52.78 },
+    { id: 'tab-assistant', tab: 'assistant', label: 'Ассистент, пока недоступен', x: 41.6, y: 14.81, w: 16.8, h: 52.78 },
+    { id: 'tab-tasks', tab: 'tasks', label: 'Дела', x: 58.4, y: 14.81, w: 16.27, h: 52.78 },
+    { id: 'tab-content', tab: 'content', label: 'Контент', x: 74.67, y: 14.81, w: 22, h: 52.78 },
   ],
   active: {
     home: [],
@@ -114,16 +116,17 @@ const MONEYBOX_PATCHES = MONEYBOXES.map(item => ({
 export const SCREENS = {
   home: {
     title: 'Главный',
+    a11y: 'Главный экран. Детская карта, баланс, быстрые действия и история операций.',
     zone: 'green',
     tab: 'home',
     cropBottom: 162,
     zones: [
-      { id: 'avatar', anchor: 'avatar', lift: true, x: 6.4, y: 6.03, w: 14.93, h: 5.63 },
-      { id: 'card', anchor: 'card', x: 4.27, y: 17.29, w: 91.47, h: 12.06 },
-      { id: 'balance', anchor: 'balance', lift: true, x: 10.67, y: 23.52, w: 33.07, h: 2.81 },
-      { id: 'transfer', go: 'transfer', x: 4.27, y: 40.8, w: 67.47, h: 11.26 },
-      { id: 'self', go: 'transfer', x: 74.67, y: 40.8, w: 21.07, h: 11.26 },
-      { id: 'mobile', go: 'transfer', x: 4.27, y: 68.34, w: 91.47, h: 7.04 },
+      { id: 'avatar', anchor: 'avatar', label: 'Аватар. Нажмите, чтобы открыть альбом находок', keyboardAction: true, lift: true, x: 6.4, y: 6.03, w: 14.93, h: 5.63 },
+      { id: 'card', anchor: 'card', label: 'Детская карта', x: 4.27, y: 17.29, w: 91.47, h: 12.06 },
+      { id: 'balance', anchor: 'balance', label: 'Баланс карты', lift: true, x: 10.67, y: 23.52, w: 33.07, h: 2.81 },
+      { id: 'transfer', label: 'Скинуть деньги', go: 'transfer', x: 4.27, y: 40.8, w: 67.47, h: 11.26 },
+      { id: 'self', label: 'Перевести себе', go: 'transfer', x: 74.67, y: 40.8, w: 21.07, h: 11.26 },
+      { id: 'mobile', label: 'Оплатить мобильную связь', go: 'transfer', x: 4.27, y: 68.34, w: 91.47, h: 7.04 },
       { id: 'moneybox', go: 'moneybox' },
       { id: 'tasks', go: 'tasks' },
     ],
@@ -159,33 +162,45 @@ export const SCREENS = {
 
   tasks: {
     title: 'Дела',
+    a11y: 'Экран дел. Пять задач, каждую можно отметить выполненной.',
     zone: 'green',
     tab: 'tasks',
-    patches: [{
-      x: 6.4, y: 7.39, w: 14.93, h: 6.9,
-      className: 'screen-patch--avatar',
-      image: 'screens/home.webp', imageRect: { x: 6.4, y: 6.03, w: 14.93, h: 5.63 },
-    }],
-    // На макете видно только первое дело, а таббар нарисован старый — срезаем всё после первой карточки
-    // и дорисовываем остальные дела HTML-строками в том же стиле (afterImage).
-    cropBottom: 175,
+    patches: [
+      {
+        x: 6.4, y: 7.39, w: 14.93, h: 6.9,
+        className: 'screen-patch--avatar',
+        image: 'screens/home.webp', imageRect: { x: 6.4, y: 6.03, w: 14.93, h: 5.63 },
+      },
+      {
+        x: 10.67, y: 22.2, w: 78.67, h: 8.5,
+        className: 'screen-patch--tasks-copy',
+        html: '<b>Тут делаются дела</b><span>Сообщи родителю, что готов выполнить полезные дела за вознаграждение</span>',
+      },
+    ],
+    // Растровая первая строка отличалась от HTML и содержала подчёркивания. Обрезаем перед списком
+    // и рисуем все пять дел одинаковыми доступными кнопками.
+    cropBottom: 292,
     zones: [
-      { id: 'avatar', anchor: 'avatar', x: 6.4, y: 7.39, w: 14.93, h: 6.9 },
-      ...TASKS.map((t, i) => ({
+      { id: 'avatar', anchor: 'avatar', label: 'Аватар. Нажмите, чтобы открыть альбом находок', keyboardAction: true, x: 6.4, y: 7.39, w: 14.93, h: 6.9 },
+      ...TASKS.map(t => ({
         id: `task-${t.id}`,
         anchor: `task-${t.id}`,
+        label: `${t.title}, награда ${t.reward} рублей`,
         tap: shell => shell.toggleTask(t.id),
         done: state => state.tasks[t.id],
-        ...(i === 0 ? { x: 4.27, y: 65.52, w: 91.47, h: 11.95 } : {}),
       })),
     ],
     afterImage: s => `
       <ul class="png-tasks">
-        ${TASKS.slice(1).map(t => `
+        ${TASKS.map(t => `
           <li>
-            <button class="png-task ${s.tasks[t.id] ? 'is-done' : ''}" data-zone="task-${t.id}" data-anchor="task-${t.id}">
+            <button class="png-task ${s.tasks[t.id] ? 'is-done' : ''}" data-zone="task-${t.id}" data-anchor="task-${t.id}"
+              aria-label="${t.title}, награда ${t.reward} рублей" aria-pressed="${s.tasks[t.id]}">
               <span class="png-task__icon" style="--tint:${t.tint}">${t.icon}</span>
-              <span class="png-task__title">${t.title}</span>
+              <span class="png-task__body">
+                <span class="png-task__title">${t.title}</span>
+                <span class="png-task__reward">+${money(t.reward)}</span>
+              </span>
             </button>
           </li>`).join('')}
       </ul>`,
@@ -214,12 +229,18 @@ export const SCREENS = {
 
   tasks_done: {
     title: 'Всё сделано',
+    a11y: 'Все дела выполнены. Можно отправить результат родителю или создать новый список.',
     zone: 'green',
     tab: null,
+    patches: [{
+      x: 4.27, y: 38.5, w: 91.47, h: 9.2,
+      className: 'screen-patch--tasks-done-copy',
+      html: '<b>Всё сделано!</b><span>Можешь поделиться с родителем — у тебя всё готово — и создать список на завтра</span>',
+    }],
     zones: [
-      { id: 'back', go: 'tasks', x: 6.4, y: 6.1, w: 14.93, h: 5.69 },
-      { id: 'trophy', anchor: 'trophy', x: 8, y: 15.24, w: 85.33, h: 18.29 },
-      { id: 'again', tap: shell => shell.resetTasks(), x: 4.27, y: 89.33, w: 91.47, h: 5.49 },
+      { id: 'back', label: 'Назад к делам', go: 'tasks', x: 6.4, y: 6.1, w: 14.93, h: 5.69 },
+      { id: 'trophy', anchor: 'trophy', label: 'Праздник выполненных дел', x: 8, y: 15.24, w: 85.33, h: 18.29 },
+      { id: 'again', label: 'Создать новый список', tap: shell => shell.resetTasks(), x: 4.27, y: 89.33, w: 91.47, h: 5.49 },
     ],
     stub: () => `
       <div class="center-page">
@@ -232,18 +253,24 @@ export const SCREENS = {
 
   moneybox: {
     title: 'Копилки',
+    a11y: 'Экран копилок. Можно открыть мечту или пополнить одну из шести копилок.',
     zone: 'green',
     tab: 'moneybox',
     // Нижняя подборка исходного макета содержит товарные бренды. Оставляем собственные копилки и кнопку,
     // а вместо подборки дорисовываем нейтральные идеи HTML-карточками.
     cropBottom: 770,
-    patches: MONEYBOX_PATCHES,
+    patches: [...MONEYBOX_PATCHES, {
+      x: 4.27, y: 32.37, w: 91.47, h: 4.95,
+      className: 'screen-patch--goal-banner',
+      html: '<span>🤖</span><b>Ура! Ты накопил на мечту</b><small>Открыть мечту →</small>',
+    }],
     zones: [
-      { id: 'avatar', anchor: 'avatar', lift: true, x: 6.4, y: 2.34, w: 14.93, h: 2.18 },
-      { id: 'goal', go: 'moneybox_goal', x: 4.27, y: 32.37, w: 91.47, h: 4.95 },
+      { id: 'avatar', anchor: 'avatar', label: 'Аватар. Нажмите, чтобы открыть альбом находок', keyboardAction: true, lift: true, x: 6.4, y: 2.34, w: 14.93, h: 2.18 },
+      { id: 'goal', label: 'Открыть накопленную мечту', go: 'moneybox_goal', x: 4.27, y: 32.37, w: 91.47, h: 4.95 },
       ...MONEYBOXES.map(m => ({
         id: `topup-${m.id}`,
         anchor: `moneybox-${m.id}`,
+        label: `Пополнить копилку «${m.title}»`,
         tap: shell => shell.topup(m.id),
         x: 4.27, y: MONEYBOX_Y[m.id], w: 91.47, h: 5.15,
       })),
@@ -278,11 +305,17 @@ export const SCREENS = {
 
   moneybox_goal: {
     title: 'Ты накопил на мечту',
+    a11y: 'Мечта накоплена. Умный робот оплачен полностью.',
     zone: 'green',
     tab: null,
+    patches: [{
+      x: 4.27, y: 24.8, w: 91.47, h: 9.3,
+      className: 'screen-patch--goal-copy',
+      html: '<b>Поздравляем!<br>Ты накопил на мечту</b><span>Переводи деньги и купи то, о чём мечтал. После перевода копилка отправится в архив</span>',
+    }],
     zones: [
-      { id: 'back', go: 'moneybox', x: 6.4, y: 4.19, w: 14.93, h: 3.91 },
-      { id: 'goal', anchor: 'goal', x: 9.6, y: 11.17, w: 46.67, h: 12.07 },
+      { id: 'back', label: 'Назад к копилкам', go: 'moneybox', x: 6.4, y: 4.19, w: 14.93, h: 3.91 },
+      { id: 'goal', anchor: 'goal', label: 'Умный робот — накопленная мечта', x: 9.6, y: 11.17, w: 46.67, h: 12.07 },
     ],
     stub: () => `
       <div class="center-page">
@@ -294,11 +327,16 @@ export const SCREENS = {
 
   topup_success: {
     title: 'Готово',
+    a11y: 'Оплата выполнена. Можно сохранить чек или вернуться на главный экран.',
     zone: 'green',
     tab: null,
+    patches: [{
+      x: 4.27, y: 86.95, w: 91.47, h: 6.9,
+      className: 'screen-patch--primary-button', html: '<b>На главный</b>',
+    }],
     zones: [
-      { id: 'success', anchor: 'success', x: 20.27, y: 13.79, w: 34.67, h: 14.78 },
-      { id: 'done', go: 'home', x: 4.27, y: 86.95, w: 91.47, h: 6.9 },
+      { id: 'success', anchor: 'success', label: 'Оплата выполнена', x: 20.27, y: 13.79, w: 34.67, h: 14.78 },
+      { id: 'done', label: 'На главный', go: 'home', x: 4.27, y: 86.95, w: 91.47, h: 6.9 },
     ],
     stub: s => {
       const t = s.lastTopup;
@@ -319,6 +357,7 @@ export const SCREENS = {
 
   content: {
     title: 'Контент',
+    a11y: 'Полезные материалы о накоплениях, кешбэке и карманных деньгах.',
     zone: 'green',
     tab: 'content',
     cropBottom: 162,
@@ -334,6 +373,7 @@ export const SCREENS = {
 
   transfer: {
     title: 'Скинуть денег',
+    a11y: 'Экран перевода денег. Приколы здесь полностью отключены.',
     zone: 'red',
     tab: null,
     patches: [{
@@ -344,7 +384,7 @@ export const SCREENS = {
         <span class="bank-choice"><i>★</i><b>Семейный</b><small>Для близких</small></span>
         <span class="bank-choice"><i>↗</i><b>Другой банк</b><small>По СБП</small></span>`,
     }],
-    zones: [{ id: 'back', go: 'home', x: 6.4, y: 7.39, w: 14.93, h: 6.9 }],
+    zones: [{ id: 'back', label: 'Назад на главный', go: 'home', x: 6.4, y: 7.39, w: 14.93, h: 6.9 }],
     stub: () => `
       <header class="nav-hdr">
         <button class="round-btn" data-zone="back" aria-label="Назад">←</button>

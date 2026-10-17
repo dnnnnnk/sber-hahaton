@@ -2,10 +2,14 @@
 
 export default {
   type: 'longpress',
-  sensors: ['pointer'],
+  sensors: ['pointer', 'keyboard'],
 
   validate(spec) {
-    return typeof spec.anchor === 'string' && spec.anchor ? null : 'нужен anchor';
+    if (typeof spec.anchor !== 'string' || !spec.anchor) return 'нужен anchor';
+    if (spec.ms != null && !(typeof spec.ms === 'number' && Number.isFinite(spec.ms) && spec.ms >= 0)) {
+      return 'ms: нужно число ≥ 0';
+    }
+    return null;
   },
 
   create(spec, ctx, fire) {
@@ -36,9 +40,14 @@ export default {
       }
     });
 
+    const offKeyboard = ctx.sensors.subscribe('keyboard', e => {
+      if (e.anchor === spec.anchor) fire({ anchor: spec.anchor, accessible: true });
+    });
+
     return () => {
       cancel();
       off();
+      offKeyboard();
     };
   },
 };

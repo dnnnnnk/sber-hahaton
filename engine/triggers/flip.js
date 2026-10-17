@@ -5,6 +5,14 @@ export default {
   type: 'flip',
   sensors: ['orientation'],
 
+  validate(spec) {
+    for (const key of ['holdMs', 'maxMs']) {
+      if (spec[key] != null && !nonNegative(spec[key])) return `${key}: нужно число ≥ 0`;
+    }
+    if (spec.holdMs != null && spec.maxMs != null && spec.maxMs < spec.holdMs) return 'maxMs не может быть меньше holdMs';
+    return null;
+  },
+
   create(spec, ctx, fire) {
     const holdMs = spec.holdMs ?? 300;
     const maxMs = spec.maxMs ?? 5000;
@@ -30,3 +38,7 @@ export default {
     });
   },
 };
+
+function nonNegative(value) {
+  return typeof value === 'number' && Number.isFinite(value) && value >= 0;
+}

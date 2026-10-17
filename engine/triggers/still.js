@@ -5,6 +5,14 @@ export default {
   type: 'still',
   sensors: ['motion'],
 
+  validate(spec) {
+    if (spec.seconds != null && !positive(spec.seconds)) return 'seconds: нужно число > 0';
+    for (const key of ['threshold', 'rotationThreshold']) {
+      if (spec[key] != null && !nonNegative(spec[key])) return `${key}: нужно число ≥ 0`;
+    }
+    return null;
+  },
+
   create(spec, ctx, fire) {
     const ms = (spec.seconds ?? 10) * 1000;
     const threshold = spec.threshold ?? 0.25;
@@ -26,3 +34,11 @@ export default {
     });
   },
 };
+
+function positive(value) {
+  return typeof value === 'number' && Number.isFinite(value) && value > 0;
+}
+
+function nonNegative(value) {
+  return typeof value === 'number' && Number.isFinite(value) && value >= 0;
+}

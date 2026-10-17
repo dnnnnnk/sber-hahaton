@@ -2,7 +2,7 @@
 // Инструмент разработчика оболочки — к движку обращается только через его публичный API.
 
 const COLLAPSED_KEY = 'sberkids.debugCollapsed';
-const SEASONS = ['auto', 'autumn', 'winter', 'spring'];
+const SEASONS = ['auto', 'autumn', 'winter', 'spring', 'summer'];
 const SEASON_LABELS = { auto: 'по календарю', autumn: 'осень', winter: 'зима', spring: 'весна', summer: 'лето' };
 
 export function mountDebug({ shell, bus, engine }) {

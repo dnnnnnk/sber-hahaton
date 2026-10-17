@@ -2,7 +2,7 @@
 // приложение в соседней вкладке (и превью справа) получает событие storage и пересобирает движок сразу.
 // Проверка — тем же validateConfig, что и в движке.
 
-import { validateConfig, fetchConfig, OVERRIDE_KEY } from '../engine/config.js';
+import { validateConfig, fetchConfig, OVERRIDE_KEY, DEFAULT_SETTINGS } from '../engine/config.js';
 
 const CONFIG_URL = 'content/config.json';
 
@@ -69,7 +69,7 @@ function renderSettings() {
   for (const input of document.querySelectorAll('[data-setting]')) {
     const value = s[input.dataset.setting];
     if (input.type === 'checkbox') input.checked = value !== false;
-    else input.value = value ?? 3000;
+    else input.value = value ?? DEFAULT_SETTINGS[input.dataset.setting] ?? 0;
   }
 }
 
@@ -127,7 +127,7 @@ function renderReport(parseError = null) {
     reportEl.textContent = `Конфиг не будет принят: ${errors.join('; ')}`;
   } else if (warnings.length) {
     reportEl.className = 'report is-warn';
-    reportEl.innerHTML = `Будут пропущены записи:<br>${warnings.map(html).join('<br>')}`;
+    reportEl.innerHTML = `Есть замечания; некорректные записи будут пропущены:<br>${warnings.map(html).join('<br>')}`;
   } else {
     reportEl.className = 'report is-ok';
     reportEl.textContent = `✓ Всё в порядке: ${config.prikoly.length} приколов, включено ${config.prikoly.filter(p => p.enabled).length}`;
@@ -211,7 +211,7 @@ $('save').addEventListener('click', () => {
   saved = JSON.stringify(draft);
   renderSource();
   say(warnings.length
-    ? `Сохранено, но ${warnings.length} записей движок пропустит — см. вкладку JSON`
+    ? `Сохранено с ${warnings.length} замечаниями — см. вкладку JSON`
     : 'Сохранено — приложение уже подхватило изменения', warnings.length ? 'warn' : 'ok');
 });
 

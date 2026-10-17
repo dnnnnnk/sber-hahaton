@@ -66,6 +66,7 @@ export function init(rawConfig, bus, stage, { baseUrl = document.baseURI } = {})
   bus.on('screen:open', ({ screen: id, zone }) => {
     screen.id = id;
     screen.zone = zone === 'red' ? 'red' : 'green';
+    ui.positionChip(screen.zone !== 'red');
     if (screen.zone === 'red') {
       pending = [];
       stopAll('красная зона');

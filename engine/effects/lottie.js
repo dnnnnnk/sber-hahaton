@@ -23,6 +23,15 @@ export default {
   type: 'lottie',
   fullscreen: false,
 
+  validate(params) {
+    if (typeof params.src !== 'string' || !params.src) return 'нужен src';
+    if (params.anchor != null && (typeof params.anchor !== 'string' || !params.anchor)) return 'anchor должен быть непустой строкой';
+    if (params.size != null && !positive(params.size)) return 'size: нужно число > 0';
+    if (params.speed != null && !positive(params.speed)) return 'speed: нужно число > 0';
+    if (params.durationMs != null && !nonNegative(params.durationMs)) return 'durationMs: нужно число ≥ 0';
+    return null;
+  },
+
   play(params, ctx) {
     if (!params.src) return null;
     if (ctx.reducedMotion) {
@@ -71,3 +80,11 @@ export default {
     return { stop: finish };
   },
 };
+
+function positive(value) {
+  return typeof value === 'number' && Number.isFinite(value) && value > 0;
+}
+
+function nonNegative(value) {
+  return typeof value === 'number' && Number.isFinite(value) && value >= 0;
+}

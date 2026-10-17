@@ -5,6 +5,17 @@ export default {
   type: 'holo',
   fullscreen: false,
 
+  validate(params) {
+    if (params.anchor != null && (typeof params.anchor !== 'string' || !params.anchor)) return 'anchor должен быть непустой строкой';
+    if (params.intensity != null && !(finite(params.intensity) && params.intensity >= 0 && params.intensity <= 1)) {
+      return 'intensity: нужно число от 0 до 1';
+    }
+    for (const key of ['idleMs', 'durationMs']) {
+      if (params[key] != null && !(finite(params[key]) && params[key] >= 0)) return `${key}: нужно число ≥ 0`;
+    }
+    return null;
+  },
+
   play(params, ctx) {
     const anchor = params.anchor || 'card';
     if (!ctx.stage.getAnchorRect(anchor)) return null;
@@ -65,3 +76,7 @@ export default {
     };
   },
 };
+
+function finite(value) {
+  return typeof value === 'number' && Number.isFinite(value);
+}

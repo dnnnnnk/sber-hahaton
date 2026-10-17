@@ -138,6 +138,48 @@ h1, h2, p { margin: 0; }
 
 .screen-patch--avatar { border-radius: 50%; background-repeat: no-repeat; }
 
+.screen-patch--tasks-copy,
+.screen-patch--tasks-done-copy,
+.screen-patch--goal-copy {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.screen-patch--tasks-copy {
+  gap: calc(4 * var(--pt));
+  padding: 0 calc(2 * var(--pt));
+  background: #fff;
+}
+
+.screen-patch--tasks-copy b { font-size: calc(20 * var(--pt)); line-height: 1.15; }
+.screen-patch--tasks-copy span { color: #a8b1bc; font-size: calc(13 * var(--pt)); line-height: 1.35; }
+
+.screen-patch--tasks-done-copy {
+  gap: calc(8 * var(--pt));
+  background: #f4f5f7;
+}
+
+.screen-patch--tasks-done-copy b { font-size: calc(24 * var(--pt)); line-height: 1.15; }
+.screen-patch--tasks-done-copy span { max-width: 95%; font-size: calc(15 * var(--pt)); line-height: 1.35; }
+
+.screen-patch--goal-copy {
+  gap: calc(12 * var(--pt));
+  background: #1fba43;
+  color: #fff;
+}
+
+.screen-patch--goal-copy b { font-size: calc(26 * var(--pt)); line-height: 1.1; }
+.screen-patch--goal-copy span { max-width: 96%; font-size: calc(15 * var(--pt)); line-height: 1.35; }
+
+.screen-patch--primary-button {
+  display: grid;
+  place-items: center;
+  border-radius: calc(24 * var(--pt));
+  background: linear-gradient(90deg, #48d4ec, #a9ff7b 55%, #6cff16);
+  font-size: calc(18 * var(--pt));
+}
+
 .screen-patch--moneybox {
   display: flex;
   align-items: center;
@@ -165,6 +207,27 @@ h1, h2, p { margin: 0; }
 .moneybox-patch__title { overflow: hidden; font-size: calc(12 * var(--pt)); white-space: nowrap; text-overflow: ellipsis; }
 .moneybox-patch__progress { height: calc(6 * var(--pt)); overflow: hidden; border-radius: 999px; background: #e9edf1; }
 .moneybox-patch__progress i { display: block; height: 100%; border-radius: inherit; background: #16d74b; }
+
+.screen-patch--goal-banner {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: calc(12 * var(--pt));
+  padding: calc(12 * var(--pt)) calc(18 * var(--pt));
+  border-radius: calc(24 * var(--pt));
+  background: #18d646;
+  color: #fff;
+}
+
+.screen-patch--goal-banner span { font-size: calc(34 * var(--pt)); }
+.screen-patch--goal-banner b { font-size: calc(17 * var(--pt)); line-height: 1.15; }
+.screen-patch--goal-banner small {
+  padding: calc(8 * var(--pt)) calc(10 * var(--pt));
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.22);
+  font-size: calc(11 * var(--pt));
+  white-space: nowrap;
+}
 
 .screen-patch--banks {
   display: grid;
@@ -218,12 +281,12 @@ h1, h2, p { margin: 0; }
   box-shadow: 0 4px 10px rgba(33, 160, 56, 0.3);
 }
 
-/* Дела, которых нет на tasks.webp: HTML-строки в стиле макета */
+/* Единый HTML-список дел вместо смешения растровой и HTML-строк. */
 .png-tasks {
   display: grid;
   gap: calc(16 * var(--pt));
   margin: 0;
-  padding: calc(9 * var(--pt)) calc(16 * var(--pt)) calc(24 * var(--pt));
+  padding: calc(16 * var(--pt));
   list-style: none;
 }
 
@@ -252,6 +315,9 @@ h1, h2, p { margin: 0; }
 }
 
 .png-task__title { font-size: calc(16 * var(--pt)); font-weight: 500; }
+.png-task__body { display: flex; flex: 1; flex-direction: column; min-width: 0; }
+.png-task__reward { margin-top: calc(3 * var(--pt)); color: var(--green-dark); font-size: calc(12 * var(--pt)); }
+.png-task.is-done .png-task__title { color: var(--muted); text-decoration: line-through; }
 
 .moneybox-ideas {
   margin: 0 calc(16 * var(--pt)) calc(24 * var(--pt));

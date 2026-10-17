@@ -6,6 +6,14 @@ export default {
   type: 'tilt',
   sensors: ['orientation'],
 
+  validate(spec) {
+    if (spec.rangeDeg != null && !positive(spec.rangeDeg)) return 'rangeDeg: нужно число > 0';
+    for (const key of ['startThreshold', 'follow']) {
+      if (spec[key] != null && !(finite(spec[key]) && spec[key] >= 0 && spec[key] <= 1)) return `${key}: нужно число от 0 до 1`;
+    }
+    return null;
+  },
+
   create(spec, ctx, fire) {
     const range = spec.rangeDeg ?? 20;
     const startThreshold = spec.startThreshold ?? 0.12;
@@ -32,4 +40,12 @@ export default {
 
 function clamp(v) {
   return Math.max(-1, Math.min(1, v));
+}
+
+function positive(value) {
+  return finite(value) && value > 0;
+}
+
+function finite(value) {
+  return typeof value === 'number' && Number.isFinite(value);
 }

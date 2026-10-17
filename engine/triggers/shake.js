@@ -5,6 +5,15 @@ export default {
   type: 'shake',
   sensors: ['motion'],
 
+  validate(spec) {
+    if (spec.threshold != null && !positive(spec.threshold)) return 'threshold: нужно число > 0';
+    if (spec.hits != null && !(Number.isInteger(spec.hits) && spec.hits > 0)) return 'hits: нужно целое число > 0';
+    for (const key of ['windowMs', 'debounceMs']) {
+      if (spec[key] != null && !nonNegative(spec[key])) return `${key}: нужно число ≥ 0`;
+    }
+    return null;
+  },
+
   create(spec, ctx, fire) {
     const threshold = spec.threshold ?? 14;
     const hits = spec.hits ?? 3;
@@ -26,3 +35,11 @@ export default {
     });
   },
 };
+
+function positive(value) {
+  return typeof value === 'number' && Number.isFinite(value) && value > 0;
+}
+
+function nonNegative(value) {
+  return typeof value === 'number' && Number.isFinite(value) && value >= 0;
+}

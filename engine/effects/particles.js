@@ -34,6 +34,9 @@ const DEFAULTS = {
 
 const FADE_OUT_MS = 400;
 const MELT_MS = 700;
+const MODES = ['normal', 'trail'];
+const SPAWNS = ['top', 'bottom', 'center', 'anchor'];
+const SHAPES = ['circle', 'rect', 'star', 'spark', 'bubble', 'snow', 'petal'];
 const sprites = new Map();
 const images = new Map();
 
@@ -41,11 +44,54 @@ export default {
   type: 'particles',
   fullscreen: true,
 
+  validate(params) {
+    if (params.mode != null && !MODES.includes(params.mode)) return `mode: одно из ${MODES.join(', ')}`;
+    if (params.spawn != null && !SPAWNS.includes(params.spawn)) return `spawn: одно из ${SPAWNS.join(', ')}`;
+    if (params.spawn === 'anchor' && (typeof params.anchor !== 'string' || !params.anchor)) return 'для spawn: anchor нужен anchor';
+    if (params.count != null && !(Number.isInteger(params.count) && params.count >= 0 && params.count <= 500)) {
+      return 'count: нужно целое число от 0 до 500';
+    }
+    for (const key of ['emitMs', 'durationMs', 'settleMs', 'stepMs', 'drag', 'sway', 'rotation']) {
+      if (params[key] != null && !nonNegative(params[key])) return `${key}: нужно число ≥ 0`;
+    }
+    for (const key of ['direction', 'spread', 'gravity', 'wind']) {
+      if (params[key] != null && !finite(params[key])) return `${key}: нужно конечное число`;
+    }
+    for (const key of ['size', 'speed']) {
+      if (params[key] != null && !numberOrRange(params[key], false)) return `${key}: нужно число > 0 или диапазон [min, max]`;
+    }
+    if (params.lifeMs != null && !numberOrRange(params.lifeMs, true)) return 'lifeMs: нужно число ≥ 0 или диапазон [min, max]';
+    if (params.settleChance != null && !(finite(params.settleChance) && params.settleChance >= 0 && params.settleChance <= 1)) {
+      return 'settleChance: нужно число от 0 до 1';
+    }
+    if (params.settleOn != null && !stringArray(params.settleOn)) return 'settleOn: нужен массив непустых строк';
+    for (const key of ['emoji', 'images', 'colors']) {
+      if (params[key] != null && !stringArray(params[key])) return `${key}: нужен непустой массив строк`;
+    }
+    if (params.shapes != null && (!stringArray(params.shapes) || params.shapes.some(shape => !SHAPES.includes(shape)))) {
+      return `shapes: допустимы ${SHAPES.join(', ')}`;
+    }
+    for (const key of ['flutter', 'fade']) {
+      if (params[key] != null && typeof params[key] !== 'boolean') return `${key}: нужно true или false`;
+    }
+    return null;
+  },
+
   play(input, ctx) {
     const p = { ...DEFAULTS, ...PRESETS[input.spawn] || PRESETS.top, ...input };
     const { stage } = ctx;
-    const budget = Math.max(1, Math.min(p.count, ctx.settings.maxParticles));
+    const budget = Math.max(0, Math.min(Math.floor(p.count), Math.floor(ctx.settings.maxParticles)));
     const total = ctx.reducedMotion ? Math.ceil(budget * 0.35) : budget;
+    if (total === 0 || p.durationMs === 0) {
+      let finished = false;
+      const finish = () => {
+        if (finished) return;
+        finished = true;
+        ctx.end();
+      };
+      queueMicrotask(finish);
+      return { stop: finish };
+    }
     const pool = buildPool(p, ctx);
     const system = p.mode === 'trail' ? createTrail(p, total, pool, stage) : createFlow(p, total, pool, stage, ctx);
 
@@ -449,4 +495,21 @@ function withAlpha(hex, a) {
   const m = /^#?([\da-f]{2})([\da-f]{2})([\da-f]{2})$/i.exec(hex);
   if (!m) return hex;
   return `rgba(${parseInt(m[1], 16)},${parseInt(m[2], 16)},${parseInt(m[3], 16)},${a})`;
+}
+
+function finite(value) {
+  return typeof value === 'number' && Number.isFinite(value);
+}
+
+function nonNegative(value) {
+  return finite(value) && value >= 0;
+}
+
+function numberOrRange(value, allowZero) {
+  const valid = number => finite(number) && (allowZero ? number >= 0 : number > 0);
+  return valid(value) || (Array.isArray(value) && value.length === 2 && valid(value[0]) && valid(value[1]) && value[0] <= value[1]);
+}
+
+function stringArray(value) {
+  return Array.isArray(value) && value.length > 0 && value.every(item => typeof item === 'string' && item.length > 0);
 }

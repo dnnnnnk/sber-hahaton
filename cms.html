@@ -31,6 +31,7 @@
               <label><input type="radio" name="season" value="autumn"><span>🍂 Осень</span></label>
               <label><input type="radio" name="season" value="winter"><span>❄️ Зима</span></label>
               <label><input type="radio" name="season" value="spring"><span>🌸 Весна</span></label>
+              <label><input type="radio" name="season" value="summer"><span>☀️ Лето</span></label>
             </div>
           </div>
           <div class="settings__row">
@@ -39,6 +40,10 @@
             <label class="field field--inline">
               <span class="field__label">Пауза между полноэкранными, мс</span>
               <input type="number" min="0" step="500" data-setting="globalCooldownMs">
+            </label>
+            <label class="field field--inline">
+              <span class="field__label">Максимум частиц</span>
+              <input type="number" min="0" max="500" step="1" data-setting="maxParticles">
             </label>
           </div>
         </section>

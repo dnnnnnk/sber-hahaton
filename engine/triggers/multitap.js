@@ -6,7 +6,10 @@ export default {
   sensors: ['pointer'],
 
   validate(spec) {
-    return typeof spec.anchor === 'string' && spec.anchor ? null : 'нужен anchor';
+    if (typeof spec.anchor !== 'string' || !spec.anchor) return 'нужен anchor';
+    if (spec.count != null && !(Number.isInteger(spec.count) && spec.count > 0)) return 'count: нужно целое число > 0';
+    if (spec.withinMs != null && !nonNegative(spec.withinMs)) return 'withinMs: нужно число ≥ 0';
+    return null;
   },
 
   create(spec, ctx, fire) {
@@ -38,3 +41,7 @@ export default {
     });
   },
 };
+
+function nonNegative(value) {
+  return typeof value === 'number' && Number.isFinite(value) && value >= 0;
+}

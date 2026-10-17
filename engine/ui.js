@@ -9,6 +9,8 @@ export function createUi(stage) {
   let toastEl = null;
   let toastTimer = 0;
   let chipEl = null;
+  let chipAllowed = true;
+  let restoreFocus = null;
 
   function toast(text) {
     if (!toastEl) {
@@ -26,15 +28,17 @@ export function createUi(stage) {
   }
 
   function showChip(onTap) {
-    if (chipEl) return;
-    chipEl = document.createElement('button');
-    chipEl.type = 'button';
-    chipEl.className = 'prikoly-chip';
-    chipEl.textContent = '✨ Включить волшебство';
-    chipEl.addEventListener('click', onTap);
-    const tabbar = stage.getAnchorRect('tabbar');
-    chipEl.style.bottom = `${(tabbar ? stage.height - tabbar.top : 0) + 12}px`;
-    layer.append(chipEl);
+    if (!chipEl) {
+      chipEl = document.createElement('button');
+      chipEl.type = 'button';
+      chipEl.className = 'prikoly-chip';
+      chipEl.textContent = '✨';
+      chipEl.setAttribute('aria-label', 'Включить волшебство — разрешить датчики движения');
+      chipEl.title = 'Включить датчики движения';
+      chipEl.addEventListener('click', onTap);
+      layer.append(chipEl);
+    }
+    positionChip();
   }
 
   function hideChip() {
@@ -42,22 +46,37 @@ export function createUi(stage) {
     chipEl = null;
   }
 
+  // Центральная вкладка «Ассистент» в демо неактивна: чип занимает её место и не закрывает контент.
+  // На экранах без таббара и в красной зоне он временно скрыт.
+  function positionChip(allowed = chipAllowed) {
+    chipAllowed = allowed;
+    if (!chipEl) return;
+    const tabbar = allowed ? stage.getAnchorRect('tabbar') : null;
+    chipEl.hidden = !tabbar;
+    if (!tabbar) return;
+    chipEl.style.left = `${tabbar.cx}px`;
+    chipEl.style.top = `${tabbar.cy - 22}px`;
+  }
+
+  window.addEventListener('resize', () => requestAnimationFrame(() => positionChip()));
+
   // ——— Альбом находок: шторка снизу, закрывается тапом мимо, свайпом вниз или «Готово» ———
 
   let album = null;
 
   function openAlbum({ items, muted, onToggleMute }) {
     closeAlbum(true);
+    restoreFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     const foundCount = items.filter(i => i.found).length;
     album = document.createElement('div');
     album.className = 'prikoly-album';
     album.innerHTML = `
       <div class="prikoly-album__backdrop"></div>
-      <section class="prikoly-album__sheet" role="dialog" aria-label="Мои находки">
+      <section class="prikoly-album__sheet" role="dialog" aria-modal="true" aria-labelledby="prikoly-album-title">
         <div class="prikoly-album__drag">
           <div class="prikoly-album__grip"></div>
           <header class="prikoly-album__head">
-            <h2>Мои находки</h2>
+            <h2 id="prikoly-album-title">Мои находки</h2>
             <span class="prikoly-album__count">${foundCount} из ${items.length}</span>
             <button type="button" class="prikoly-album__mute" aria-label="Звук приколов"></button>
           </header>
@@ -76,13 +95,20 @@ export function createUi(stage) {
 
     const sheet = album.querySelector('.prikoly-album__sheet');
     const mute = album.querySelector('.prikoly-album__mute');
-    const renderMute = value => (mute.textContent = value ? '🔇' : '🔊');
+    const renderMute = value => {
+      mute.textContent = value ? '🔇' : '🔊';
+      mute.setAttribute('aria-label', value ? 'Включить звук приколов' : 'Выключить звук приколов');
+    };
     renderMute(muted);
     mute.addEventListener('click', () => renderMute(onToggleMute()));
     album.querySelector('.prikoly-album__backdrop').addEventListener('click', () => closeAlbum());
     album.querySelector('.prikoly-album__done').addEventListener('click', () => closeAlbum());
+    album.addEventListener('keydown', e => e.key === 'Escape' && closeAlbum());
     enableSwipe(album.querySelector('.prikoly-album__drag'), sheet);
-    requestAnimationFrame(() => album?.classList.add('is-open'));
+    requestAnimationFrame(() => {
+      album?.classList.add('is-open');
+      album?.querySelector('.prikoly-album__done')?.focus();
+    });
   }
 
   function enableSwipe(handle, sheet) {
@@ -117,9 +143,11 @@ export function createUi(stage) {
     if (immediately) return el.remove();
     el.classList.remove('is-open');
     setTimeout(() => el.remove(), 300);
+    restoreFocus?.focus();
+    restoreFocus = null;
   }
 
-  return { toast, showChip, hideChip, openAlbum, closeAlbum, isAlbumOpen: () => Boolean(album) };
+  return { toast, showChip, hideChip, positionChip, openAlbum, closeAlbum, isAlbumOpen: () => Boolean(album) };
 }
 
 function escape(text) {
