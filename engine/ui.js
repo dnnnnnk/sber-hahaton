@@ -51,7 +51,8 @@ export function createUi(stage) {
     chipEl = null;
   }
 
-  // Центральная вкладка «Ассистент» в демо неактивна: чип занимает её место и не закрывает контент.
+  // Центральная вкладка «Ассистент» в демо неактивна: там живёт Капля, а чип — маленький значок ✨ у её макушки,
+  // в пределах той же вкладки (не закрывает ни Каплю, ни соседние вкладки, ни контент).
   // На экранах без таббара и в красной зоне он временно скрыт.
   function positionChip(allowed = chipAllowed) {
     chipAllowed = allowed;
@@ -59,8 +60,8 @@ export function createUi(stage) {
     const tabbar = allowed ? stage.getAnchorRect('tabbar') : null;
     chipEl.hidden = !tabbar;
     if (!tabbar) return;
-    chipEl.style.left = `${tabbar.cx}px`;
-    chipEl.style.top = `${tabbar.cy - 22}px`;
+    chipEl.style.left = `${tabbar.cx + 20}px`;
+    chipEl.style.top = `${tabbar.top - 6}px`;
   }
 
   window.addEventListener('resize', () => requestAnimationFrame(() => positionChip()));
