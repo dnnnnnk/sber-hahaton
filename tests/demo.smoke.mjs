@@ -522,7 +522,7 @@ for (const browserType of [chromium, webkit].filter(b => !process.env.ONLY_BROWS
     });
 
     await check('C2 every album hint is a short riddle, not an instruction', async () => {
-      const hints = await page.evaluate(() => window.sberKids.engine.config.prikoly.map(p => [p.id, p.hint]));
+      const hints = await page.evaluate(() => window.sberKids.engine.config.prikoly.filter(p => p.collect !== false).map(p => [p.id, p.hint]));
       for (const [id, hint] of hints) {
         assert.ok(hint.endsWith('?'), `${id}: riddle ends with "?"`);
         assert.ok(hint.length <= 60, `${id}: short (${hint.length})`);
@@ -584,6 +584,33 @@ for (const browserType of [chromium, webkit].filter(b => !process.env.ONLY_BROWS
       await stop();
       await page.evaluate(() => document.querySelector('[data-act="resetDemo"]').click());
       await page.waitForFunction(() => window.sberKids.current() === 'home');
+    });
+
+    // ——— D: красивое число и вехи копилки ———
+    await check('D pretty number: gold stars and a glowing HTML balance', async () => {
+      await go('home');
+      await reset();
+      await page.evaluate(() => window.sberKids.setBalance(1111));
+      await page.waitForFunction(() => ['balance-pretty-number', 'balance-pretty-glow'].every(id => window.sberKids.engine.stats().active.includes(id)));
+      const animated = await page.locator('[data-anchor="balance"]').evaluate(el => el.getAnimations().length);
+      assert.ok(animated > 0, 'the sum itself jumps and glows');
+      await page.evaluate(() => window.sberKids.engine.openAlbum());
+      const album = await page.locator('.prikoly-album').innerText();
+      assert.ok(!album.includes('сияние'), 'companion glow is not a separate find');
+      await page.evaluate(() => { window.sberKids.engine.closeAlbum(); window.sberKids.setBalance(800.55); });
+      await stop();
+    });
+
+    await check('D milestones burst from the progress bar next to the Lottie star', async () => {
+      await go('moneybox');
+      await reset();
+      await page.evaluate(() => { window.sberKids.state.moneyboxes.find(m => m.id === 'slides').saved = 1400; window.sberKids.refresh(); });
+      await page.locator('[data-zone="topup-slides"]').tap();
+      await page.waitForFunction(() => window.sberKids.current() === 'topup_success');
+      await page.waitForFunction(() => ['topup-star', 'moneybox-milestones'].every(id => window.sberKids.engine.stats().active.includes(id)));
+      assert.ok(await page.locator('[data-anchor="progress"]').count() === 1, 'progress anchor on the topup screen');
+      await stop();
+      await go('home');
     });
 
     assert.deepEqual(errors, [], 'console and HTTP');

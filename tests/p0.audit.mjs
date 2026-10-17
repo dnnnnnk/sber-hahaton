@@ -263,7 +263,7 @@ for (const browserType of [chromium, webkit].filter(b => !process.env.ONLY_BROWS
         await page.waitForFunction(() => document.querySelector('.prikoly-album.is-open'));
         await page.waitForTimeout(350);
         await shot('album-found');
-        const enabled = original.prikoly.filter(p => p.enabled).length;
+        const enabled = original.prikoly.filter(p => p.enabled && p.collect !== false).length;
         assert.equal(await page.locator('.prikoly-album__grid li').count(), enabled);
         assert.equal(await page.locator('.prikoly-album__grid .is-locked').count(), 0);
         await page.locator('.prikoly-album__mute').tap();
