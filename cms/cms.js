@@ -3,6 +3,7 @@
 // Проверка — тем же validateConfig, что и в движке.
 
 import { validateConfig, fetchConfig, OVERRIDE_KEY, DEFAULT_SETTINGS } from '../engine/config.js';
+import { REACTIONS, REACTION_EVENTS, DEFAULT_REACTIONS } from '../engine/effects/resident.js';
 
 const CONFIG_URL = 'content/config.json';
 
@@ -95,7 +96,25 @@ function renderList() {
           <input type="number" min="0" step="500" data-field="cooldownMs" value="${Number(p.cooldownMs) || 0}">
         </label>
       </div>
+      ${p.effect?.type === 'resident' ? reactionsEditor(p.effect.params?.reactions) : ''}
     </article>`).join('') || '<p class="hint">В конфиге нет приколов.</p>';
+}
+
+// Капля: какое событие → какая реакция. Меняется без релиза, как и всё остальное.
+function reactionsEditor(current = {}) {
+  const options = selected => Object.entries(REACTIONS)
+    .map(([id, label]) => `<option value="${id}" ${id === selected ? 'selected' : ''}>${html(label)}</option>`).join('');
+  return `
+    <div class="reactions">
+      <span class="field__label">Реакции Капли</span>
+      <div class="reactions__grid">
+        ${Object.entries(REACTION_EVENTS).map(([event, label]) => `
+          <label class="field">
+            <span class="field__label">${html(label)}</span>
+            <select data-reaction="${attr(event)}">${options(current[event] ?? DEFAULT_REACTIONS[event] ?? 'none')}</select>
+          </label>`).join('')}
+      </div>
+    </div>`;
 }
 
 function describe(p) {
@@ -139,8 +158,13 @@ function renderReport(parseError = null) {
 listEl.addEventListener('input', e => {
   const field = e.target.dataset.field;
   const item = e.target.closest('[data-index]');
-  if (!field || !item) return;
+  if ((!field && !e.target.dataset.reaction) || !item) return;
   const prikol = draft.prikoly[Number(item.dataset.index)];
+  if (e.target.dataset.reaction) {
+    prikol.effect.params ??= {};
+    prikol.effect.params.reactions = { ...prikol.effect.params.reactions, [e.target.dataset.reaction]: e.target.value };
+    return renderSource();
+  }
   if (field === 'enabled') {
     prikol.enabled = e.target.checked;
     item.classList.toggle('is-off', !prikol.enabled);

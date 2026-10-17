@@ -253,3 +253,18 @@ textarea {
 .status.is-ok { color: #128a2b; }
 .status.is-warn { color: var(--amber); }
 .status.is-error { color: var(--red); }
+
+/* Реакции Капли: событие → реакция */
+.reactions { margin-top: 12px; padding-top: 12px; border-top: 1px dashed var(--line); }
+.reactions__grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 210px), 1fr)); gap: 8px 12px; margin-top: 8px; }
+.reactions select {
+  width: 100%;
+  min-width: 0;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #fbfcfd;
+  font: inherit;
+  color: inherit;
+}
+.reactions select:focus { outline: 2px solid var(--green); outline-offset: -1px; }
