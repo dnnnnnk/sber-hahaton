@@ -123,7 +123,7 @@ for (const browserType of [chromium, webkit].filter(b => !process.env.ONLY_BROWS
       assert.ok(log.some(l => l.id === 'moneybox-rattle' && !l.ok), 'rattle skipped');
       assert.ok(!log.some(l => l.id === 'season-autumn-leaves' && !l.ok), 'leaves not dropped by priority');
       await stop();
-      await page.evaluate(() => { window.sberKids.engine.setSeason('auto'); return window.sberKids.engine.reloadFromSources(); });
+      await page.evaluate(async () => { window.sberKids.engine.setSeason('auto'); await window.sberKids.engine.reloadFromSources(); });
     });
 
     await check('A3 topup screen reads as a moneybox, not a payment', async () => {
@@ -492,6 +492,98 @@ for (const browserType of [chromium, webkit].filter(b => !process.env.ONLY_BROWS
       await shot('b3-summer');
       await page.waitForFunction(() => !document.querySelector('.prikoly-sun'), null, { timeout: 6000 });
       await page.evaluate(() => window.sberKids.engine.setSeason('auto'));
+    });
+
+    // ——— C: готовность к защите ———
+    const stillFor = ms => page.evaluate(ms => {
+      const s = window.sberKids.engine.sensors;
+      const t = performance.now();
+      for (let i = 0; i * 500 <= ms; i++) s.inject('motion', { linear: 0.04, rotation: 0.4, t: t + i * 500 });
+    }, ms);
+
+    await check('C1 quiet hour: 6 s lying still → 💤 over the avatar, Drop dozes', async () => {
+      await go('content');
+      await go('home');
+      await reset();
+      await page.waitForFunction(() => document.querySelectorAll('.prikoly-drop').length === 1);
+      await stillFor(5000);
+      await page.waitForTimeout(150);
+      assert.ok(!(await page.evaluate(() => window.sberKids.engine.stats().active.includes('still-sleep'))), 'not before 6 s');
+      await page.evaluate(() => window.sberKids.engine.sensors.inject('motion', { linear: 3, rotation: 30 }));
+      await stillFor(6500);
+      await page.waitForFunction(() => window.sberKids.engine.stats().active.includes('still-sleep'));
+      const spec = await page.evaluate(() => window.sberKids.engine.config.prikoly.find(p => p.id === 'still-sleep'));
+      assert.equal(spec.effect.params.anchor, 'avatar');
+      assert.ok(spec.effect.params.gravity < 0 && spec.effect.params.direction < 0, '💤 float up from the avatar');
+      await page.waitForFunction(() => document.querySelector('.prikoly-drop')?.dataset.face === 'sleep');
+      await page.waitForTimeout(900);
+      await shot('c1-quiet-hour');
+      await stop();
+    });
+
+    await check('C2 every album hint is a short riddle, not an instruction', async () => {
+      const hints = await page.evaluate(() => window.sberKids.engine.config.prikoly.map(p => [p.id, p.hint]));
+      for (const [id, hint] of hints) {
+        assert.ok(hint.endsWith('?'), `${id}: riddle ends with "?"`);
+        assert.ok(hint.length <= 60, `${id}: short (${hint.length})`);
+        assert.ok(!/^(Отметь|Тряхни|Покачай|Переверни|Пополни|Выполни|Положи|Дважды|Быстро|Почитай|Убери|Помой|Выучи|Накопи|Загляни)/.test(hint), `${id}: not an instruction`);
+      }
+    });
+
+    await check('C3 presenter reset returns everything to the start', async () => {
+      await go('tasks');
+      await page.locator('[data-zone="task-dog_walk"]').tap();
+      await page.evaluate(() => { window.sberKids.engine.setSeason('winter'); window.sberKids.engine.sound.setMuted(true); window.sberKids.setBalance(1111); });
+      await go('home');
+      await page.waitForFunction(() => document.querySelectorAll('.prikoly-drop').length === 1);
+      await page.evaluate(() => window.sberKids.engine.stopAll('swipe stand-in'));
+      await page.evaluate(() => { document.querySelector('.dbg').classList.remove('is-collapsed'); document.querySelector('[data-act="resetDemo"]').click(); });
+      await page.waitForFunction(() => window.sberKids.current() === 'home');
+      await page.waitForFunction(() => document.querySelectorAll('.prikoly-drop').length === 1);
+      const state = await page.evaluate(() => ({
+        // Как при первом входе: в альбоме только Капля, которая встречает сразу.
+        found: window.sberKids.engine.collection.ids().filter(id => id !== 'screen-resident').length,
+        tasks: Object.values(window.sberKids.state.tasks).some(Boolean),
+        season: window.sberKids.engine.rules.season(),
+        muted: window.sberKids.engine.sound.isMuted(),
+        balance: window.sberKids.state.balance,
+        robot: window.sberKids.state.moneyboxes.find(m => m.id === 'robot').saved,
+        daily: localStorage.getItem('prikoly.daily'),
+      }));
+      assert.deepEqual(state, { found: 0, tasks: false, season: 'auto', muted: false, balance: 800.55, robot: 7600, daily: null });
+      await page.evaluate(() => document.querySelector('.dbg').classList.add('is-collapsed'));
+    });
+
+    await check('C3 presenter buttons call every hero moment', async () => {
+      const act = name => page.evaluate(name => document.querySelector(`[data-act="${name}"]`).click(), name);
+      await go('home');
+      await page.waitForFunction(() => document.querySelectorAll('.prikoly-drop').length === 1);
+      await act('heroGiggle');
+      await page.waitForFunction(() => document.querySelector('.prikoly-drop')?.dataset.face === 'happy');
+      await act('heroDance');
+      await page.waitForFunction(() => document.querySelector('.pd-fx--note'));
+      await act('heroHolo');
+      await page.waitForFunction(() => document.querySelector('.prikoly-holo--foil'));
+      await page.waitForTimeout(2800);
+      await reset();
+      await act('flip');
+      await page.waitForFunction(() => document.querySelector('.prikoly-night'));
+      await page.waitForFunction(() => !document.querySelector('.prikoly-night'), null, { timeout: 8000 });
+      await reset();
+      await act('still');
+      await page.waitForFunction(() => window.sberKids.engine.stats().active.includes('still-sleep'));
+      await stop();
+      await go('moneybox');
+      await reset();
+      await act('coins');
+      await page.waitForFunction(() => window.sberKids.engine.stats().active.includes('moneybox-rattle'));
+      await stop();
+      await act('allDone');
+      await page.waitForFunction(() => window.sberKids.current() === 'tasks_done');
+      await page.waitForFunction(() => window.sberKids.engine.stats().active.includes('tasks-all-done'));
+      await stop();
+      await page.evaluate(() => document.querySelector('[data-act="resetDemo"]').click());
+      await page.waitForFunction(() => window.sberKids.current() === 'home');
     });
 
     assert.deepEqual(errors, [], 'console and HTTP');
