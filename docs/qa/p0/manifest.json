@@ -1,0 +1,212 @@
+{
+  "viewport": "375x812",
+  "date": "2026-10-17",
+  "runtimeSHA256": {
+    "app/bus.js": "4b4b57490d539f4c7b1f1e4a76b8ce75a6047e188442fa5628b6a044ddc7e185",
+    "app/debug.css": "234b8f639fd30179ce0f774672ebf08fd14f87c198f98ea07a37c46b77a98890",
+    "app/debug.js": "9b786c66c5a87b94e44b0f6062cac54b9269092d4542115f1cc2915812bd8b51",
+    "app/main.js": "2caa6834151ce3dc3d0bf13c278be5c5c9824836daef934a2780f5d838233805",
+    "app/screens.js": "5a7d4b677df915ddb84bb9be8929d81448e83ef46438289c4da3e9bbe9c488b1",
+    "app/shell.css": "ab6179bd0d1e04150e5f46a043bc513612e4486dd6f6fd24d17f03c2a7747d47",
+    "engine/collection.js": "d6ba67f8a58425c6fef8875100d04a51101455d5c516d90a3052dc8f71fb8efc",
+    "engine/config.js": "90833e0722b1f603cb2f58eae8caf81423b5311359d91c0cb5f4904148cacfce",
+    "engine/effects/coins.js": "e6a59b942b2d268eddcb5118dc91e10ee15293b25f42facaace83f69c2d1b7b8",
+    "engine/effects/cssAnimate.js": "3d702557e35a9f9348edaa025ba04b45e4384252b5a8b92a9f5ecda7247c2d49",
+    "engine/effects/holo.js": "4241b0aeb1f7f13c8a43da3e40ce0084731a3ec9fcb50686b78220179830b743",
+    "engine/effects/index.js": "646325f9779aafae1b294f53a5ee1e70bde7da5dcfbb9306322fb2c218c89ec1",
+    "engine/effects/lottie.js": "1c56ca6d03229609bf8c13b295c33a9a870b5c84132a7bcbe360a6678f7402a4",
+    "engine/effects/particles.js": "1c162d0b850fad4f639a656ee9a46b1a3a5c47e1ce16afa5ecfa1012dd798ebd",
+    "engine/effects/resident.js": "a023c6c5a9270db5671308afea0adfd897b0388aa84d58debadb86bc613ca52b",
+    "engine/engine.css": "a3c8bc5d5effd6cc243a73b039f34ddcfbe5d490b9e1600b6316ecf723235bcb",
+    "engine/engine.js": "b622e51ca07d63bd28e49fbff32a27f3e5298be7914b0cfeed706cdd2d819fdb",
+    "engine/haptics.js": "e8907a2f9b1df2f3e2e2f8192cc065480c23f3fd5357369299d9fa35c5ae5a07",
+    "engine/rules.js": "484fa1e8eec5c9e18c613c20fde4e8f9325aeea74d71335a9471b8c7f607992b",
+    "engine/sensors.js": "6609e00d6bfa8767675b183c985e7478a60b5555a11d10740ead980d5c68b2de",
+    "engine/sound.js": "94b8485f18db86a34bcc2e29be722fe8aca359025470325bc2cc0845fcd7ab33",
+    "engine/stage.js": "a9fd1426fa23a9623321400fe957251b379962d99c8eaaae9114b2675bd7f456",
+    "engine/triggers/event.js": "1692dc9907e976cdadd53d9a96c8e1402567f1423a68d9c23db7a8ff7ba40fe8",
+    "engine/triggers/flip.js": "623dc84e974eb7fba6d9d7db7352cd126a32d3a665a49d3ed26c6cabf12f46dc",
+    "engine/triggers/index.js": "f94ea8d06b6e4bb5dfc73794666eb67ff0236220569540160678b816f04548a7",
+    "engine/triggers/longpress.js": "4b9dcc2708db7628ce06ef08997fef19098288803289fa509ac02796021b9759",
+    "engine/triggers/multitap.js": "07fc0591fdaab626e07dc8f1540126e1af9cb6a17b463a1b3178cd8c431aab3a",
+    "engine/triggers/shake.js": "073c3a1ca1d69e1a4952487182250c0d47b51d53cbeb5c1a0c4e7fbd8fd0114c",
+    "engine/triggers/still.js": "0e4093755d5ab716841287a437c3917060b38c6bf4005c018ef9f8b9008c129d",
+    "engine/triggers/tilt.js": "77d11d4915de0c12f60a4875a273bf656c48aac2882cc196a9c66b1941f1932b",
+    "engine/ui.js": "97e30d26c8e46023b55d24814343a0d2b3732aa982e5202a2a261e4142de1a9d",
+    "cms/cms.css": "7cfd300830ce769f345680be85912a3030f2d2f6e51adac5181d7c1cf4e84948",
+    "cms/cms.js": "6284c907262eb82be9f522f549c633b72ba19a653e4a434c26056f452c00ef4c",
+    "content/config.json": "c34203614418070b50f1aab904d773a4cebe657df6e1e98a24e728e90e61ba13",
+    "content/effects/sparkle.json": "45003e276ba41ede39cc84a6099cf0177d44ac1781b76417d2f744c3298f0b13",
+    "content/sounds/boing.wav": "863a5552705f8892c919801a1d589b55b2011a2fcef10dbe956999db1126de49",
+    "content/sounds/chime.wav": "6e59864b37ed333d7e95f7bc9f11eaf371511faece2cc9182b976b46df3ee02d",
+    "content/sounds/pop.wav": "514e1e3e7cb3be6b9fe5c0a81a3515e03704366363f300658782bff9896061e8",
+    "content/sounds/sparkle.wav": "ca2e0505c852f7dd886e0c0cdfda0120cbca634b438b681ccfba4f860372f1e3",
+    "content/sounds/whoosh.wav": "2d9d5a9e548842e78e576851021898ec31e903d0e3981d2ad392e694606fd70f",
+    "screens/content.webp": "97bbaae0593574ed7a9ad2fdf08d00bd217c723510be7975a70b5dc2b8155c25",
+    "screens/home.webp": "e5208f229742bcd01f5f363545f4ec35a247f18bfd51e7789fb0b31cac8831d5",
+    "screens/moneybox.webp": "f80075ea90c3ae5f2b5a3de9a436aacc89dae665b6ec34faf6a8c88635a4ea4c",
+    "screens/moneybox_goal.webp": "b9d28d0acfec8a9cbb3f78e213a513d15797ed9c02071313de5cb720c2394f0b",
+    "screens/tabbar.webp": "81114fc07198582ad1bad770cde5117bc8e92737d643e9f1705faca0789cd2ee",
+    "screens/tasks.webp": "84d000708395716fb00c1727f5bc5bda5ed4111349514ef84ccb895f8fd27dd8",
+    "screens/tasks_done.webp": "09bcd9469b7b4281260bba083bbc39635c747a475ec79675602c99cb82b3716b",
+    "screens/topup_success.webp": "1e2a53d3dd0139feb2d7a0fc9942f4d36fa17edb7a10a5f1287bee65a2c3efcb",
+    "screens/transfer.webp": "61dfa945bbb8737ceca2dda0e11a4212bacca4acab43db0fdb166a7c00275a20",
+    "vendor/lottie.min.js": "a0757321f974527bda3cc2593bf56cc7ffe4578421249ced6ae49ffb1c529f90",
+    "index.html": "e6bf07bd630514b4253141aaaffc64eddb7b872ea64f65baaf216bb0bcdceda5",
+    "cms.html": "07031428305497c381ff5a5a6e939e7d3cf8cfdc172bf15201aa257611645fa8"
+  },
+  "contactSheets": {
+    "chromium-screens-1.webp": [
+      "chromium-screen-content-0.png",
+      "chromium-screen-home-0.png",
+      "chromium-screen-home-1.png",
+      "chromium-screen-moneybox-0.png",
+      "chromium-screen-moneybox-1.png",
+      "chromium-screen-moneybox-2.png",
+      "chromium-screen-moneybox-3.png",
+      "chromium-screen-moneybox_goal-0.png"
+    ],
+    "chromium-screens-2.webp": [
+      "chromium-screen-moneybox_goal-1.png",
+      "chromium-screen-tasks-0.png",
+      "chromium-screen-tasks-1.png",
+      "chromium-screen-tasks_done-0.png",
+      "chromium-screen-tasks_done-1.png",
+      "chromium-screen-topup_success-0.png",
+      "chromium-screen-transfer-0.png"
+    ],
+    "chromium-zones-1.webp": [
+      "chromium-zones-content-0.png",
+      "chromium-zones-home-0.png",
+      "chromium-zones-home-1.png",
+      "chromium-zones-moneybox-0.png",
+      "chromium-zones-moneybox-1.png",
+      "chromium-zones-moneybox-2.png",
+      "chromium-zones-moneybox-3.png",
+      "chromium-zones-moneybox_goal-0.png"
+    ],
+    "chromium-zones-2.webp": [
+      "chromium-zones-moneybox_goal-1.png",
+      "chromium-zones-tasks-0.png",
+      "chromium-zones-tasks-1.png",
+      "chromium-zones-tasks_done-0.png",
+      "chromium-zones-tasks_done-1.png",
+      "chromium-zones-topup_success-0.png",
+      "chromium-zones-transfer-0.png"
+    ],
+    "chromium-effects-1.webp": [
+      "chromium-effect-avatar-flip-1.png",
+      "chromium-effect-holo-card-1.png",
+      "chromium-effect-moneybox-rattle-1.png",
+      "chromium-effect-screen-resident-1.png",
+      "chromium-effect-season-autumn-leaves-1.png",
+      "chromium-effect-season-spring-petals-1.png",
+      "chromium-effect-season-summer-sunbeams-1.png",
+      "chromium-effect-season-summer-sunbeams-2.png"
+    ],
+    "chromium-effects-2.webp": [
+      "chromium-effect-season-winter-snow-1.png",
+      "chromium-effect-tasks-alive-book-1.png",
+      "chromium-effect-tasks-alive-book-2.png",
+      "chromium-effect-tasks-alive-clean-1.png",
+      "chromium-effect-tasks-alive-clean-2.png",
+      "chromium-effect-tasks-alive-dishes-1.png",
+      "chromium-effect-tasks-alive-dishes-2.png",
+      "chromium-effect-tasks-alive-dog-1.png"
+    ],
+    "chromium-effects-3.webp": [
+      "chromium-effect-tasks-alive-dog-2.png",
+      "chromium-effect-tasks-alive-math-1.png",
+      "chromium-effect-tasks-alive-math-2.png",
+      "chromium-effect-tasks-all-done-1.png",
+      "chromium-effect-tasks-all-done-2.png",
+      "chromium-effect-topup-star-1.png"
+    ],
+    "chromium-ui-1.webp": [
+      "chromium-album-found.png",
+      "chromium-album-locked.png",
+      "chromium-debug.png",
+      "chromium-cms-list.png",
+      "chromium-cms-json.png",
+      "chromium-cms-json-error.png"
+    ],
+    "webkit-screens-1.webp": [
+      "webkit-screen-content-0.png",
+      "webkit-screen-home-0.png",
+      "webkit-screen-home-1.png",
+      "webkit-screen-moneybox-0.png",
+      "webkit-screen-moneybox-1.png",
+      "webkit-screen-moneybox-2.png",
+      "webkit-screen-moneybox-3.png",
+      "webkit-screen-moneybox_goal-0.png"
+    ],
+    "webkit-screens-2.webp": [
+      "webkit-screen-moneybox_goal-1.png",
+      "webkit-screen-tasks-0.png",
+      "webkit-screen-tasks-1.png",
+      "webkit-screen-tasks_done-0.png",
+      "webkit-screen-tasks_done-1.png",
+      "webkit-screen-topup_success-0.png",
+      "webkit-screen-transfer-0.png"
+    ],
+    "webkit-zones-1.webp": [
+      "webkit-zones-content-0.png",
+      "webkit-zones-home-0.png",
+      "webkit-zones-home-1.png",
+      "webkit-zones-moneybox-0.png",
+      "webkit-zones-moneybox-1.png",
+      "webkit-zones-moneybox-2.png",
+      "webkit-zones-moneybox-3.png",
+      "webkit-zones-moneybox_goal-0.png"
+    ],
+    "webkit-zones-2.webp": [
+      "webkit-zones-moneybox_goal-1.png",
+      "webkit-zones-tasks-0.png",
+      "webkit-zones-tasks-1.png",
+      "webkit-zones-tasks_done-0.png",
+      "webkit-zones-tasks_done-1.png",
+      "webkit-zones-topup_success-0.png",
+      "webkit-zones-transfer-0.png"
+    ],
+    "webkit-effects-1.webp": [
+      "webkit-effect-avatar-flip-1.png",
+      "webkit-effect-holo-card-1.png",
+      "webkit-effect-moneybox-rattle-1.png",
+      "webkit-effect-screen-resident-1.png",
+      "webkit-effect-season-autumn-leaves-1.png",
+      "webkit-effect-season-spring-petals-1.png",
+      "webkit-effect-season-summer-sunbeams-1.png",
+      "webkit-effect-season-summer-sunbeams-2.png"
+    ],
+    "webkit-effects-2.webp": [
+      "webkit-effect-season-winter-snow-1.png",
+      "webkit-effect-tasks-alive-book-1.png",
+      "webkit-effect-tasks-alive-book-2.png",
+      "webkit-effect-tasks-alive-clean-1.png",
+      "webkit-effect-tasks-alive-clean-2.png",
+      "webkit-effect-tasks-alive-dishes-1.png",
+      "webkit-effect-tasks-alive-dishes-2.png",
+      "webkit-effect-tasks-alive-dog-1.png"
+    ],
+    "webkit-effects-3.webp": [
+      "webkit-effect-tasks-alive-dog-2.png",
+      "webkit-effect-tasks-alive-math-1.png",
+      "webkit-effect-tasks-alive-math-2.png",
+      "webkit-effect-tasks-all-done-1.png",
+      "webkit-effect-tasks-all-done-2.png",
+      "webkit-effect-topup-star-1.png"
+    ],
+    "webkit-ui-1.webp": [
+      "webkit-album-found.png",
+      "webkit-album-locked.png",
+      "webkit-debug.png",
+      "webkit-cms-list.png",
+      "webkit-cms-json.png",
+      "webkit-cms-json-error.png"
+    ]
+  },
+  "browsers": {
+    "chromium": "151.0.7922.34",
+    "webkit": "26.5"
+  }
+}

@@ -17,7 +17,8 @@
 | Контент | `content/` | CMS-ключ + CDN | `config.json`, Lottie, картинки, звуки | код |
 
 - Движок видит оболочку только через **шину событий** и **якоря** (`stage.getAnchorRect(name)`,
-  `stage.getAnchorElement(name)`). Якорь в разметке — атрибут `data-anchor="<имя>"`.
+  `stage.getAnchorElement(name)`, `stage.getAnchorData(name)`). Якорь в разметке — атрибут `data-anchor="<имя>"`.
+  У `moneybox-*` публичное `data-progress` содержит долю накопленного `0..1`, без суммы и цели.
 - Нейтральные исправления растров принадлежат оболочке: `patches` в `app/screens.js`, либо собственная
   HTML-композиция через `preferStub`. Они обязаны оставаться `pointer-events: none` и не менять зоны/якоря.
 - Движок ничего не решает сам: всё поведение — в `content/config.json`.
@@ -96,7 +97,7 @@ export default {
 export default {
   type: 'particles',
   fullscreen: true,                       // одновременно играет не больше одного полноэкранного
-  play(params, ctx) {                     // ctx: { stage, settings, reducedMotion, asset(src), haptics, sound, end() }
+  play(params, ctx) {                     // ctx: { stage, sensors, settings, reducedMotion, asset(src), haptics, sound, end() }
     // …рисуем; по завершении ОБЯЗАТЕЛЬНО ctx.end() и убрать за собой всё
     return { stop() { /* мгновенно убрать всё и вызвать ctx.end() */ }, update(payload) { /* опционально */ } };
   },
@@ -105,6 +106,20 @@ export default {
 
 Эффект обязан сам завершиться за `params.durationMs` (движок подстрахует принудительным `stop()`).
 Анимации — через `ctx.stage.addRenderer()` (один общий `requestAnimationFrame`, сам останавливается) или CSS/WAAPI.
+`stage.availableParticles(settings.maxParticles)` выдаёт остаток общего бюджета; у рендерера `budget` резервирует
+его сразу, а `count` показывает число видимых частиц. Это важно для одновременной Капли и сезонного эффекта.
+Эффект с собственными сенсорами объявляет `sensors: ['motion', 'orientation']` и снимает подписки в `stop()`;
+`onDone` рендерера также выполняет уборку при ошибке отрисовки. `sound.synth('coins'|'giggle'|'wobble')` соблюдает
+общий mute и возвращает функцию немедленной остановки.
+
+### P2
+
+- `coins`: shake на `moneybox`, монеты в нижнем правом кармашке карточки; число зависит от `data-progress`.
+- `resident`: собственная «Капля» по двум тапам на `card`; наклон, тап, тряска и свайп наблюдаются пассивно.
+  Появление без звука, жизнь ограничена `durationMs`; уход с экрана и CMS снимают все подписки.
+- Новые приколы — `moneybox-rattle` и `screen-resident`; debug-предпросмотр через `simulateEntry(id)`
+  проходит обычные правила. Переходы и отклик на нажатия принадлежат оболочке и учитывают reduced motion.
+- Smoke P2: `tests/p2.smoke.mjs`, Chromium + WebKit; запуск описан в README.
 
 ## Чек-лист ограничений (нарушать нельзя)
 
@@ -132,6 +147,9 @@ export default {
 - Идентификаторы — по-английски, тексты интерфейса — по-русски, комментарии — коротко и по делу.
 - Шрифт — системный стек. Никаких новых зависимостей (кроме уже лежащей `vendor/lottie.min.js`).
 - `localStorage` — только внутри `try/catch` (в приватном режиме бросает). Ключи с префиксом `prikoly.` / `sberkids.`.
+- Пути ассетов проходят `isContentPath()` в конфиге и при разрешении URL: только внутри `content/`, без внешних URL.
+- `sound.play()` возвращает отмену, включая незавершённую загрузку; `sound.stopAll()` и `haptics.stop()` вызываются
+  при общем завершении/красной зоне. Альбом нельзя открыть в красной зоне, в том числе через debug/API.
 - Ошибка в прикле не должна ломать оболочку: движок ловит исключения триггеров и эффектов.
 - Новый параметр триггера или эффекта получает смысловую проверку в `validate()`; длительности и лимиты неотрицательны.
 

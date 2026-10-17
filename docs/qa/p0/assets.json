@@ -1,0 +1,52 @@
+{
+  "images": [
+    {
+      "file": "content.webp",
+      "bytes": 380062,
+      "width": 750
+    },
+    {
+      "file": "home.webp",
+      "bytes": 66332,
+      "width": 750
+    },
+    {
+      "file": "moneybox.webp",
+      "bytes": 163946,
+      "width": 750
+    },
+    {
+      "file": "moneybox_goal.webp",
+      "bytes": 111386,
+      "width": 750
+    },
+    {
+      "file": "tabbar.webp",
+      "bytes": 31150,
+      "width": 750
+    },
+    {
+      "file": "tasks.webp",
+      "bytes": 39984,
+      "width": 750
+    },
+    {
+      "file": "tasks_done.webp",
+      "bytes": 58082,
+      "width": 750
+    },
+    {
+      "file": "topup_success.webp",
+      "bytes": 34754,
+      "width": 750
+    },
+    {
+      "file": "transfer.webp",
+      "bytes": 34464,
+      "width": 750
+    }
+  ],
+  "imageBytes": 920160,
+  "contentBytes": 160292,
+  "externalAssetPaths": "rejected"
+}

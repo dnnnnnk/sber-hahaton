@@ -1,0 +1,1514 @@
+[
+  {
+    "browser": "chromium",
+    "scope": "full",
+    "viewport": "375x812",
+    "checks": [
+      {
+        "name": "screen home",
+        "passed": true
+      },
+      {
+        "name": "screen tasks",
+        "passed": true
+      },
+      {
+        "name": "screen tasks_done",
+        "passed": true
+      },
+      {
+        "name": "screen moneybox",
+        "passed": true
+      },
+      {
+        "name": "screen moneybox_goal",
+        "passed": true
+      },
+      {
+        "name": "screen topup_success",
+        "passed": true
+      },
+      {
+        "name": "screen content",
+        "passed": true
+      },
+      {
+        "name": "screen transfer",
+        "passed": true
+      },
+      {
+        "name": "navigation: four tabs and all home actions",
+        "passed": true
+      },
+      {
+        "name": "navigation: goal, six moneyboxes, success and reset list",
+        "passed": true
+      },
+      {
+        "name": "all five task actions, input through effects, final celebration",
+        "passed": true
+      },
+      {
+        "name": "effect tasks-alive-dog variant 1",
+        "passed": true
+      },
+      {
+        "name": "effect tasks-alive-dog variant 2",
+        "passed": true
+      },
+      {
+        "name": "effect tasks-alive-dishes variant 1",
+        "passed": true
+      },
+      {
+        "name": "effect tasks-alive-dishes variant 2",
+        "passed": true
+      },
+      {
+        "name": "effect tasks-alive-math variant 1",
+        "passed": true
+      },
+      {
+        "name": "effect tasks-alive-math variant 2",
+        "passed": true
+      },
+      {
+        "name": "effect tasks-alive-clean variant 1",
+        "passed": true
+      },
+      {
+        "name": "effect tasks-alive-clean variant 2",
+        "passed": true
+      },
+      {
+        "name": "effect tasks-alive-book variant 1",
+        "passed": true
+      },
+      {
+        "name": "effect tasks-alive-book variant 2",
+        "passed": true
+      },
+      {
+        "name": "effect tasks-all-done variant 1",
+        "passed": true
+      },
+      {
+        "name": "effect tasks-all-done variant 2",
+        "passed": true
+      },
+      {
+        "name": "effect season-autumn-leaves variant 1",
+        "passed": true
+      },
+      {
+        "name": "effect season-winter-snow variant 1",
+        "passed": true
+      },
+      {
+        "name": "effect season-spring-petals variant 1",
+        "passed": true
+      },
+      {
+        "name": "effect season-summer-sunbeams variant 1",
+        "passed": true
+      },
+      {
+        "name": "effect season-summer-sunbeams variant 2",
+        "passed": true
+      },
+      {
+        "name": "effect holo-card variant 1",
+        "passed": true
+      },
+      {
+        "name": "effect avatar-flip variant 1",
+        "passed": true
+      },
+      {
+        "name": "effect topup-star variant 1",
+        "passed": true
+      },
+      {
+        "name": "effect moneybox-rattle variant 1",
+        "passed": true
+      },
+      {
+        "name": "effect screen-resident variant 1",
+        "passed": true
+      },
+      {
+        "name": "real avatar triple tap and long press album",
+        "passed": true
+      },
+      {
+        "name": "debug controls, decision log, zones and calibration",
+        "passed": true
+      },
+      {
+        "name": "red zone cancels pending audio and blocks every trigger",
+        "passed": true
+      },
+      {
+        "name": "red zone rejects album via public/debug API",
+        "passed": true
+      },
+      {
+        "name": "CMS list, JSON validation, save, live season and reset",
+        "passed": true
+      },
+      {
+        "name": "storage unavailable and iOS permission denied",
+        "passed": true
+      },
+      {
+        "name": "console, HTTP and origin",
+        "passed": true
+      }
+    ],
+    "screens": [
+      {
+        "id": "home",
+        "height": 812,
+        "scroll": 917,
+        "snapshots": [
+          {
+            "top": 0,
+            "screenshot": "chromium-screen-home-0.png"
+          },
+          {
+            "top": 105,
+            "screenshot": "chromium-screen-home-1.png"
+          }
+        ],
+        "overflow": false,
+        "patches": [
+          {
+            "className": "screen-patch screen-patch--home-mark",
+            "input": "none",
+            "clipped": false
+          }
+        ],
+        "anchors": [
+          {
+            "name": "avatar",
+            "x": 24,
+            "y": -89.015625,
+            "width": 55.984375,
+            "height": 56.015625
+          },
+          {
+            "name": "card",
+            "x": 16,
+            "y": 23.03125,
+            "width": 343,
+            "height": 119.984375
+          },
+          {
+            "name": "balance",
+            "x": 40,
+            "y": 85.015625,
+            "width": 124,
+            "height": 27.953125
+          },
+          {
+            "name": "tabbar",
+            "x": 12,
+            "y": 707.984375,
+            "width": 350.5,
+            "height": 85.5
+          }
+        ],
+        "raster": true
+      },
+      {
+        "id": "tasks",
+        "height": 812,
+        "scroll": 1185,
+        "snapshots": [
+          {
+            "top": 0,
+            "screenshot": "chromium-screen-tasks-0.png"
+          },
+          {
+            "top": 373,
+            "screenshot": "chromium-screen-tasks-1.png"
+          }
+        ],
+        "overflow": false,
+        "patches": [
+          {
+            "className": "screen-patch screen-patch--avatar",
+            "input": "none",
+            "clipped": false
+          },
+          {
+            "className": "screen-patch screen-patch--tasks-copy",
+            "input": "none",
+            "clipped": false
+          }
+        ],
+        "anchors": [
+          {
+            "name": "avatar",
+            "x": 24,
+            "y": -357,
+            "width": 55.984375,
+            "height": 56.015625
+          },
+          {
+            "name": "task-dog_walk",
+            "x": 16,
+            "y": 119,
+            "width": 343,
+            "height": 97
+          },
+          {
+            "name": "task-dishes",
+            "x": 16,
+            "y": 232,
+            "width": 343,
+            "height": 97
+          },
+          {
+            "name": "task-multiplication",
+            "x": 16,
+            "y": 345,
+            "width": 343,
+            "height": 97
+          },
+          {
+            "name": "task-clean_room",
+            "x": 16,
+            "y": 458,
+            "width": 343,
+            "height": 97
+          },
+          {
+            "name": "task-read_book",
+            "x": 16,
+            "y": 571,
+            "width": 343,
+            "height": 97
+          },
+          {
+            "name": "tabbar",
+            "x": 12,
+            "y": 707.984375,
+            "width": 350.5,
+            "height": 85.5
+          }
+        ],
+        "raster": true
+      },
+      {
+        "id": "tasks_done",
+        "height": 812,
+        "scroll": 906,
+        "snapshots": [
+          {
+            "top": 0,
+            "screenshot": "chromium-screen-tasks_done-0.png"
+          },
+          {
+            "top": 94,
+            "screenshot": "chromium-screen-tasks_done-1.png"
+          }
+        ],
+        "overflow": false,
+        "patches": [
+          {
+            "className": "screen-patch screen-patch--tasks-done-copy",
+            "input": "none",
+            "clipped": false
+          }
+        ],
+        "anchors": [
+          {
+            "name": "trophy",
+            "x": 30,
+            "y": 11.953125,
+            "width": 319.984375,
+            "height": 179.96875
+          },
+          {
+            "name": "tabbar",
+            "x": 0,
+            "y": 0,
+            "width": 0,
+            "height": 0
+          }
+        ],
+        "raster": true
+      },
+      {
+        "id": "moneybox",
+        "height": 812,
+        "scroll": 2121,
+        "snapshots": [
+          {
+            "top": 0,
+            "screenshot": "chromium-screen-moneybox-0.png"
+          },
+          {
+            "top": 580,
+            "screenshot": "chromium-screen-moneybox-1.png"
+          },
+          {
+            "top": 1160,
+            "screenshot": "chromium-screen-moneybox-2.png"
+          },
+          {
+            "top": 1309,
+            "screenshot": "chromium-screen-moneybox-3.png"
+          }
+        ],
+        "overflow": false,
+        "patches": [
+          {
+            "className": "screen-patch screen-patch--moneybox",
+            "input": "none",
+            "clipped": false
+          },
+          {
+            "className": "screen-patch screen-patch--moneybox",
+            "input": "none",
+            "clipped": false
+          },
+          {
+            "className": "screen-patch screen-patch--moneybox",
+            "input": "none",
+            "clipped": false
+          },
+          {
+            "className": "screen-patch screen-patch--moneybox",
+            "input": "none",
+            "clipped": false
+          },
+          {
+            "className": "screen-patch screen-patch--moneybox",
+            "input": "none",
+            "clipped": false
+          },
+          {
+            "className": "screen-patch screen-patch--moneybox",
+            "input": "none",
+            "clipped": false
+          },
+          {
+            "className": "screen-patch screen-patch--goal-banner",
+            "input": "none",
+            "clipped": false
+          }
+        ],
+        "anchors": [
+          {
+            "name": "avatar",
+            "x": 24,
+            "y": -1293.015625,
+            "width": 55.984375,
+            "height": 55.890625
+          },
+          {
+            "name": "moneybox-slides",
+            "x": 16,
+            "y": -663.03125,
+            "width": 343,
+            "height": 132.03125
+          },
+          {
+            "name": "moneybox-neon",
+            "x": 16,
+            "y": -383.046875,
+            "width": 343,
+            "height": 132.03125
+          },
+          {
+            "name": "moneybox-slime",
+            "x": 16,
+            "y": -235.109375,
+            "width": 343,
+            "height": 132.03125
+          },
+          {
+            "name": "moneybox-markers",
+            "x": 16,
+            "y": -91,
+            "width": 343,
+            "height": 132.03125
+          },
+          {
+            "name": "moneybox-band",
+            "x": 16,
+            "y": 53.09375,
+            "width": 343,
+            "height": 132.03125
+          },
+          {
+            "name": "moneybox-robot",
+            "x": 16,
+            "y": 196.9375,
+            "width": 343,
+            "height": 132.03125
+          },
+          {
+            "name": "tabbar",
+            "x": 12,
+            "y": 707.984375,
+            "width": 350.5,
+            "height": 85.5
+          }
+        ],
+        "raster": true
+      },
+      {
+        "id": "moneybox_goal",
+        "height": 812,
+        "scroll": 1355,
+        "snapshots": [
+          {
+            "top": 0,
+            "screenshot": "chromium-screen-moneybox_goal-0.png"
+          },
+          {
+            "top": 543,
+            "screenshot": "chromium-screen-moneybox_goal-1.png"
+          }
+        ],
+        "overflow": false,
+        "patches": [
+          {
+            "className": "screen-patch screen-patch--goal-copy",
+            "input": "none",
+            "clipped": false
+          }
+        ],
+        "anchors": [
+          {
+            "name": "goal",
+            "x": 36,
+            "y": -426.9375,
+            "width": 175,
+            "height": 172.953125
+          },
+          {
+            "name": "tabbar",
+            "x": 0,
+            "y": 0,
+            "width": 0,
+            "height": 0
+          }
+        ],
+        "raster": true
+      },
+      {
+        "id": "topup_success",
+        "height": 812,
+        "scroll": 812,
+        "snapshots": [
+          {
+            "top": 0,
+            "screenshot": "chromium-screen-topup_success-0.png"
+          }
+        ],
+        "overflow": false,
+        "patches": [
+          {
+            "className": "screen-patch screen-patch--primary-button",
+            "input": "none",
+            "clipped": false
+          }
+        ],
+        "anchors": [
+          {
+            "name": "success",
+            "x": 76,
+            "y": 67.96875,
+            "width": 130,
+            "height": 120
+          },
+          {
+            "name": "tabbar",
+            "x": 0,
+            "y": 0,
+            "width": 0,
+            "height": 0
+          }
+        ],
+        "raster": true
+      },
+      {
+        "id": "content",
+        "height": 812,
+        "scroll": 812,
+        "snapshots": [
+          {
+            "top": 0,
+            "screenshot": "chromium-screen-content-0.png"
+          }
+        ],
+        "overflow": false,
+        "patches": [],
+        "anchors": [
+          {
+            "name": "feed-1",
+            "x": 16,
+            "y": 75.796875,
+            "width": 343,
+            "height": 98
+          },
+          {
+            "name": "feed-2",
+            "x": 16,
+            "y": 185.796875,
+            "width": 343,
+            "height": 98
+          },
+          {
+            "name": "feed-3",
+            "x": 16,
+            "y": 295.796875,
+            "width": 343,
+            "height": 98
+          },
+          {
+            "name": "feed-4",
+            "x": 16,
+            "y": 405.796875,
+            "width": 343,
+            "height": 98
+          },
+          {
+            "name": "tabbar",
+            "x": 12,
+            "y": 707.984375,
+            "width": 350.5,
+            "height": 85.5
+          }
+        ],
+        "raster": false
+      },
+      {
+        "id": "transfer",
+        "height": 812,
+        "scroll": 812,
+        "snapshots": [
+          {
+            "top": 0,
+            "screenshot": "chromium-screen-transfer-0.png"
+          }
+        ],
+        "overflow": false,
+        "patches": [
+          {
+            "className": "screen-patch screen-patch--banks",
+            "input": "none",
+            "clipped": false
+          }
+        ],
+        "anchors": [
+          {
+            "name": "tabbar",
+            "x": 0,
+            "y": 0,
+            "width": 0,
+            "height": 0
+          }
+        ],
+        "raster": true
+      }
+    ],
+    "effects": [
+      {
+        "id": "tasks-alive-dog",
+        "variant": 1,
+        "peak": 8,
+        "endedNaturally": true
+      },
+      {
+        "id": "tasks-alive-dog",
+        "variant": 2,
+        "peak": 8,
+        "endedNaturally": true
+      },
+      {
+        "id": "tasks-alive-dishes",
+        "variant": 1,
+        "peak": 30,
+        "endedNaturally": true
+      },
+      {
+        "id": "tasks-alive-dishes",
+        "variant": 2,
+        "peak": 24,
+        "endedNaturally": true
+      },
+      {
+        "id": "tasks-alive-math",
+        "variant": 1,
+        "peak": 36,
+        "endedNaturally": true
+      },
+      {
+        "id": "tasks-alive-math",
+        "variant": 2,
+        "peak": 28,
+        "endedNaturally": true
+      },
+      {
+        "id": "tasks-alive-clean",
+        "variant": 1,
+        "peak": 46,
+        "endedNaturally": true
+      },
+      {
+        "id": "tasks-alive-clean",
+        "variant": 2,
+        "peak": 38,
+        "endedNaturally": true
+      },
+      {
+        "id": "tasks-alive-book",
+        "variant": 1,
+        "peak": 26,
+        "endedNaturally": true
+      },
+      {
+        "id": "tasks-alive-book",
+        "variant": 2,
+        "peak": 22,
+        "endedNaturally": true
+      },
+      {
+        "id": "tasks-all-done",
+        "variant": 1,
+        "peak": 130,
+        "endedNaturally": true
+      },
+      {
+        "id": "tasks-all-done",
+        "variant": 2,
+        "peak": 90,
+        "endedNaturally": true
+      },
+      {
+        "id": "season-autumn-leaves",
+        "variant": 1,
+        "peak": 34,
+        "endedNaturally": true
+      },
+      {
+        "id": "season-winter-snow",
+        "variant": 1,
+        "peak": 70,
+        "endedNaturally": true
+      },
+      {
+        "id": "season-spring-petals",
+        "variant": 1,
+        "peak": 40,
+        "endedNaturally": true
+      },
+      {
+        "id": "season-summer-sunbeams",
+        "variant": 1,
+        "peak": 42,
+        "endedNaturally": true
+      },
+      {
+        "id": "season-summer-sunbeams",
+        "variant": 2,
+        "peak": 30,
+        "endedNaturally": true
+      },
+      {
+        "id": "holo-card",
+        "variant": 1,
+        "peak": 0,
+        "endedNaturally": true
+      },
+      {
+        "id": "avatar-flip",
+        "variant": 1,
+        "peak": 0,
+        "endedNaturally": true
+      },
+      {
+        "id": "topup-star",
+        "variant": 1,
+        "peak": 0,
+        "endedNaturally": true
+      },
+      {
+        "id": "moneybox-rattle",
+        "variant": 1,
+        "peak": 61,
+        "endedNaturally": true
+      },
+      {
+        "id": "screen-resident",
+        "variant": 1,
+        "peak": 1,
+        "endedNaturally": true
+      }
+    ],
+    "errors": [],
+    "warnings": [],
+    "external": []
+  },
+  {
+    "browser": "webkit",
+    "scope": "full",
+    "viewport": "375x812",
+    "checks": [
+      {
+        "name": "screen home",
+        "passed": true
+      },
+      {
+        "name": "screen tasks",
+        "passed": true
+      },
+      {
+        "name": "screen tasks_done",
+        "passed": true
+      },
+      {
+        "name": "screen moneybox",
+        "passed": true
+      },
+      {
+        "name": "screen moneybox_goal",
+        "passed": true
+      },
+      {
+        "name": "screen topup_success",
+        "passed": true
+      },
+      {
+        "name": "screen content",
+        "passed": true
+      },
+      {
+        "name": "screen transfer",
+        "passed": true
+      },
+      {
+        "name": "navigation: four tabs and all home actions",
+        "passed": true
+      },
+      {
+        "name": "navigation: goal, six moneyboxes, success and reset list",
+        "passed": true
+      },
+      {
+        "name": "all five task actions, input through effects, final celebration",
+        "passed": true
+      },
+      {
+        "name": "effect tasks-alive-dog variant 1",
+        "passed": true
+      },
+      {
+        "name": "effect tasks-alive-dog variant 2",
+        "passed": true
+      },
+      {
+        "name": "effect tasks-alive-dishes variant 1",
+        "passed": true
+      },
+      {
+        "name": "effect tasks-alive-dishes variant 2",
+        "passed": true
+      },
+      {
+        "name": "effect tasks-alive-math variant 1",
+        "passed": true
+      },
+      {
+        "name": "effect tasks-alive-math variant 2",
+        "passed": true
+      },
+      {
+        "name": "effect tasks-alive-clean variant 1",
+        "passed": true
+      },
+      {
+        "name": "effect tasks-alive-clean variant 2",
+        "passed": true
+      },
+      {
+        "name": "effect tasks-alive-book variant 1",
+        "passed": true
+      },
+      {
+        "name": "effect tasks-alive-book variant 2",
+        "passed": true
+      },
+      {
+        "name": "effect tasks-all-done variant 1",
+        "passed": true
+      },
+      {
+        "name": "effect tasks-all-done variant 2",
+        "passed": true
+      },
+      {
+        "name": "effect season-autumn-leaves variant 1",
+        "passed": true
+      },
+      {
+        "name": "effect season-winter-snow variant 1",
+        "passed": true
+      },
+      {
+        "name": "effect season-spring-petals variant 1",
+        "passed": true
+      },
+      {
+        "name": "effect season-summer-sunbeams variant 1",
+        "passed": true
+      },
+      {
+        "name": "effect season-summer-sunbeams variant 2",
+        "passed": true
+      },
+      {
+        "name": "effect holo-card variant 1",
+        "passed": true
+      },
+      {
+        "name": "effect avatar-flip variant 1",
+        "passed": true
+      },
+      {
+        "name": "effect topup-star variant 1",
+        "passed": true
+      },
+      {
+        "name": "effect moneybox-rattle variant 1",
+        "passed": true
+      },
+      {
+        "name": "effect screen-resident variant 1",
+        "passed": true
+      },
+      {
+        "name": "real avatar triple tap and long press album",
+        "passed": true
+      },
+      {
+        "name": "debug controls, decision log, zones and calibration",
+        "passed": true
+      },
+      {
+        "name": "red zone cancels pending audio and blocks every trigger",
+        "passed": true
+      },
+      {
+        "name": "red zone rejects album via public/debug API",
+        "passed": true
+      },
+      {
+        "name": "CMS list, JSON validation, save, live season and reset",
+        "passed": true
+      },
+      {
+        "name": "storage unavailable and iOS permission denied",
+        "passed": true
+      },
+      {
+        "name": "console, HTTP and origin",
+        "passed": true
+      }
+    ],
+    "screens": [
+      {
+        "id": "home",
+        "height": 812,
+        "scroll": 917,
+        "snapshots": [
+          {
+            "top": 0,
+            "screenshot": "webkit-screen-home-0.png"
+          },
+          {
+            "top": 105,
+            "screenshot": "webkit-screen-home-1.png"
+          }
+        ],
+        "overflow": false,
+        "patches": [
+          {
+            "className": "screen-patch screen-patch--home-mark",
+            "input": "none",
+            "clipped": false
+          }
+        ],
+        "anchors": [
+          {
+            "name": "avatar",
+            "x": 24,
+            "y": -89.015625,
+            "width": 55.984375,
+            "height": 56.015625
+          },
+          {
+            "name": "card",
+            "x": 16,
+            "y": 23.03125,
+            "width": 343,
+            "height": 119.984375
+          },
+          {
+            "name": "balance",
+            "x": 40,
+            "y": 85.015625,
+            "width": 124,
+            "height": 27.953125
+          },
+          {
+            "name": "tabbar",
+            "x": 12,
+            "y": 707.984375,
+            "width": 350.5,
+            "height": 85.5
+          }
+        ],
+        "raster": true
+      },
+      {
+        "id": "tasks",
+        "height": 812,
+        "scroll": 1185,
+        "snapshots": [
+          {
+            "top": 0,
+            "screenshot": "webkit-screen-tasks-0.png"
+          },
+          {
+            "top": 373,
+            "screenshot": "webkit-screen-tasks-1.png"
+          }
+        ],
+        "overflow": false,
+        "patches": [
+          {
+            "className": "screen-patch screen-patch--avatar",
+            "input": "none",
+            "clipped": false
+          },
+          {
+            "className": "screen-patch screen-patch--tasks-copy",
+            "input": "none",
+            "clipped": false
+          }
+        ],
+        "anchors": [
+          {
+            "name": "avatar",
+            "x": 24,
+            "y": -357,
+            "width": 55.984375,
+            "height": 56.015625
+          },
+          {
+            "name": "task-dog_walk",
+            "x": 16,
+            "y": 119,
+            "width": 343,
+            "height": 97
+          },
+          {
+            "name": "task-dishes",
+            "x": 16,
+            "y": 232,
+            "width": 343,
+            "height": 97
+          },
+          {
+            "name": "task-multiplication",
+            "x": 16,
+            "y": 345,
+            "width": 343,
+            "height": 97
+          },
+          {
+            "name": "task-clean_room",
+            "x": 16,
+            "y": 458,
+            "width": 343,
+            "height": 97
+          },
+          {
+            "name": "task-read_book",
+            "x": 16,
+            "y": 571,
+            "width": 343,
+            "height": 97
+          },
+          {
+            "name": "tabbar",
+            "x": 12,
+            "y": 707.984375,
+            "width": 350.5,
+            "height": 85.5
+          }
+        ],
+        "raster": true
+      },
+      {
+        "id": "tasks_done",
+        "height": 812,
+        "scroll": 906,
+        "snapshots": [
+          {
+            "top": 0,
+            "screenshot": "webkit-screen-tasks_done-0.png"
+          },
+          {
+            "top": 94,
+            "screenshot": "webkit-screen-tasks_done-1.png"
+          }
+        ],
+        "overflow": false,
+        "patches": [
+          {
+            "className": "screen-patch screen-patch--tasks-done-copy",
+            "input": "none",
+            "clipped": false
+          }
+        ],
+        "anchors": [
+          {
+            "name": "trophy",
+            "x": 30,
+            "y": 11.953125,
+            "width": 319.984375,
+            "height": 179.96875
+          },
+          {
+            "name": "tabbar",
+            "x": 0,
+            "y": 0,
+            "width": 0,
+            "height": 0
+          }
+        ],
+        "raster": true
+      },
+      {
+        "id": "moneybox",
+        "height": 812,
+        "scroll": 2121,
+        "snapshots": [
+          {
+            "top": 0,
+            "screenshot": "webkit-screen-moneybox-0.png"
+          },
+          {
+            "top": 580,
+            "screenshot": "webkit-screen-moneybox-1.png"
+          },
+          {
+            "top": 1160,
+            "screenshot": "webkit-screen-moneybox-2.png"
+          },
+          {
+            "top": 1309,
+            "screenshot": "webkit-screen-moneybox-3.png"
+          }
+        ],
+        "overflow": false,
+        "patches": [
+          {
+            "className": "screen-patch screen-patch--moneybox",
+            "input": "none",
+            "clipped": false
+          },
+          {
+            "className": "screen-patch screen-patch--moneybox",
+            "input": "none",
+            "clipped": false
+          },
+          {
+            "className": "screen-patch screen-patch--moneybox",
+            "input": "none",
+            "clipped": false
+          },
+          {
+            "className": "screen-patch screen-patch--moneybox",
+            "input": "none",
+            "clipped": false
+          },
+          {
+            "className": "screen-patch screen-patch--moneybox",
+            "input": "none",
+            "clipped": false
+          },
+          {
+            "className": "screen-patch screen-patch--moneybox",
+            "input": "none",
+            "clipped": false
+          },
+          {
+            "className": "screen-patch screen-patch--goal-banner",
+            "input": "none",
+            "clipped": false
+          }
+        ],
+        "anchors": [
+          {
+            "name": "avatar",
+            "x": 24,
+            "y": -1293.015625,
+            "width": 55.984375,
+            "height": 55.890625
+          },
+          {
+            "name": "moneybox-slides",
+            "x": 16,
+            "y": -663.03125,
+            "width": 343,
+            "height": 132.03125
+          },
+          {
+            "name": "moneybox-neon",
+            "x": 16,
+            "y": -383.046875,
+            "width": 343,
+            "height": 132.03125
+          },
+          {
+            "name": "moneybox-slime",
+            "x": 16,
+            "y": -235.109375,
+            "width": 343,
+            "height": 132.03125
+          },
+          {
+            "name": "moneybox-markers",
+            "x": 16,
+            "y": -91,
+            "width": 343,
+            "height": 132.03125
+          },
+          {
+            "name": "moneybox-band",
+            "x": 16,
+            "y": 53.09375,
+            "width": 343,
+            "height": 132.03125
+          },
+          {
+            "name": "moneybox-robot",
+            "x": 16,
+            "y": 196.9375,
+            "width": 343,
+            "height": 132.03125
+          },
+          {
+            "name": "tabbar",
+            "x": 12,
+            "y": 707.984375,
+            "width": 350.5,
+            "height": 85.5
+          }
+        ],
+        "raster": true
+      },
+      {
+        "id": "moneybox_goal",
+        "height": 812,
+        "scroll": 1355,
+        "snapshots": [
+          {
+            "top": 0,
+            "screenshot": "webkit-screen-moneybox_goal-0.png"
+          },
+          {
+            "top": 543,
+            "screenshot": "webkit-screen-moneybox_goal-1.png"
+          }
+        ],
+        "overflow": false,
+        "patches": [
+          {
+            "className": "screen-patch screen-patch--goal-copy",
+            "input": "none",
+            "clipped": false
+          }
+        ],
+        "anchors": [
+          {
+            "name": "goal",
+            "x": 36,
+            "y": -426.9375,
+            "width": 175,
+            "height": 172.953125
+          },
+          {
+            "name": "tabbar",
+            "x": 0,
+            "y": 0,
+            "width": 0,
+            "height": 0
+          }
+        ],
+        "raster": true
+      },
+      {
+        "id": "topup_success",
+        "height": 812,
+        "scroll": 812,
+        "snapshots": [
+          {
+            "top": 0,
+            "screenshot": "webkit-screen-topup_success-0.png"
+          }
+        ],
+        "overflow": false,
+        "patches": [
+          {
+            "className": "screen-patch screen-patch--primary-button",
+            "input": "none",
+            "clipped": false
+          }
+        ],
+        "anchors": [
+          {
+            "name": "success",
+            "x": 76,
+            "y": 67.96875,
+            "width": 130,
+            "height": 120
+          },
+          {
+            "name": "tabbar",
+            "x": 0,
+            "y": 0,
+            "width": 0,
+            "height": 0
+          }
+        ],
+        "raster": true
+      },
+      {
+        "id": "content",
+        "height": 812,
+        "scroll": 812,
+        "snapshots": [
+          {
+            "top": 0,
+            "screenshot": "webkit-screen-content-0.png"
+          }
+        ],
+        "overflow": false,
+        "patches": [],
+        "anchors": [
+          {
+            "name": "feed-1",
+            "x": 16,
+            "y": 75.796875,
+            "width": 343,
+            "height": 98
+          },
+          {
+            "name": "feed-2",
+            "x": 16,
+            "y": 185.796875,
+            "width": 343,
+            "height": 98
+          },
+          {
+            "name": "feed-3",
+            "x": 16,
+            "y": 295.796875,
+            "width": 343,
+            "height": 98
+          },
+          {
+            "name": "feed-4",
+            "x": 16,
+            "y": 405.796875,
+            "width": 343,
+            "height": 98
+          },
+          {
+            "name": "tabbar",
+            "x": 12,
+            "y": 707.984375,
+            "width": 350.5,
+            "height": 85.5
+          }
+        ],
+        "raster": false
+      },
+      {
+        "id": "transfer",
+        "height": 812,
+        "scroll": 812,
+        "snapshots": [
+          {
+            "top": 0,
+            "screenshot": "webkit-screen-transfer-0.png"
+          }
+        ],
+        "overflow": false,
+        "patches": [
+          {
+            "className": "screen-patch screen-patch--banks",
+            "input": "none",
+            "clipped": false
+          }
+        ],
+        "anchors": [
+          {
+            "name": "tabbar",
+            "x": 0,
+            "y": 0,
+            "width": 0,
+            "height": 0
+          }
+        ],
+        "raster": true
+      }
+    ],
+    "effects": [
+      {
+        "id": "tasks-alive-dog",
+        "variant": 1,
+        "peak": 8,
+        "endedNaturally": true
+      },
+      {
+        "id": "tasks-alive-dog",
+        "variant": 2,
+        "peak": 8,
+        "endedNaturally": true
+      },
+      {
+        "id": "tasks-alive-dishes",
+        "variant": 1,
+        "peak": 30,
+        "endedNaturally": true
+      },
+      {
+        "id": "tasks-alive-dishes",
+        "variant": 2,
+        "peak": 24,
+        "endedNaturally": true
+      },
+      {
+        "id": "tasks-alive-math",
+        "variant": 1,
+        "peak": 36,
+        "endedNaturally": true
+      },
+      {
+        "id": "tasks-alive-math",
+        "variant": 2,
+        "peak": 28,
+        "endedNaturally": true
+      },
+      {
+        "id": "tasks-alive-clean",
+        "variant": 1,
+        "peak": 46,
+        "endedNaturally": true
+      },
+      {
+        "id": "tasks-alive-clean",
+        "variant": 2,
+        "peak": 38,
+        "endedNaturally": true
+      },
+      {
+        "id": "tasks-alive-book",
+        "variant": 1,
+        "peak": 26,
+        "endedNaturally": true
+      },
+      {
+        "id": "tasks-alive-book",
+        "variant": 2,
+        "peak": 22,
+        "endedNaturally": true
+      },
+      {
+        "id": "tasks-all-done",
+        "variant": 1,
+        "peak": 130,
+        "endedNaturally": true
+      },
+      {
+        "id": "tasks-all-done",
+        "variant": 2,
+        "peak": 90,
+        "endedNaturally": true
+      },
+      {
+        "id": "season-autumn-leaves",
+        "variant": 1,
+        "peak": 34,
+        "endedNaturally": true
+      },
+      {
+        "id": "season-winter-snow",
+        "variant": 1,
+        "peak": 70,
+        "endedNaturally": true
+      },
+      {
+        "id": "season-spring-petals",
+        "variant": 1,
+        "peak": 40,
+        "endedNaturally": true
+      },
+      {
+        "id": "season-summer-sunbeams",
+        "variant": 1,
+        "peak": 42,
+        "endedNaturally": true
+      },
+      {
+        "id": "season-summer-sunbeams",
+        "variant": 2,
+        "peak": 30,
+        "endedNaturally": true
+      },
+      {
+        "id": "holo-card",
+        "variant": 1,
+        "peak": 0,
+        "endedNaturally": true
+      },
+      {
+        "id": "avatar-flip",
+        "variant": 1,
+        "peak": 0,
+        "endedNaturally": true
+      },
+      {
+        "id": "topup-star",
+        "variant": 1,
+        "peak": 0,
+        "endedNaturally": true
+      },
+      {
+        "id": "moneybox-rattle",
+        "variant": 1,
+        "peak": 61,
+        "endedNaturally": true
+      },
+      {
+        "id": "screen-resident",
+        "variant": 1,
+        "peak": 1,
+        "endedNaturally": true
+      }
+    ],
+    "errors": [],
+    "warnings": [],
+    "external": []
+  }
+]

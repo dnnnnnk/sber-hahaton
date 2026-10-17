@@ -1,0 +1,7 @@
+sound: mute while loading: PASS
+sound: stop while loading: PASS
+sound: disable while loading: PASS
+sound: hide while loading: PASS
+sound: stop playing: PASS
+sound: mute playing: PASS
+haptics: cancel current pattern: PASS

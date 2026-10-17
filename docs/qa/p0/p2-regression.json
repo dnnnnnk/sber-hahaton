@@ -1,0 +1,37 @@
+[
+  {
+    "browser": "chromium",
+    "passed": true,
+    "errors": [],
+    "external": [],
+    "viewport": "375x812",
+    "cms": "1280x900",
+    "performance": [
+      {
+        "scenario": "coins-full-cards",
+        "cpu": 4,
+        "frames": 108,
+        "fps": 60,
+        "p95Ms": 18,
+        "maxParticles": 56
+      },
+      {
+        "scenario": "resident-and-snow",
+        "cpu": 4,
+        "frames": 109,
+        "fps": 60,
+        "p95Ms": 18,
+        "maxParticles": 64
+      }
+    ]
+  },
+  {
+    "browser": "webkit",
+    "passed": true,
+    "errors": [],
+    "external": [],
+    "viewport": "375x812",
+    "cms": "1280x900",
+    "performance": null
+  }
+]

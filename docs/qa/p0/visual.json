@@ -1,0 +1,428 @@
+[
+  {
+    "browser": "chromium",
+    "browserVersion": "151.0.7922.34",
+    "scope": "effect ",
+    "visualOnly": true,
+    "viewport": "375x812",
+    "checks": [
+      {
+        "name": "effect tasks-alive-dog variant 1",
+        "passed": true
+      },
+      {
+        "name": "effect tasks-alive-dog variant 2",
+        "passed": true
+      },
+      {
+        "name": "effect tasks-alive-dishes variant 1",
+        "passed": true
+      },
+      {
+        "name": "effect tasks-alive-dishes variant 2",
+        "passed": true
+      },
+      {
+        "name": "effect tasks-alive-math variant 1",
+        "passed": true
+      },
+      {
+        "name": "effect tasks-alive-math variant 2",
+        "passed": true
+      },
+      {
+        "name": "effect tasks-alive-clean variant 1",
+        "passed": true
+      },
+      {
+        "name": "effect tasks-alive-clean variant 2",
+        "passed": true
+      },
+      {
+        "name": "effect tasks-alive-book variant 1",
+        "passed": true
+      },
+      {
+        "name": "effect tasks-alive-book variant 2",
+        "passed": true
+      },
+      {
+        "name": "effect tasks-all-done variant 1",
+        "passed": true
+      },
+      {
+        "name": "effect tasks-all-done variant 2",
+        "passed": true
+      },
+      {
+        "name": "effect season-autumn-leaves variant 1",
+        "passed": true
+      },
+      {
+        "name": "effect season-winter-snow variant 1",
+        "passed": true
+      },
+      {
+        "name": "effect season-spring-petals variant 1",
+        "passed": true
+      },
+      {
+        "name": "effect season-summer-sunbeams variant 1",
+        "passed": true
+      },
+      {
+        "name": "effect season-summer-sunbeams variant 2",
+        "passed": true
+      },
+      {
+        "name": "effect holo-card variant 1",
+        "passed": true
+      },
+      {
+        "name": "effect avatar-flip variant 1",
+        "passed": true
+      },
+      {
+        "name": "effect topup-star variant 1",
+        "passed": true
+      },
+      {
+        "name": "effect moneybox-rattle variant 1",
+        "passed": true
+      },
+      {
+        "name": "effect screen-resident variant 1",
+        "passed": true
+      }
+    ],
+    "screens": [],
+    "effects": [
+      {
+        "id": "tasks-alive-dog",
+        "variant": 1,
+        "visualOnly": true
+      },
+      {
+        "id": "tasks-alive-dog",
+        "variant": 2,
+        "visualOnly": true
+      },
+      {
+        "id": "tasks-alive-dishes",
+        "variant": 1,
+        "visualOnly": true
+      },
+      {
+        "id": "tasks-alive-dishes",
+        "variant": 2,
+        "visualOnly": true
+      },
+      {
+        "id": "tasks-alive-math",
+        "variant": 1,
+        "visualOnly": true
+      },
+      {
+        "id": "tasks-alive-math",
+        "variant": 2,
+        "visualOnly": true
+      },
+      {
+        "id": "tasks-alive-clean",
+        "variant": 1,
+        "visualOnly": true
+      },
+      {
+        "id": "tasks-alive-clean",
+        "variant": 2,
+        "visualOnly": true
+      },
+      {
+        "id": "tasks-alive-book",
+        "variant": 1,
+        "visualOnly": true
+      },
+      {
+        "id": "tasks-alive-book",
+        "variant": 2,
+        "visualOnly": true
+      },
+      {
+        "id": "tasks-all-done",
+        "variant": 1,
+        "visualOnly": true
+      },
+      {
+        "id": "tasks-all-done",
+        "variant": 2,
+        "visualOnly": true
+      },
+      {
+        "id": "season-autumn-leaves",
+        "variant": 1,
+        "visualOnly": true
+      },
+      {
+        "id": "season-winter-snow",
+        "variant": 1,
+        "visualOnly": true
+      },
+      {
+        "id": "season-spring-petals",
+        "variant": 1,
+        "visualOnly": true
+      },
+      {
+        "id": "season-summer-sunbeams",
+        "variant": 1,
+        "visualOnly": true
+      },
+      {
+        "id": "season-summer-sunbeams",
+        "variant": 2,
+        "visualOnly": true
+      },
+      {
+        "id": "holo-card",
+        "variant": 1,
+        "visualOnly": true
+      },
+      {
+        "id": "avatar-flip",
+        "variant": 1,
+        "visualOnly": true
+      },
+      {
+        "id": "topup-star",
+        "variant": 1,
+        "visualOnly": true
+      },
+      {
+        "id": "moneybox-rattle",
+        "variant": 1,
+        "visualOnly": true
+      },
+      {
+        "id": "screen-resident",
+        "variant": 1,
+        "visualOnly": true
+      }
+    ],
+    "errors": [],
+    "warnings": [],
+    "external": []
+  },
+  {
+    "browser": "webkit",
+    "browserVersion": "26.5",
+    "scope": "effect ",
+    "visualOnly": true,
+    "viewport": "375x812",
+    "checks": [
+      {
+        "name": "effect tasks-alive-dog variant 1",
+        "passed": true
+      },
+      {
+        "name": "effect tasks-alive-dog variant 2",
+        "passed": true
+      },
+      {
+        "name": "effect tasks-alive-dishes variant 1",
+        "passed": true
+      },
+      {
+        "name": "effect tasks-alive-dishes variant 2",
+        "passed": true
+      },
+      {
+        "name": "effect tasks-alive-math variant 1",
+        "passed": true
+      },
+      {
+        "name": "effect tasks-alive-math variant 2",
+        "passed": true
+      },
+      {
+        "name": "effect tasks-alive-clean variant 1",
+        "passed": true
+      },
+      {
+        "name": "effect tasks-alive-clean variant 2",
+        "passed": true
+      },
+      {
+        "name": "effect tasks-alive-book variant 1",
+        "passed": true
+      },
+      {
+        "name": "effect tasks-alive-book variant 2",
+        "passed": true
+      },
+      {
+        "name": "effect tasks-all-done variant 1",
+        "passed": true
+      },
+      {
+        "name": "effect tasks-all-done variant 2",
+        "passed": true
+      },
+      {
+        "name": "effect season-autumn-leaves variant 1",
+        "passed": true
+      },
+      {
+        "name": "effect season-winter-snow variant 1",
+        "passed": true
+      },
+      {
+        "name": "effect season-spring-petals variant 1",
+        "passed": true
+      },
+      {
+        "name": "effect season-summer-sunbeams variant 1",
+        "passed": true
+      },
+      {
+        "name": "effect season-summer-sunbeams variant 2",
+        "passed": true
+      },
+      {
+        "name": "effect holo-card variant 1",
+        "passed": true
+      },
+      {
+        "name": "effect avatar-flip variant 1",
+        "passed": true
+      },
+      {
+        "name": "effect topup-star variant 1",
+        "passed": true
+      },
+      {
+        "name": "effect moneybox-rattle variant 1",
+        "passed": true
+      },
+      {
+        "name": "effect screen-resident variant 1",
+        "passed": true
+      }
+    ],
+    "screens": [],
+    "effects": [
+      {
+        "id": "tasks-alive-dog",
+        "variant": 1,
+        "visualOnly": true
+      },
+      {
+        "id": "tasks-alive-dog",
+        "variant": 2,
+        "visualOnly": true
+      },
+      {
+        "id": "tasks-alive-dishes",
+        "variant": 1,
+        "visualOnly": true
+      },
+      {
+        "id": "tasks-alive-dishes",
+        "variant": 2,
+        "visualOnly": true
+      },
+      {
+        "id": "tasks-alive-math",
+        "variant": 1,
+        "visualOnly": true
+      },
+      {
+        "id": "tasks-alive-math",
+        "variant": 2,
+        "visualOnly": true
+      },
+      {
+        "id": "tasks-alive-clean",
+        "variant": 1,
+        "visualOnly": true
+      },
+      {
+        "id": "tasks-alive-clean",
+        "variant": 2,
+        "visualOnly": true
+      },
+      {
+        "id": "tasks-alive-book",
+        "variant": 1,
+        "visualOnly": true
+      },
+      {
+        "id": "tasks-alive-book",
+        "variant": 2,
+        "visualOnly": true
+      },
+      {
+        "id": "tasks-all-done",
+        "variant": 1,
+        "visualOnly": true
+      },
+      {
+        "id": "tasks-all-done",
+        "variant": 2,
+        "visualOnly": true
+      },
+      {
+        "id": "season-autumn-leaves",
+        "variant": 1,
+        "visualOnly": true
+      },
+      {
+        "id": "season-winter-snow",
+        "variant": 1,
+        "visualOnly": true
+      },
+      {
+        "id": "season-spring-petals",
+        "variant": 1,
+        "visualOnly": true
+      },
+      {
+        "id": "season-summer-sunbeams",
+        "variant": 1,
+        "visualOnly": true
+      },
+      {
+        "id": "season-summer-sunbeams",
+        "variant": 2,
+        "visualOnly": true
+      },
+      {
+        "id": "holo-card",
+        "variant": 1,
+        "visualOnly": true
+      },
+      {
+        "id": "avatar-flip",
+        "variant": 1,
+        "visualOnly": true
+      },
+      {
+        "id": "topup-star",
+        "variant": 1,
+        "visualOnly": true
+      },
+      {
+        "id": "moneybox-rattle",
+        "variant": 1,
+        "visualOnly": true
+      },
+      {
+        "id": "screen-resident",
+        "variant": 1,
+        "visualOnly": true
+      }
+    ],
+    "errors": [],
+    "warnings": [],
+    "external": []
+  }
+]
