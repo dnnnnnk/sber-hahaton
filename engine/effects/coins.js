@@ -20,10 +20,12 @@ export default {
     const duration = p.durationMs ?? 2800;
     const perCard = p.coinsPerCard ?? 14;
     let budget = stage.availableParticles(ctx.settings.maxParticles);
-    // Отсеиваем невидимые карточки до распределения общего бюджета.
+    // Отсеиваем карточки, у которых кармашек не виден целиком (за краем или под таббаром), до раздачи бюджета.
+    // Нет ни одного — эффект не стартует, и движок пробует следующий прикол (например, сезонный).
+    const tabAtStart = stage.getAnchorRect('tabbar');
     const cards = p.anchors.flatMap(anchor => {
       const r = stage.getAnchorRect(anchor);
-      if (!visible(r, stage)) return [];
+      if (!pocketVisible(r, stage, tabAtStart)) return [];
       const progress = Math.max(0, Math.min(1, Number(stage.getAnchorData(anchor)?.progress) || 0));
       return [{ anchor, progress, coins: [] }];
     });
@@ -61,12 +63,9 @@ export default {
           if (!card.coins.length) continue;
           const r = stage.getAnchorRect(card.anchor);
           if (!visible(r, stage) || (tab && r.top >= tab.top)) continue;
-          shown = true;
           // Нижний правый кармашек не закрывает сумму и прогресс. Совпадает с карточкой при скролле.
-          const w = Math.min(96, r.width * 0.29);
-          const h = Math.min(40, r.height * 0.34);
-          const x = r.right - w - 12;
-          const y = r.bottom - h - 9;
+          const { x, y, w, h } = pocket(r);
+          if (y + h > 0 && y < (tab ? tab.top : stage.height)) shown = true;
           g.save();
           g.globalAlpha = alpha;
           if (tab) { g.beginPath(); g.rect(0, 0, stage.width, tab.top); g.clip(); }
@@ -120,6 +119,18 @@ export default {
 
 function visible(r, stage) {
   return r && r.bottom > 0 && r.top < stage.height && r.right > 0 && r.left < stage.width;
+}
+
+function pocket(r) {
+  const w = Math.min(96, r.width * 0.29);
+  const h = Math.min(40, r.height * 0.34);
+  return { x: r.right - w - 12, y: r.bottom - h - 9, w, h };
+}
+
+function pocketVisible(r, stage, tab) {
+  if (!visible(r, stage)) return false;
+  const { x, y, w, h } = pocket(r);
+  return y >= 0 && y + h <= (tab ? tab.top : stage.height) && x >= 0 && x + w <= stage.width;
 }
 
 function rounded(g, x, y, w, h, r) {

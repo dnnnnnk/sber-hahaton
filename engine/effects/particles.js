@@ -115,6 +115,11 @@ export default {
     const remove = stage.addRenderer(renderer);
 
     return {
+      // Мягкое завершение: новые частицы не рождаются, живые гаснут за FADE_OUT_MS и освобождают бюджет.
+      fade() {
+        system.expire(elapsed);
+        delete renderer.budget;
+      },
       stop() {
         remove();
         if (!finished) {

@@ -15,6 +15,7 @@ import { fetchConfig, readOverride, validateConfig, isContentPath, OVERRIDE_KEY,
 const LOG_LIMIT = 60;
 const DEFAULT_DURATION_MS = 5000;
 const SAFETY_EXTRA_MS = 1500;
+const FADE_SAFETY_MS = 900;
 
 // Запуск из оболочки: слой эффектов + конфиг (override из CMS или content/config.json) + горячая перезагрузка.
 export async function boot({ bus, host, configUrl }) {
@@ -55,6 +56,7 @@ export function init(rawConfig, bus, stage, { baseUrl = document.baseURI } = {})
   const collection = createCollection();
   const screen = { id: null, zone: 'green' };
   const active = new Map(); // id прикола → { handle, fullscreen, priority, timer }
+  const fading = new Set(); // мягко гаснущие эффекты: красная зона и CMS обрывают их сразу
   const log = [];
   const logListeners = new Set();
   let entries = []; // { prikol, fullscreen, dispose }
@@ -186,18 +188,30 @@ export function init(rawConfig, bus, stage, { baseUrl = document.baseURI } = {})
       else decision(c, false, verdict.reason);
     }
     passed.sort((a, b) => b.entry.prikol.priority - a.entry.prikol.priority);
-    const [winner, ...losers] = passed;
-    for (const c of losers) decision(c, false, `уступил «${winner.entry.prikol.id}» по приоритету`);
-    if (winner) start(winner, now);
+    // Победителю не на чем играть (нет якоря, кармашки за краем) — пробуем следующего подходящего.
+    let winner = null;
+    for (const c of passed) {
+      if (winner) decision(c, false, `уступил «${winner.entry.prikol.id}» по приоритету`);
+      else if (start(c, now)) winner = c;
+    }
   }
 
+  // true — эффект запущен; false — пропущен (причина уже в логе).
   function start(c, now) {
     const { prikol, fullscreen } = c.entry;
-    if (active.has(prikol.id)) return decision(c, false, 'уже играет');
+    const userAction = prikol.trigger.type === 'event';
+    if (active.has(prikol.id)) {
+      if (!userAction) return decision(c, false, 'уже играет'), false;
+      fadeEffect(prikol.id, 'повтор действия');
+    }
     if (fullscreen) {
       const current = [...active.entries()].find(([, run]) => run.fullscreen);
-      if (current && current[1].priority >= prikol.priority) return decision(c, false, `уже идёт «${current[0]}»`);
-      if (current) stopEffect(current[0], `прерван «${prikol.id}»`);
+      // Новое действие ребёнка мягко гасит предыдущий эффект того же или меньшего приоритета.
+      if (current && (userAction ? current[1].priority > prikol.priority : current[1].priority >= prikol.priority)) {
+        return decision(c, false, `уже идёт «${current[0]}»`), false;
+      }
+      if (current && userAction) fadeEffect(current[0], `сменён «${prikol.id}»`);
+      else if (current) stopEffect(current[0], `прерван «${prikol.id}»`);
     }
 
     const spec = pickVariant(prikol.effect);
@@ -234,7 +248,7 @@ export function init(rawConfig, bus, stage, { baseUrl = document.baseURI } = {})
     }
     if (!run.handle) {
       end();
-      return decision(c, false, 'эффекту не на чем играть (нет якоря?)');
+      return decision(c, false, 'эффекту не на чем играть (нет якоря?)'), false;
     }
     if (!ended) {
       active.set(prikol.id, run);
@@ -249,6 +263,7 @@ export function init(rawConfig, bus, stage, { baseUrl = document.baseURI } = {})
     if (prikol.sound) run.stopSound = sound.play(ctx.asset(prikol.sound));
     decision(c, true);
     if (collection.add(prikol.id)) ui.toast(`✨ Новая находка: ${prikol.title}`);
+    return true;
   }
 
   function stopEffect(id, reason) {
@@ -261,8 +276,27 @@ export function init(rawConfig, bus, stage, { baseUrl = document.baseURI } = {})
     info(`⏹ ${id}: ${reason}`);
   }
 
+  // Мягкое завершение: эффект перестаёт считаться активным сразу, а частицы досгорают сами (≤ 0,5 с).
+  function fadeEffect(id, reason) {
+    const run = active.get(id);
+    if (!run) return;
+    if (!run.handle.fade) return stopEffect(id, reason);
+    active.delete(id);
+    clearTimeout(run.timer);
+    const handle = run.handle;
+    const done = () => {
+      fading.delete(done);
+      safely(() => handle.stop());
+    };
+    fading.add(done);
+    safely(() => handle.fade());
+    setTimeout(done, FADE_SAFETY_MS);
+    info(`⏹ ${id}: ${reason}`);
+  }
+
   function stopAll(reason) {
     for (const id of [...active.keys()]) stopEffect(id, reason);
+    for (const done of [...fading]) done();
     sound.stopAll();
     haptics.stop();
   }

@@ -1,7 +1,9 @@
 // Правила: можно ли сейчас запустить прикол. Порядок проверок важен — первая неудачная и есть причина пропуска.
 // 1) enabled  2) красная зона и список screens  3) расписание (dateRange, timeOfDay)
 // 4) кулдаун прикола и глобальный кулдаун (пауза после полноэкранного эффекта; прикол с бо́льшим
-//    приоритетом её не ждёт — так «Все дела выполнены» не теряется сразу после отметки дела)  5) maxPerDay.
+//    приоритетом её не ждёт — так «Все дела выполнены» не теряется сразу после отметки дела).
+//    Отклик на действие ребёнка (триггер event) глобальный кулдаун не ждёт: каждый тап по делу отвечает сразу.
+// 5) maxPerDay.
 // Приоритет при одновременном срабатывании решает engine.js.
 
 const DAILY_KEY = 'prikoly.daily';
@@ -38,7 +40,8 @@ export function createRules(getSettings) {
     const since = now - (lastFired.get(prikol.id) ?? -Infinity);
     if (since < prikol.cooldownMs) return skip(`кулдаун ещё ${Math.ceil((prikol.cooldownMs - since) / 1000)} с`);
     const globalCooldown = getSettings().globalCooldownMs;
-    if (fullscreen && now - lastFullscreen.at < globalCooldown && prikol.priority <= lastFullscreen.priority) {
+    const userAction = prikol.trigger?.type === 'event';
+    if (fullscreen && !userAction && now - lastFullscreen.at < globalCooldown && prikol.priority <= lastFullscreen.priority) {
       return skip('глобальный кулдаун');
     }
 
