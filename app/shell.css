@@ -129,6 +129,79 @@ h1, h2, p { margin: 0; }
 .zone--hole { pointer-events: none; }
 .zone--lift { background-repeat: no-repeat; }
 
+/* Локальные плашки скрывают сторонние образы в исходных демонстрационных макетах. */
+.screen-patch {
+  position: absolute;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.screen-patch--avatar { border-radius: 50%; background-repeat: no-repeat; }
+
+.screen-patch--moneybox {
+  display: flex;
+  align-items: center;
+  gap: calc(16 * var(--pt));
+  padding: calc(16 * var(--pt));
+  border-radius: calc(24 * var(--pt));
+  background: #fff;
+  box-shadow: 0 calc(2 * var(--pt)) calc(8 * var(--pt)) rgba(31, 34, 41, 0.03);
+}
+
+.moneybox-patch__icon {
+  display: grid;
+  place-items: center;
+  flex: 0 0 calc(80 * var(--pt));
+  width: calc(80 * var(--pt));
+  height: calc(80 * var(--pt));
+  border-radius: calc(18 * var(--pt));
+  background: linear-gradient(145deg, #f0f6ff, #f7efff);
+  font-size: calc(34 * var(--pt));
+}
+
+.moneybox-patch__body { display: grid; flex: 1; gap: calc(7 * var(--pt)); min-width: 0; }
+.moneybox-patch__amount { font-size: calc(16 * var(--pt)); font-weight: 750; white-space: nowrap; }
+.moneybox-patch__amount small { float: right; color: #a8b1bc; font-size: calc(12 * var(--pt)); font-weight: 500; }
+.moneybox-patch__title { overflow: hidden; font-size: calc(12 * var(--pt)); white-space: nowrap; text-overflow: ellipsis; }
+.moneybox-patch__progress { height: calc(6 * var(--pt)); overflow: hidden; border-radius: 999px; background: #e9edf1; }
+.moneybox-patch__progress i { display: block; height: 100%; border-radius: inherit; background: #16d74b; }
+
+.screen-patch--banks {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: calc(8 * var(--pt));
+  padding: calc(20 * var(--pt)) calc(16 * var(--pt));
+  border-radius: calc(24 * var(--pt));
+  background: #fff;
+}
+
+.bank-choice {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-width: 0;
+  padding: calc(12 * var(--pt));
+  border-radius: calc(18 * var(--pt));
+  background: #f4f5f7;
+}
+
+.bank-choice.is-active { outline: calc(2 * var(--pt)) solid #b78aff; background: #faf7ff; }
+.bank-choice i {
+  display: grid;
+  place-items: center;
+  width: calc(34 * var(--pt));
+  height: calc(34 * var(--pt));
+  margin-bottom: calc(12 * var(--pt));
+  border-radius: calc(12 * var(--pt));
+  background: #dff6e6;
+  color: #15933a;
+  font-size: calc(18 * var(--pt));
+  font-style: normal;
+  font-weight: 800;
+}
+.bank-choice b { font-size: calc(11.5 * var(--pt)); line-height: 1.15; overflow-wrap: anywhere; }
+.bank-choice small { overflow: hidden; color: #8b949f; font-size: calc(11 * var(--pt)); white-space: nowrap; text-overflow: ellipsis; }
+
 /* Галочка «сделано» на зоне PNG */
 .zone.is-done::after,
 .png-task.is-done::after {
@@ -179,6 +252,29 @@ h1, h2, p { margin: 0; }
 }
 
 .png-task__title { font-size: calc(16 * var(--pt)); font-weight: 500; }
+
+.moneybox-ideas {
+  margin: 0 calc(16 * var(--pt)) calc(24 * var(--pt));
+  padding: calc(24 * var(--pt));
+  border-radius: calc(24 * var(--pt));
+  background: #fff;
+}
+
+.moneybox-ideas h2 { font-size: calc(22 * var(--pt)); }
+.moneybox-ideas > p { margin-top: calc(4 * var(--pt)); color: #89929d; font-size: calc(13 * var(--pt)); }
+.moneybox-ideas__grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: calc(10 * var(--pt)); margin-top: calc(18 * var(--pt)); }
+.moneybox-ideas__grid article {
+  display: grid;
+  place-items: center;
+  gap: calc(8 * var(--pt));
+  min-width: 0;
+  padding: calc(16 * var(--pt)) calc(6 * var(--pt));
+  border-radius: calc(18 * var(--pt));
+  background: linear-gradient(145deg, #eef7ff, #f6efff);
+  text-align: center;
+}
+.moneybox-ideas__grid span { font-size: calc(34 * var(--pt)); }
+.moneybox-ideas__grid b { overflow: hidden; max-width: 100%; font-size: calc(12 * var(--pt)); white-space: nowrap; text-overflow: ellipsis; }
 
 /* ——— Таббар ——— */
 

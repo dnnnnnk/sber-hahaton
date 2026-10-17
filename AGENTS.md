@@ -18,6 +18,8 @@
 
 - Движок видит оболочку только через **шину событий** и **якоря** (`stage.getAnchorRect(name)`,
   `stage.getAnchorElement(name)`). Якорь в разметке — атрибут `data-anchor="<имя>"`.
+- Нейтральные исправления растров принадлежат оболочке: `patches` в `app/screens.js`, либо собственная
+  HTML-композиция через `preferStub`. Они обязаны оставаться `pointer-events: none` и не менять зоны/якоря.
 - Движок ничего не решает сам: всё поведение — в `content/config.json`.
 - `cms.html` + `cms/` — мини-CMS, правит конфиг через override в `localStorage`.
 

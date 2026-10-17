@@ -96,7 +96,7 @@ let renderToken = 0;
 async function render(id) {
   const token = ++renderToken;
   const screen = SCREENS[id];
-  const probe = loadImage(id);
+  const probe = screen.preferStub ? Promise.resolve(null) : loadImage(id);
   // Картинку экрана (и таббара) ждём недолго — иначе рисуем заглушку и подменяем, когда догрузится.
   const ready = Promise.all([probe, screen.tab ? loadImage(TABBAR.image) : null]);
   const image = await Promise.race([ready.then(([img]) => img), wait(IMAGE_WAIT_MS).then(() => null)]);
@@ -121,7 +121,7 @@ function refresh() {
   const screen = SCREENS[state.screen];
   if (!screen) return;
   const top = viewport.scrollTop;
-  mountScreen(screen, imageCache.get(state.screen)?.result ?? null);
+  mountScreen(screen, screen.preferStub ? null : imageCache.get(state.screen)?.result ?? null);
   viewport.scrollTop = top;
 }
 
@@ -155,6 +155,7 @@ function mountScreen(screen, image) {
     frame.className = 'screen__frame';
     frame.style.aspectRatio = `${image.width} / ${image.height}`;
     frame.append(imageEl(image, screen.title));
+    for (const patch of screen.patches || []) frame.append(patchEl(patch));
     for (const zone of screen.zones) frame.append(...zoneEls(zone, image));
     const crop = document.createElement('div');
     crop.className = 'screen__crop';
@@ -252,6 +253,25 @@ function zoneEls(zone, image) {
   hole.className = 'zone zone--hole';
   Object.assign(hole.style, box, { background: zone.fill || cornerColor(image, zone) });
   return [hole, el];
+}
+
+// Нейтральные плашки поверх фрагментов исходного макета с чужими брендами/персонажами.
+// Это часть оболочки, не движка: плашки не принимают ввод, а интерактивные зоны остаются поверх них.
+function patchEl(patch) {
+  const el = document.createElement('div');
+  el.className = `screen-patch ${patch.className || ''}`;
+  Object.assign(el.style, {
+    left: `${patch.x}%`, top: `${patch.y}%`, width: `${patch.w}%`, height: `${patch.h}%`,
+  });
+  if (patch.image && patch.imageRect) {
+    const r = patch.imageRect;
+    el.style.backgroundImage = `url("${patch.image}")`;
+    el.style.backgroundSize = `${10000 / r.w}% ${10000 / r.h}%`;
+    el.style.backgroundPosition = `${slicePos(r.x, r.w)}% ${slicePos(r.y, r.h)}%`;
+  }
+  const html = typeof patch.html === 'function' ? patch.html(state) : patch.html;
+  if (html) el.innerHTML = html;
+  return el;
 }
 
 function slicePos(offset, size) {

@@ -15,7 +15,8 @@
 // Поля экрана для PNG:
 //   cropBottom: 162       — сколько pt снизу картинки скрыть всегда (нарисованный таббар — вместо него закреплённый)
 //   afterImage: state => html — HTML, который дорисовывается под картинкой (если в макете чего-то нет)
-// Координаты зон — «на глаз» по макетам: уточните их в ?debug=1 → «Калибровка».
+//   patches: []           — нейтральные HTML-плашки поверх чужих образов; ввод всегда проходит сквозь них
+// Координаты зон сверены по кадрам 750 px и в ?debug=1 → «Зоны и якоря» при viewport 375×812.
 
 export const START_SCREEN = 'home';
 
@@ -94,6 +95,22 @@ export const MONEYBOXES = [
 // Зоны копилок на moneybox.webp (карточки сверху вниз).
 const MONEYBOX_Y = { slides: 26.91, neon: 37.83, slime: 43.6, markers: 49.22, band: 54.84, robot: 60.45 };
 
+const MONEYBOX_PATCHES = MONEYBOXES.map(item => ({
+  x: 4.27, y: MONEYBOX_Y[item.id], w: 91.47, h: 5.15,
+  className: 'screen-patch--moneybox',
+  html: state => {
+    const box = state.moneyboxes.find(candidate => candidate.id === item.id) || item;
+    const progress = Math.min(100, Math.round((box.saved / box.goal) * 100));
+    return `
+      <span class="moneybox-patch__icon">${box.icon}</span>
+      <span class="moneybox-patch__body">
+        <span class="moneybox-patch__amount">${money(box.saved)} <small>из ${money(box.goal)}</small></span>
+        <span class="moneybox-patch__progress"><i style="width:${progress}%"></i></span>
+        <span class="moneybox-patch__title">${box.title}</span>
+      </span>`;
+  },
+}));
+
 export const SCREENS = {
   home: {
     title: 'Главный',
@@ -144,11 +161,16 @@ export const SCREENS = {
     title: 'Дела',
     zone: 'green',
     tab: 'tasks',
+    patches: [{
+      x: 6.4, y: 7.39, w: 14.93, h: 6.9,
+      className: 'screen-patch--avatar',
+      image: 'screens/home.webp', imageRect: { x: 6.4, y: 6.03, w: 14.93, h: 5.63 },
+    }],
     // На макете видно только первое дело, а таббар нарисован старый — срезаем всё после первой карточки
     // и дорисовываем остальные дела HTML-строками в том же стиле (afterImage).
     cropBottom: 175,
     zones: [
-      { id: 'avatar', anchor: 'avatar', lift: true, x: 6.4, y: 7.39, w: 14.93, h: 6.9 },
+      { id: 'avatar', anchor: 'avatar', x: 6.4, y: 7.39, w: 14.93, h: 6.9 },
       ...TASKS.map((t, i) => ({
         id: `task-${t.id}`,
         anchor: `task-${t.id}`,
@@ -212,7 +234,10 @@ export const SCREENS = {
     title: 'Копилки',
     zone: 'green',
     tab: 'moneybox',
-    cropBottom: 162,
+    // Нижняя подборка исходного макета содержит товарные бренды. Оставляем собственные копилки и кнопку,
+    // а вместо подборки дорисовываем нейтральные идеи HTML-карточками.
+    cropBottom: 770,
+    patches: MONEYBOX_PATCHES,
     zones: [
       { id: 'avatar', anchor: 'avatar', lift: true, x: 6.4, y: 2.34, w: 14.93, h: 2.18 },
       { id: 'goal', go: 'moneybox_goal', x: 4.27, y: 32.37, w: 91.47, h: 4.95 },
@@ -223,6 +248,16 @@ export const SCREENS = {
         x: 4.27, y: MONEYBOX_Y[m.id], w: 91.47, h: 5.15,
       })),
     ],
+    afterImage: () => `
+      <section class="moneybox-ideas">
+        <h2>Идеи для мечты</h2>
+        <p>На что можно начать копить</p>
+        <div class="moneybox-ideas__grid">
+          <article><span>🚲</span><b>Велосипед</b></article>
+          <article><span>🎧</span><b>Наушники</b></article>
+          <article><span>🛹</span><b>Скейт</b></article>
+        </div>
+      </section>`,
     stub: s => `
       <header class="page-hdr">
         <h1>Копилки</h1>
@@ -287,6 +322,7 @@ export const SCREENS = {
     zone: 'green',
     tab: 'content',
     cropBottom: 162,
+    preferStub: true,
     zones: [],
     stub: () => `
       <header class="page-hdr"><h1>Контент</h1></header>
@@ -300,6 +336,14 @@ export const SCREENS = {
     title: 'Скинуть денег',
     zone: 'red',
     tab: null,
+    patches: [{
+      x: 4.27, y: 39.9, w: 91.47, h: 20.1,
+      className: 'screen-patch--banks',
+      html: `
+        <span class="bank-choice is-active"><i>₽</i><b>Мой банк</b><small>Основной</small></span>
+        <span class="bank-choice"><i>★</i><b>Семейный</b><small>Для близких</small></span>
+        <span class="bank-choice"><i>↗</i><b>Другой банк</b><small>По СБП</small></span>`,
+    }],
     zones: [{ id: 'back', go: 'home', x: 6.4, y: 7.39, w: 14.93, h: 6.9 }],
     stub: () => `
       <header class="nav-hdr">
