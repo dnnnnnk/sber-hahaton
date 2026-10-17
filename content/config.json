@@ -163,6 +163,80 @@
       },
       "haptic": "success",
       "sound": "sounds/chime.wav"
+    },
+    {
+      "id": "season-autumn-leaves",
+      "title": "Листопад",
+      "icon": "🍂",
+      "hint": "Тряхни телефон осенью",
+      "enabled": true,
+      "priority": 5,
+      "trigger": { "type": "shake" },
+      "screens": null,
+      "schedule": { "dateRange": "09-01..11-30" },
+      "cooldownMs": 6000,
+      "maxPerDay": null,
+      "effect": {
+        "type": "particles",
+        "params": {
+          "spawn": "top", "emoji": ["🍁", "🍂", "🍃"], "count": 34, "size": [22, 34],
+          "speed": [40, 90], "gravity": 200, "drag": 0.9, "sway": 30, "rotation": 120,
+          "emitMs": 1800, "lifeMs": [4200, 5200], "durationMs": 8000,
+          "settleOn": ["card", "tabbar"], "settleChance": 0.6, "settleMs": 2000
+        }
+      },
+      "haptic": "medium",
+      "sound": "sounds/whoosh.wav"
+    },
+    {
+      "id": "season-winter-snow",
+      "title": "Снегопад",
+      "icon": "❄️",
+      "hint": "Тряхни телефон зимой",
+      "enabled": true,
+      "priority": 5,
+      "trigger": { "type": "shake" },
+      "screens": null,
+      "schedule": { "dateRange": "12-01..02-29" },
+      "cooldownMs": 6000,
+      "maxPerDay": null,
+      "effect": {
+        "type": "particles",
+        "params": {
+          "spawn": "top", "emoji": ["❄️"], "shapes": ["snow", "snow", "snow"],
+          "colors": ["#8EC8FF", "#A9D5FF", "#74B9FF"], "count": 70, "size": [10, 24],
+          "speed": [30, 70], "gravity": 180, "drag": 1, "sway": 20, "rotation": 40,
+          "emitMs": 2000, "lifeMs": [4500, 5500], "durationMs": 8000,
+          "settleOn": ["card", "tabbar"], "settleChance": 0.7, "settleMs": 2200
+        }
+      },
+      "haptic": "medium",
+      "sound": "sounds/whoosh.wav"
+    },
+    {
+      "id": "season-spring-petals",
+      "title": "Лепестки",
+      "icon": "🌸",
+      "hint": "Тряхни телефон весной",
+      "enabled": true,
+      "priority": 5,
+      "trigger": { "type": "shake" },
+      "screens": null,
+      "schedule": { "dateRange": "03-01..05-31" },
+      "cooldownMs": 6000,
+      "maxPerDay": null,
+      "effect": {
+        "type": "particles",
+        "params": {
+          "spawn": "top", "emoji": ["🌸"], "shapes": ["petal", "petal"],
+          "colors": ["#FFB3C7", "#FF8FB1", "#FFC9D6"], "count": 40, "size": [16, 28],
+          "speed": [40, 90], "gravity": 190, "drag": 0.9, "sway": 28, "rotation": 140, "flutter": true,
+          "emitMs": 1800, "lifeMs": [4200, 5200], "durationMs": 8000,
+          "settleOn": ["card", "tabbar"], "settleChance": 0.5, "settleMs": 2000
+        }
+      },
+      "haptic": "medium",
+      "sound": "sounds/whoosh.wav"
     }
   ]
 }

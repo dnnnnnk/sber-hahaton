@@ -298,6 +298,10 @@ function loadEngine() {
     .then(engine => engine.boot({ bus, host: phone, configUrl: 'content/config.json' }))
     .then(engine => {
       shell.engine = engine;
+      if (DEBUG) return import('./debug.js').then(debug => debug.mountDebug({ shell, bus, engine }));
+    })
+    .then(() => {
+      if (!shell.engine) return;
       if (state.screen) announce(); // движок пропустил первый screen:open
       announceFirstOpenToday();
     })

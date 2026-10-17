@@ -22,3 +22,52 @@
   z-index: 30;
   font-family: -apple-system, system-ui, Roboto, sans-serif;
 }
+
+/* ——— Тост «Новая находка»: сверху, не перекрывает таббар, касания проходят насквозь ——— */
+
+.prikoly-toast {
+  position: absolute;
+  top: calc(env(safe-area-inset-top) + 12px);
+  left: 50%;
+  max-width: calc(100% - 32px);
+  padding: 9px 16px;
+  border-radius: 999px;
+  background: rgba(31, 34, 41, 0.88);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18);
+  opacity: 0;
+  transform: translate(-50%, -12px);
+  transition: opacity 0.25s, transform 0.25s;
+}
+
+.prikoly-toast.is-shown {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+/* ——— Чип разрешения датчиков (только iOS, исчезает после ответа) ——— */
+
+.prikoly-chip {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 8px 14px;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.95);
+  color: #1f2229;
+  font: 600 13px/1.2 -apple-system, system-ui, Roboto, sans-serif;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.14);
+  pointer-events: auto;
+  cursor: pointer;
+  animation: prikoly-chip-in 0.4s ease-out;
+}
+
+@keyframes prikoly-chip-in {
+  from { opacity: 0; transform: translate(-50%, 8px); }
+}

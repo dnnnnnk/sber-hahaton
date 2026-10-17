@@ -216,11 +216,21 @@ function createFlow(p, total, pool, stage, ctx) {
 function createTrail(p, total, pool, stage) {
   const W = stage.width;
   const H = stage.height;
-  const right = Math.random() < 0.5;
   const rect = p.spawn === 'anchor' && p.anchor ? stage.getAnchorRect(p.anchor) : null;
-  const from = rect ? { x: rect.cx, y: rect.cy } : { x: right ? -20 : W + 20, y: H * rand([0.6, 0.85]) };
-  const to = { x: right ? W + 30 : -30, y: H * rand([0.1, 0.35]) };
-  const via = { x: W * rand([0.3, 0.7]), y: H * rand([0.3, 0.8]) };
+  // От якоря — к дальнему боковому краю, иначе — через весь экран снизу вверх.
+  const right = Math.random() < 0.5;
+  const from = rect
+    ? { x: right ? rect.left + rect.height / 2 : rect.right - rect.height / 2, y: rect.cy }
+    : { x: right ? -20 : W + 20, y: H * rand([0.6, 0.85]) };
+  const to = rect
+    ? { x: right ? W + 30 : -30, y: Math.min(H * 0.95, Math.max(H * 0.05, from.y + H * rand([-0.35, 0.1]))) }
+    : { x: right ? W + 30 : -30, y: H * rand([0.1, 0.35]) };
+  const len = Math.hypot(to.x - from.x, to.y - from.y) || 1;
+  const bend = (Math.random() - 0.5) * 0.5 * len;
+  const via = {
+    x: (from.x + to.x) / 2 - ((to.y - from.y) / len) * bend,
+    y: (from.y + to.y) / 2 + ((to.x - from.x) / len) * bend,
+  };
   const steps = Math.max(2, total);
   const lifeMs = rand(p.lifeMs);
   const stepMs = Math.min(p.stepMs, Math.max(30, (p.durationMs - lifeMs) / (steps - 1)));

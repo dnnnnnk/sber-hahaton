@@ -1,0 +1,151 @@
+/* Debug-панель (?debug=1). На широком экране — сбоку от телефона, на телефоне — шторка снизу. */
+
+.dbg {
+  position: fixed;
+  right: 16px;
+  bottom: calc(84px + env(safe-area-inset-bottom)); /* над таббаром */
+  z-index: 1000;
+  font: 13px/1.35 -apple-system, system-ui, Roboto, sans-serif;
+  color: #1f2229;
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+.dbg button {
+  font: inherit;
+  cursor: pointer;
+}
+
+.dbg__fab {
+  display: none;
+  width: 44px;
+  height: 44px;
+  border: 0;
+  border-radius: 50%;
+  background: #1f2229;
+  color: #fff;
+  font-size: 20px !important;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
+}
+
+.dbg.is-collapsed .dbg__fab { display: block; }
+.dbg.is-collapsed .dbg__body { display: none; }
+
+.dbg__body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: min(340px, calc(100vw - 32px));
+  max-height: min(70vh, 640px);
+  padding: 12px;
+  overflow-y: auto;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.97);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.25);
+}
+
+@media (min-width: 900px) {
+  .dbg { top: 16px; bottom: auto; }
+  .dbg__body { max-height: calc(100vh - 32px); }
+}
+
+.dbg__head { display: flex; justify-content: space-between; align-items: center; }
+.dbg__head button { border: 0; background: none; font-size: 16px; }
+
+.dbg__status, .dbg__stats { color: #4a505c; }
+.dbg__stats { font-variant-numeric: tabular-nums; }
+
+.dbg__zone {
+  display: inline-block;
+  margin-right: 4px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  font-weight: 600;
+}
+
+.dbg__zone--green { background: #e3f6e8; color: #128a2b; }
+.dbg__zone--red { background: #fde4e2; color: #c4271b; }
+
+.dbg__grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+
+.dbg__grid button {
+  padding: 8px 6px;
+  border: 1px solid #e1e5eb;
+  border-radius: 10px;
+  background: #f6f8fa;
+  text-align: left;
+}
+
+.dbg__grid button:active { background: #e8ecf1; }
+
+.dbg__tilt {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  padding: 6px 10px 8px;
+  border: 1px solid #e1e5eb;
+  border-radius: 10px;
+}
+
+.dbg__tilt label { display: flex; align-items: center; gap: 8px; }
+.dbg__tilt input { flex: 1; }
+
+.dbg__toggles { display: flex; gap: 14px; }
+.dbg__calib { padding: 6px 8px; border-radius: 8px; background: #fff7d6; font-family: ui-monospace, Menlo, monospace; font-size: 12px; }
+
+.dbg__log {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-family: ui-monospace, Menlo, monospace;
+  font-size: 11.5px;
+}
+
+.dbg__log li { padding: 2px 0; border-bottom: 1px solid #f0f2f5; overflow-wrap: anywhere; }
+.dbg__log .is-ok { color: #128a2b; }
+.dbg__log .is-skip { color: #8a6d00; }
+.dbg__log .is-info { color: #3d6bd9; }
+.dbg__log .is-event { color: #9aa1ad; }
+
+/* Красная зона видна сразу */
+.debug-on .phone[data-screen-zone="red"] { outline: 4px solid #f04438; outline-offset: -4px; }
+
+/* Подсветка зон и якорей */
+.debug-zones [data-zone], .debug-zones [data-tab] { outline: 2px solid rgba(61, 139, 255, 0.8); outline-offset: -2px; }
+.debug-zones [data-anchor] { outline: 2px dashed rgba(255, 122, 89, 0.95); outline-offset: -2px; }
+.debug-zones [data-anchor]:not(.zone):not(.tabbar) { position: relative; }
+
+.debug-zones [data-anchor]::after {
+  content: attr(data-anchor);
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 5;
+  padding: 0 4px;
+  background: rgba(255, 122, 89, 0.95);
+  color: #fff;
+  font: 600 10px/1.5 ui-monospace, Menlo, monospace;
+  text-decoration: none;
+  pointer-events: none;
+}
+
+/* Калибровка */
+.dbg-calib {
+  position: absolute;
+  inset: 0;
+  z-index: 40;
+  cursor: crosshair;
+  touch-action: none;
+  background: rgba(61, 139, 255, 0.06);
+}
+
+.dbg-calib__box {
+  position: absolute;
+  border: 2px solid #3d8bff;
+  background: rgba(61, 139, 255, 0.15);
+  pointer-events: none;
+}

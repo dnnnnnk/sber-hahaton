@@ -7,6 +7,8 @@ import { createRules } from './rules.js';
 import { createStage } from './stage.js';
 import { createHaptics } from './haptics.js';
 import { createSound } from './sound.js';
+import { createSensors, PERMISSION_SOURCES } from './sensors.js';
+import { createUi } from './ui.js';
 import { fetchConfig, readOverride, validateConfig, OVERRIDE_KEY, DEFAULT_SETTINGS } from './config.js';
 
 const LOG_LIMIT = 60;
@@ -47,6 +49,8 @@ export function init(rawConfig, bus, stage, { baseUrl = document.baseURI } = {})
   const rules = createRules(settings);
   const haptics = createHaptics(() => settings().haptics);
   const sound = createSound(() => settings().sound);
+  const sensors = createSensors();
+  const ui = createUi(stage);
   const screen = { id: null, zone: 'green' };
   const active = new Map(); // id прикола → { handle, fullscreen, priority, timer }
   const log = [];
@@ -54,7 +58,7 @@ export function init(rawConfig, bus, stage, { baseUrl = document.baseURI } = {})
   let entries = []; // { prikol, fullscreen, dispose }
   let pending = [];
 
-  const triggerCtx = { bus, stage, settings };
+  const triggerCtx = { bus, stage, sensors, settings };
 
   bus.on('screen:open', ({ screen: id, zone }) => {
     screen.id = id;
@@ -90,9 +94,33 @@ export function init(rawConfig, bus, stage, { baseUrl = document.baseURI } = {})
     config = result.config;
     source = from;
     build();
+    updatePermissionUi();
     info(`🔄 конфиг из ${from}: ${entries.length} из ${config.prikoly.length} приколов включено`);
     return result;
   }
+
+  // ——— Разрешение датчиков (iOS) и разблокировка звука: первым же касанием или чипом ———
+
+  function usesMotion() {
+    return entries.some(e => triggers[e.prikol.trigger.type].sensors?.some(s => PERMISSION_SOURCES.includes(s)));
+  }
+
+  function updatePermissionUi() {
+    if (sensors.needsPermission() && usesMotion()) ui.showChip(onGesture);
+    else ui.hideChip();
+  }
+
+  function onGesture() {
+    sound.unlock();
+    if (sensors.needsPermission() && usesMotion()) {
+      sensors.requestPermission().then(result => {
+        if (result !== 'unknown') info(`📱 датчики движения: ${result === 'granted' ? 'разрешены' : 'запрещены'}`);
+        updatePermissionUi();
+      });
+    }
+  }
+
+  for (const type of ['touchend', 'click']) document.addEventListener(type, onGesture, { capture: true, passive: true });
 
   // ——— Срабатывание: копим кандидатов одного «тика» и решаем разом (приоритеты) ———
 
@@ -216,6 +244,8 @@ export function init(rawConfig, bus, stage, { baseUrl = document.baseURI } = {})
     stage,
     rules,
     sound,
+    sensors,
+    ui,
     get config() { return config; },
     get source() { return source; },
     get screen() { return { ...screen }; },
