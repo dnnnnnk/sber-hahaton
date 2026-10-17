@@ -318,7 +318,7 @@ export const SCREENS = {
         <p>На что можно начать копить</p>
         <div class="moneybox-ideas__grid">
           <article><span>🛹</span><b>Скейт</b></article>
-          <article><span>🧩</span><b>Конструктор</b></article>
+          <article><span>🧩</span><b>Пазл</b></article>
           <article><span>📚</span><b>Книга</b></article>
         </div>
       </section>`,
