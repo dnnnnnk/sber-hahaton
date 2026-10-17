@@ -97,10 +97,18 @@ export function createSound(isEnabled) {
       if (muted || !isEnabled() || document.hidden) return null;
       const ctx = context(false);
       if (!ctx || ctx.state !== 'running') return null;
+      // [начало, частота, длительность, во сколько раз изменится частота к концу]
       const notes = {
         coins: [[0, 1568, 0.08], [0.07, 2093, 0.07], [0.15, 1760, 0.09], [0.23, 2637, 0.12]],
         giggle: [[0, 620, 0.08], [0.1, 820, 0.07], [0.2, 1060, 0.12]],
         wobble: [[0, 440, 0.12], [0.12, 370, 0.12], [0.24, 330, 0.16]],
+        hop: [[0, 520, 0.09, 1.6], [0.08, 880, 0.1, 1.2]],
+        dance: [[0, 660, 0.09], [0.12, 880, 0.09], [0.24, 990, 0.09], [0.36, 1320, 0.16]],
+        yawn: [[0, 560, 0.55, 0.55]],
+        wake: [[0, 420, 0.22, 1.7], [0.2, 700, 0.14, 1.25]],
+        shimmer: [[0, 1760, 0.18, 1.12], [0.06, 2349, 0.2, 1.1], [0.13, 2793, 0.26, 1.08]],
+        dawn: [[0, 523, 0.3, 1], [0.18, 659, 0.3, 1], [0.36, 784, 0.42, 1], [0.6, 1047, 0.5, 1]],
+        swish: [[0, 900, 0.12, 0.5]],
       }[kind];
       if (!notes) return null;
       const nodes = [];
@@ -114,13 +122,13 @@ export function createSound(isEnabled) {
         }
         voices.delete(stop);
       };
-      for (const [offset, frequency, duration] of notes) {
+      for (const [offset, frequency, duration, glide = 0.82] of notes) {
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
         const at = ctx.currentTime + offset;
         osc.type = 'sine';
         osc.frequency.setValueAtTime(frequency, at);
-        osc.frequency.exponentialRampToValueAtTime(frequency * 0.82, at + duration);
+        osc.frequency.exponentialRampToValueAtTime(frequency * glide, at + duration);
         gain.gain.setValueAtTime(0, at);
         gain.gain.linearRampToValueAtTime(0.065, at + 0.008);
         gain.gain.exponentialRampToValueAtTime(0.001, at + duration);

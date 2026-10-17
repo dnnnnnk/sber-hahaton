@@ -113,6 +113,7 @@ function entryProblem(entry, ids) {
   if (typeof entry.id !== 'string' || !entry.id) return 'нет id';
   if (ids.has(entry.id)) return 'повторяющийся id';
   if (entry.enabled != null && typeof entry.enabled !== 'boolean') return 'enabled должен быть true или false';
+  if (entry.exclusive != null && typeof entry.exclusive !== 'boolean') return 'exclusive должен быть true или false';
   for (const key of ['title', 'hint', 'icon']) {
     if (entry[key] != null && typeof entry[key] !== 'string') return `${key} должен быть строкой`;
   }
@@ -160,6 +161,7 @@ function normalizeEntry(entry) {
     hint: typeof entry.hint === 'string' ? entry.hint : '',
     icon: typeof entry.icon === 'string' && entry.icon ? entry.icon : '✨',
     enabled: entry.enabled !== false,
+    exclusive: entry.exclusive !== false,
     priority: entry.priority ?? 0,
     screens: entry.screens ?? null,
     schedule: entry.schedule ?? null,

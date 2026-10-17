@@ -63,7 +63,8 @@ export function init(rawConfig, bus, stage, { baseUrl = document.baseURI } = {})
   let disposeAlbumGesture = null;
   let pending = [];
 
-  const triggerCtx = { bus, stage, sensors, settings };
+  const currentScreen = () => ({ ...screen });
+  const triggerCtx = { bus, stage, sensors, settings, screen: currentScreen };
 
   bus.on('screen:open', ({ screen: id, zone }) => {
     screen.id = id;
@@ -187,10 +188,13 @@ export function init(rawConfig, bus, stage, { baseUrl = document.baseURI } = {})
       if (verdict.ok) passed.push(c);
       else decision(c, false, verdict.reason);
     }
-    passed.sort((a, b) => b.entry.prikol.priority - a.entry.prikol.priority);
+    // Неэксклюзивные приколы (exclusive: false — жилец, вехи поверх звезды) не соревнуются за приоритет.
+    for (const c of passed.filter(c => c.entry.prikol.exclusive === false)) start(c, now);
+    const contest = passed.filter(c => c.entry.prikol.exclusive !== false);
+    contest.sort((a, b) => b.entry.prikol.priority - a.entry.prikol.priority);
     // Победителю не на чем играть (нет якоря, кармашки за краем) — пробуем следующего подходящего.
     let winner = null;
-    for (const c of passed) {
+    for (const c of contest) {
       if (winner) decision(c, false, `уступил «${winner.entry.prikol.id}» по приоритету`);
       else if (start(c, now)) winner = c;
     }
@@ -236,6 +240,9 @@ export function init(rawConfig, bus, stage, { baseUrl = document.baseURI } = {})
       haptics,
       sound,
       sensors,
+      // Эффект может слушать события оболочки (жилец реагирует на дела), но не отправлять их.
+      events: { on: (name, fn) => bus.on(name, fn) },
+      screen: currentScreen,
       payload: c.payload,
       end,
     };
@@ -252,10 +259,13 @@ export function init(rawConfig, bus, stage, { baseUrl = document.baseURI } = {})
     }
     if (!ended) {
       active.set(prikol.id, run);
-      run.timer = setTimeout(
-        () => stopEffect(prikol.id, 'не уложился в durationMs'),
-        (params.durationMs ?? DEFAULT_DURATION_MS) + SAFETY_EXTRA_MS,
-      );
+      // Постоянный эффект (жилец без durationMs) живёт до ухода на красный/неподходящий экран.
+      if (!run.handle.persistent) {
+        run.timer = setTimeout(
+          () => stopEffect(prikol.id, 'не уложился в durationMs'),
+          (params.durationMs ?? DEFAULT_DURATION_MS) + SAFETY_EXTRA_MS,
+        );
+      }
     }
 
     rules.commit(prikol, fullscreen, now);
