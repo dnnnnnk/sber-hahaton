@@ -291,7 +291,7 @@ button.zone--pill:active::before { display: none; }
   color: #fff;
 }
 
-.screen-patch--goal-banner b { font-size: calc(17 * var(--pt)); font-weight: 700; line-height: calc(20 * var(--pt)); }
+.screen-patch--goal-banner b { font-size: calc(16.5 * var(--pt)); font-weight: 700; line-height: calc(20 * var(--pt)); white-space: nowrap; }
 .screen-patch--goal-banner span {
   display: grid;
   place-items: center;
