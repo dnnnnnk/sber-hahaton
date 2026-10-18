@@ -364,14 +364,23 @@ for (const browserType of [chromium, webkit].filter(b => !process.env.ONLY_BROWS
     });
 
     // ——— B2: голограмма-фольга ———
-    await check('B2 card has its own green face and an HTML balance', async () => {
+    await check('B1 home card and QR button are the original raster, no shell patch over them', async () => {
       await go('home');
-      const card = await page.locator('[data-anchor="card"]').boundingBox();
-      const face = await page.locator('.screen-patch--card').boundingBox();
-      assert.ok(['x', 'y', 'width', 'height'].every(k => Math.abs(card[k] - face[k]) < 1), 'face covers the card anchor exactly');
-      await page.evaluate(() => window.sberKids.setBalance(1111));
-      assert.ok(/1\s111/.test(await page.locator('[data-anchor="balance"]').innerText()), 'balance is live HTML');
-      await page.evaluate(() => window.sberKids.setBalance(800.55));
+      const covered = await page.evaluate(() => {
+        const frame = document.querySelector('.screen__frame').getBoundingClientRect();
+        const card = document.querySelector('[data-anchor="card"]').getBoundingClientRect();
+        // Кнопка сканера QR в правом верхнем углу home.webp: 590..701 × 120..231 px из 750 × 1990.
+        const qr = { left: frame.left + frame.width * 0.787, right: frame.left + frame.width * 0.935, top: frame.top + frame.height * 0.0603, bottom: frame.top + frame.height * 0.116 };
+        const hit = (a, b) => a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom;
+        return [...document.querySelectorAll('.screen-patch')].filter(el => {
+          const r = el.getBoundingClientRect();
+          return hit(r, card) || hit(r, qr);
+        }).map(el => el.className);
+      });
+      assert.deepEqual(covered, [], 'nothing covers the card picture or the QR icon');
+      const [card, balance] = await Promise.all(['card', 'balance'].map(name => page.locator(`[data-anchor="${name}"]`).last().boundingBox()));
+      assert.ok(balance.x > card.x && balance.y > card.y && balance.x + balance.width < card.x + card.width / 2, 'balance anchor sits on the raster sum');
+      await shot('b1-home-raster');
     });
 
     await check('B2 foil is visible from the first ±10° and fades when still', async () => {

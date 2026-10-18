@@ -128,27 +128,11 @@ export const SCREENS = {
     zone: 'green',
     tab: 'home',
     cropBottom: 162,
-    patches: [{
-      x: 78.4, y: 6.03, w: 14.93, h: 5.63,
-      className: 'screen-patch--home-mark', html: '<span>✦</span>',
-    }, {
-      // Собственное «жидкое» зелёное лицо карты вместо растра с котом: на нём видна голограмма,
-      // а баланс — живой HTML (debug «Баланс 1111» меняет число). Якорь balance — сам текст суммы.
-      x: 4.27, y: 17.36, w: 91.47, h: 11.98,
-      className: 'screen-patch--card',
-      html: s => {
-        const [whole, cents] = money(s.balance).split(',');
-        return `
-          ${CARD_LIQUID}
-          <span class="card-face__title">Детская карта</span>
-          <span class="card-face__num">•• 4821</span>
-          <span class="card-face__balance" data-anchor="balance" role="img" aria-label="Баланс карты ${money(s.balance)}">${whole}${cents ? `<small>,${cents}</small>` : ''}</span>
-          <i class="card-face__chip"></i>`;
-      },
-    }],
     zones: [
       { id: 'avatar', anchor: 'avatar', label: 'Аватар. Нажмите, чтобы открыть альбом находок', keyboardAction: true, lift: true, round: true, x: 6.4, y: 6.03, w: 14.93, h: 5.63 },
       { id: 'card', anchor: 'card', label: 'Детская карта', x: 4.27, y: 17.36, w: 91.47, h: 11.98 },
+      // Растровая сумма «800,55 ₽» на карте — поднимаемый якорь: «Красивое число» анимирует саму сумму.
+      { id: 'balance', anchor: 'balance', lift: true, fill: '#fff', x: 10.4, y: 23.52, w: 33.6, h: 3.22 },
       { id: 'transfer', label: 'Скинуть деньги', go: 'transfer', x: 4.27, y: 40.8, w: 67.47, h: 11.26 },
       { id: 'self', label: 'Перевести себе', go: 'transfer', x: 74.67, y: 40.8, w: 21.07, h: 11.26 },
       { id: 'mobile', label: 'Оплатить мобильную связь', go: 'transfer', x: 4.27, y: 68.34, w: 91.47, h: 7.04 },
@@ -292,10 +276,11 @@ export const SCREENS = {
     // Нижняя подборка исходного макета содержит товарные бренды. Оставляем собственные копилки и кнопку,
     // а вместо подборки дорисовываем нейтральные идеи HTML-карточками.
     cropBottom: 770,
+    // Баннер мечты — из растра (робот, ракета, кнопка); плашкой закрыт только заголовок с артефактами «_».
     patches: [...MONEYBOX_PATCHES, {
-      x: 4.27, y: 32.37, w: 91.47, h: 4.95,
+      x: 36.27, y: 33.54, w: 39.07, h: 1.6,
       className: 'screen-patch--goal-banner',
-      html: '<span>🤖</span><b>Ура! Ты накопил на мечту</b><small>Открыть мечту →</small>',
+      html: '<b>Ура! Ты накопил<br>на мечту</b>',
     }],
     zones: [
       { id: 'avatar', anchor: 'avatar', label: 'Аватар. Нажмите, чтобы открыть альбом находок', keyboardAction: true, lift: true, round: true, x: 6.4, y: 2.34, w: 14.93, h: 2.18 },
@@ -459,16 +444,6 @@ export const SCREENS = {
       </div>`,
   },
 };
-
-// Мягкие «жидкие» волны на зелёной карте (только векторы, без растров).
-const CARD_LIQUID = `
-  <svg class="card-face__liquid" viewBox="0 0 343 118" preserveAspectRatio="none" aria-hidden="true">
-    <path d="M0 64C52 40 96 92 160 70S262 30 343 52V118H0Z" fill="rgba(255,255,255,.10)"/>
-    <path d="M0 92C64 70 118 112 196 90S292 72 343 86V118H0Z" fill="rgba(0,70,55,.20)"/>
-    <path d="M190 0C210 30 262 40 343 22V0Z" fill="rgba(255,255,255,.12)"/>
-    <circle cx="300" cy="78" r="46" fill="rgba(160,255,210,.16)"/>
-    <circle cx="44" cy="14" r="30" fill="rgba(255,255,255,.08)"/>
-  </svg>`;
 
 export function money(value) {
   return `${value.toLocaleString('ru-RU', { maximumFractionDigits: 2 })} ₽`;
