@@ -155,11 +155,15 @@ export const SCREENS = {
     zone: 'green',
     tab: 'home',
     cropBottom: 162,
+    // Живая сумма поверх растровой «800,55 ₽» (debug «Баланс 1111» меняет число). Плашка закрывает только
+    // растровые цифры белым — фон карты там чисто белый. Якорь balance — сам текст суммы.
+    patches: [{
+      x: 9.87, y: 23.42, w: 35.47, h: 3.52,
+      className: 'screen-patch--balance',
+      html: s => balanceHtml(s.balance),
+    }],
     zones: [
       { id: 'avatar', anchor: 'avatar', label: 'Аватар. Нажмите, чтобы открыть альбом находок', keyboardAction: true, lift: true, round: true, x: 6.4, y: 6.03, w: 14.93, h: 5.63 },
-      // Растровая сумма «800,55 ₽» на карте — поднимаемый якорь: «Красивое число» анимирует саму сумму.
-      // Стоит до карты: слой голограммы внутри якоря card ложится и на сумму.
-      { id: 'balance', anchor: 'balance', lift: true, fill: '#fff', x: 10.4, y: 23.52, w: 33.6, h: 3.22 },
       // Углы карты по растру home.webp: сверху 40 px @2x, снизу (стык с «Бонусами») 10 px.
       { id: 'card', anchor: 'card', label: 'Детская карта', radius: [20, 20, 5, 5], x: 4.27, y: 17.36, w: 91.47, h: 11.98 },
       { id: 'transfer', label: 'Скинуть деньги', go: 'transfer', x: 4.27, y: 40.8, w: 67.47, h: 11.26 },
@@ -491,6 +495,15 @@ export const SCREENS = {
       </div>`,
   },
 };
+
+// Сумма на карте как в макете: рубли чёрным, копейки и «₽» серым, тот же кегль. Системный шрифт подобран
+// по растру home.webp: высота цифр 21 pt → 29 pt, жирность 700, трекинг −0.01em (shell.css).
+function balanceHtml(value) {
+  const text = money(value); // «800,55 ₽», «1 111 ₽»
+  const cut = text.includes(',') ? text.indexOf(',') : text.lastIndexOf(' ');
+  return `<span class="balance-sum" data-anchor="balance" role="img" aria-label="Баланс карты ${text}">`
+    + `<b>${text.slice(0, cut)}</b><small>${text.slice(cut)}</small></span>`;
+}
 
 export function money(value) {
   return `${value.toLocaleString('ru-RU', { maximumFractionDigits: 2 })} ₽`;

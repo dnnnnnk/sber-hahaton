@@ -460,9 +460,11 @@ for (const browserType of [chromium, webkit].filter(b => !process.env.ONLY_BROWS
         // Кнопка сканера QR в правом верхнем углу home.webp: 590..701 × 120..231 px из 750 × 1990.
         const qr = { left: frame.left + frame.width * 0.787, right: frame.left + frame.width * 0.935, top: frame.top + frame.height * 0.0603, bottom: frame.top + frame.height * 0.116 };
         const hit = (a, b) => a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom;
+        // Единственная плашка на карте — живая сумма: только над растровыми цифрами, не над картинкой.
+        const picture = { left: card.left + card.width * 0.66, right: card.right, top: card.top, bottom: card.bottom };
         return [...document.querySelectorAll('.screen-patch')].filter(el => {
           const r = el.getBoundingClientRect();
-          return hit(r, card) || hit(r, qr);
+          return hit(r, qr) || hit(r, picture) || (hit(r, card) && !el.classList.contains('screen-patch--balance'));
         }).map(el => el.className);
       });
       assert.deepEqual(covered, [], 'nothing covers the card picture or the QR icon');
@@ -759,6 +761,69 @@ for (const browserType of [chromium, webkit].filter(b => !process.env.ONLY_BROWS
     });
 
     // ——— D: красивое число и вехи копилки ———
+    await check('D the HTML balance at 800,55 ₽ is indistinguishable from the raster', async () => {
+      await go('home');
+      await stop();
+      const hide = await page.addStyleTag({ content: '.prikoly-stage, .prikoly-toast { visibility: hidden !important; }' });
+      const patch = await page.locator('.screen-patch--balance').boundingBox();
+      const clip = { x: patch.x - 6, y: patch.y - 6, width: patch.width + 12, height: patch.height + 12 };
+      const html = await page.screenshot({ clip, scale: 'device' });
+      const raw = await page.addStyleTag({ content: '.screen-patch--balance { visibility: hidden !important; }' });
+      const raster = await page.screenshot({ clip, scale: 'device' });
+      await raw.evaluate(el => el.remove());
+      await hide.evaluate(el => el.remove());
+      const m = await page.evaluate(async ([a, r]) => {
+        const read = async b64 => {
+          const img = new Image();
+          img.src = `data:image/png;base64,${b64}`;
+          await img.decode();
+          const c = document.createElement('canvas');
+          c.width = img.width; c.height = img.height;
+          const g = c.getContext('2d');
+          g.drawImage(img, 0, 0);
+          return g.getImageData(0, 0, c.width, c.height);
+        };
+        const [A, R] = await Promise.all([read(a), read(r)]);
+        const ink = (D, thr) => {
+          let L = 1e9, Rr = -1, T = 1e9, B = -1;
+          for (let y = 0; y < D.height; y++) for (let x = 0; x < D.width; x++) {
+            if (D.data[(y * D.width + x) * 4] < thr) { L = Math.min(L, x); Rr = Math.max(Rr, x); T = Math.min(T, y); B = Math.max(B, y); }
+          }
+          return [L, Rr, T, B];
+        };
+        let sum = 0;
+        for (let i = 0; i < A.data.length; i += 4) sum += Math.abs(A.data[i] - R.data[i]) + Math.abs(A.data[i + 1] - R.data[i + 1]) + Math.abs(A.data[i + 2] - R.data[i + 2]);
+        return { all: [ink(A, 230), ink(R, 230)], rubles: [ink(A, 100), ink(R, 100)], mean: sum / (A.data.length / 4 * 3) };
+      }, [html.toString('base64'), raster.toString('base64')]);
+      for (const key of ['all', 'rubles']) {
+        const [h, r] = m[key];
+        assert.ok(h.every((v, i) => Math.abs(v - r[i]) <= 2), `${key}: html ${h} vs raster ${r} (px @2x)`);
+      }
+      assert.ok(m.mean < 9, `mean difference ${m.mean.toFixed(2)}`);
+      const colors = await page.locator('[data-anchor="balance"]').evaluate(el => [getComputedStyle(el.firstElementChild).color, getComputedStyle(el.lastElementChild).color]);
+      assert.deepEqual(colors, ['rgb(0, 0, 0)', 'rgb(166, 180, 189)']);
+    });
+
+    await check('D debug «Баланс 1111» changes the HTML balance and sends balance:show → glow around it', async () => {
+      await go('home');
+      await reset();
+      const shown = [];
+      await page.exposeFunction('noteBalance', v => shown.push(v)).catch(() => {});
+      await page.evaluate(() => window.sberKids.bus.on('balance:show', ({ value }) => window.noteBalance(value)));
+      await page.evaluate(() => { document.querySelector('.dbg').classList.remove('is-collapsed'); document.querySelector('[data-act="balance"]').click(); document.querySelector('.dbg').classList.add('is-collapsed'); });
+      await page.waitForFunction(() => ['balance-pretty-number', 'balance-pretty-glow'].every(id => window.sberKids.engine.stats().active.includes(id)));
+      assert.ok(/^1\s111\s₽$/.test(await page.locator('[data-anchor="balance"]').innerText()), 'the sum on the card is 1 111 ₽');
+      assert.ok(shown.includes(1111), 'balance:show 1111');
+      const glow = await page.locator('[data-anchor="balance"]').evaluate(el => el.getAnimations().length);
+      assert.ok(glow > 0, 'the sum glows and jumps');
+      const enabled = await page.evaluate(() => window.sberKids.engine.config.prikoly.filter(p => p.id.startsWith('balance-pretty')).every(p => p.enabled));
+      assert.ok(enabled, 'pretty number is enabled in the config');
+      await page.waitForTimeout(400);
+      await shot('d-balance-1111');
+      await page.evaluate(() => window.sberKids.setBalance(800.55));
+      await stop();
+    });
+
     await check('D pretty number: gold stars and a glowing HTML balance', async () => {
       await go('home');
       await reset();

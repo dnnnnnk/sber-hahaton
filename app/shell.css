@@ -352,6 +352,25 @@ button.zone--pill:active::before { display: none; }
 .bank-choice b { font-size: calc(11.5 * var(--pt)); line-height: 1.15; overflow-wrap: anywhere; }
 .bank-choice small { overflow: hidden; color: #8b949f; font-size: calc(11 * var(--pt)); white-space: nowrap; text-overflow: ellipsis; }
 
+/* Баланс на карте: живой HTML поверх растровой суммы. Плашка закрывает растровые цифры белым (фон карты там
+   чисто белый) и не обрезает сумму, когда «Красивое число» её подбрасывает. Метрики сверены по home.webp:
+   цифры 41..163 × 238..259 pt, «800» — #000, «,55 ₽» — #A6B4BD. */
+.screen-patch--balance { overflow: visible; background: #fff; }
+.balance-sum {
+  position: absolute;
+  left: calc(3 * var(--pt));
+  top: calc(1 * var(--pt));
+  display: inline-block;
+  color: #000;
+  font-size: calc(29 * var(--pt));
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+}
+.balance-sum b { font-weight: inherit; letter-spacing: -0.05em; }
+.balance-sum small { margin-left: calc(3 * var(--pt)); color: #a6b4bd; font-size: inherit; letter-spacing: -0.02em; }
+
 /* Итог дел: те же пять дел, что на экране «Дела» */
 .screen-patch--done-list {
   display: grid;
