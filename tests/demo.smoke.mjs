@@ -349,26 +349,109 @@ for (const browserType of [chromium, webkit].filter(b => !process.env.ONLY_BROWS
       await cms.close();
     });
 
-    await check('B1 swipe lets her go until the next app open', async () => {
-      await go('home');
-      await page.waitForFunction(() => document.querySelectorAll('.prikoly-drop').length === 1);
-      await settle();
+    // Прятки: поза Капли — по коробке .prikoly-drop (без поворота, со сдвигом и масштабом).
+    const dropBox = () => page.evaluate(() => {
+      const r = document.querySelector('.prikoly-drop')?.getBoundingClientRect();
+      const bar = document.querySelector('[data-anchor="tabbar"]')?.getBoundingClientRect();
+      return r && { left: r.left, right: r.right, cx: r.left + r.width / 2, cy: r.top + r.height / 2, barTop: bar?.top, barCx: bar && bar.left + bar.width / 2,
+        peeking: document.querySelector('.prikoly-drop').classList.contains('is-peeking'), plate: Boolean(document.querySelector('.prikoly-drop-plate:not([hidden])')) };
+    });
+    const swipeAway = async dx => {
       const c = await dropCenter();
       await page.mouse.move(c.x, c.y);
       await page.mouse.down();
-      await page.mouse.move(c.x + 90, c.y, { steps: 6 });
+      await page.mouse.move(c.x + dx, c.y, { steps: 6 });
       await page.mouse.up();
-      await page.waitForFunction(() => !document.querySelector('.prikoly-drop'));
-      await go('tasks');
+      await page.waitForFunction(() => document.querySelector('.prikoly-drop.is-peeking'));
+      await settle();
+    };
+
+    await check('B1 swipe → she hides behind the nearest edge and peeks; tap → jumps back', async () => {
       await go('home');
-      assert.equal(await drop().count(), 0, 'stays away while the app is open');
+      await page.waitForFunction(() => document.querySelectorAll('.prikoly-drop').length === 1);
+      await settle();
+      await swipeAway(-90);
+      let r = await dropBox();
+      assert.ok(r.peeking && r.left < 0 && r.right > 12 && r.right <= 32, `peeks from the left edge (${r.left.toFixed(1)}..${r.right.toFixed(1)})`);
+      assert.ok(Math.abs(r.cy - r.barTop) < 24, 'at the tabbar corner, not over cards');
+      assert.equal(r.plate, false, 'her house is hidden while she hides');
+      assert.ok(!(await page.locator('.prikoly-drop').innerHTML()).match(/sad|cry/), 'no sad faces');
+      await shot('b1-peek');
+      // Переход между экранами — она всё ещё подглядывает.
+      await go('tasks');
+      await page.waitForFunction(() => document.querySelector('.prikoly-drop.is-peeking'));
+      // Событие — выглядывает, радуется и снова прячется.
+      await page.locator('[data-zone="task-dog_walk"]').tap();
+      await page.waitForFunction(() => {
+        const r = document.querySelector('.prikoly-drop').getBoundingClientRect();
+        return r.left > 0 && document.querySelector('.prikoly-drop').dataset.face === 'happy';
+      }, null, { timeout: 2000 });
+      await page.waitForFunction(() => document.querySelector('.prikoly-drop').getBoundingClientRect().left < 0, null, { timeout: 3000 });
+      await settle();
+      // Тап по подглядывающей — выпрыгивает на своё место.
+      r = await dropBox();
+      await page.touchscreen.tap(5, r.cy);
+      await page.waitForFunction(() => !document.querySelector('.prikoly-drop.is-peeking'));
+      await settle();
+      r = await dropBox();
+      assert.ok(Math.abs(r.cx - r.barCx) < 30 && r.plate, `back in the tabbar centre (${r.cx.toFixed(1)})`);
+      assert.equal(await page.evaluate(() => window.sberKids.current()), 'tasks', 'the tap did not press anything under her');
+      await page.evaluate(() => Object.keys(window.sberKids.state.tasks).forEach(id => { window.sberKids.state.tasks[id] = false; }));
+    });
+
+    await check('B1 hidden Drop: none on red screens, right edge too, back in place on the next app open', async () => {
+      await go('home');
+      await settle();
+      await swipeAway(90);
+      let r = await dropBox();
+      assert.ok(r.peeking && r.right > 375 && r.left >= 343, `peeks from the right edge (${r.left.toFixed(1)}..${r.right.toFixed(1)})`);
+      await go('transfer');
+      assert.equal(await page.locator('.prikoly-drop, .prikoly-drop-plate').count(), 0, 'nothing on the transfer screen, not even at the edge');
+      await go('home');
+      await page.waitForFunction(() => document.querySelector('.prikoly-drop.is-peeking'));
       await page.reload({ waitUntil: 'networkidle' });
       await page.waitForFunction(() => window.sberKids?.engine?.config?.prikoly.length);
       await page.addStyleTag({ content: '.dbg { visibility: hidden !important; }' });
       await page.waitForFunction(() => document.querySelectorAll('.prikoly-drop').length === 1);
+      await settle();
+      r = await dropBox();
+      assert.ok(!r.peeking && Math.abs(r.cx - r.barCx) < 30, 'next app open — she is back in her place');
     });
 
-    // ——— B2: голограмма-фольга ———
+    await check('B1 album switch «Показывать Каплю»: off — no Drop anywhere, on — back', async () => {
+      await go('home');
+      await page.evaluate(() => window.sberKids.engine.openAlbum());
+      const toggle = page.locator('.prikoly-album__switch');
+      assert.ok(await toggle.isChecked());
+      assert.equal(await page.locator('.prikoly-album__drop').innerText().then(t => /Показывать Каплю/.test(t)), true);
+      await toggle.click();
+      await page.waitForFunction(() => !document.querySelector('.prikoly-drop'));
+      assert.equal(await page.evaluate(() => localStorage.getItem('prikoly.showDrop')), 'off');
+      await page.evaluate(() => window.sberKids.engine.closeAlbum());
+      await go('tasks');
+      await page.locator('[data-zone="task-dishes"]').tap();
+      await page.waitForTimeout(400);
+      assert.equal(await page.locator('.prikoly-drop, .prikoly-drop-plate').count(), 0, 'not on events');
+      await page.evaluate(() => window.sberKids.engine.sensors.inject('orientation', { alpha: 0, beta: 179, gamma: 0 }));
+      await page.waitForTimeout(500);
+      assert.equal(await page.locator('.prikoly-drop').count(), 0, 'not on a flip');
+      await page.evaluate(() => window.sberKids.engine.sensors.inject('orientation', { alpha: 0, beta: 12, gamma: 0 }));
+      await stop();
+      await page.reload({ waitUntil: 'networkidle' });
+      await page.waitForFunction(() => window.sberKids?.engine?.config?.prikoly.length);
+      await page.addStyleTag({ content: '.dbg { visibility: hidden !important; }' });
+      await page.waitForTimeout(600);
+      assert.equal(await page.locator('.prikoly-drop').count(), 0, 'the choice survives a reload');
+      const reason = await page.evaluate(() => window.sberKids.engine.getLog().filter(l => l.id === 'screen-resident').at(-1)?.reason);
+      assert.equal(reason, 'Капля выключена в альбоме');
+      await page.evaluate(() => window.sberKids.engine.openAlbum());
+      await page.locator('.prikoly-album__switch').click();
+      await page.waitForFunction(() => document.querySelectorAll('.prikoly-drop').length === 1);
+      await page.evaluate(() => window.sberKids.engine.closeAlbum());
+      await page.evaluate(() => Object.keys(window.sberKids.state.tasks).forEach(id => { window.sberKids.state.tasks[id] = false; }));
+      await stop();
+    });
+
     await check('B1 home card and QR button are the original raster, no shell patch over them', async () => {
       await go('home');
       const covered = await page.evaluate(() => {

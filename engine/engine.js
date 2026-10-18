@@ -10,6 +10,7 @@ import { createSound } from './sound.js';
 import { createSensors, PERMISSION_SOURCES } from './sensors.js';
 import { createUi } from './ui.js';
 import { createCollection } from './collection.js';
+import { dropShown, setDropShown } from './prefs.js';
 import { fetchConfig, readOverride, validateConfig, isContentPath, OVERRIDE_KEY, DEFAULT_SETTINGS } from './config.js';
 
 const LOG_LIMIT = 60;
@@ -114,12 +115,29 @@ export function init(rawConfig, bus, stage, { baseUrl = document.baseURI } = {})
     haptics.play('light');
     ui.openAlbum({
       items,
+      drop: { shown: dropShown(), onToggle: showDrop },
       muted: sound.isMuted(),
       onToggleMute: () => {
         sound.setMuted(!sound.isMuted());
         return sound.isMuted();
       },
     });
+  }
+
+  // «Показывать Каплю» в альбоме: выключили — постоянные жильцы гаснут и больше не приходят (ни на краю,
+  // ни на событиях); включили — Капля сразу возвращается на своё место.
+  function residentEntries() {
+    return entries.filter(e => (e.prikol.effect.variants ?? [e.prikol.effect]).some(v => v.type === 'resident'));
+  }
+
+  function showDrop(on) {
+    setDropShown(on);
+    info(on ? '💧 Капля снова с нами (альбом)' : '💧 Капля выключена в альбоме');
+    for (const entry of residentEntries()) {
+      if (!on) stopEffect(entry.prikol.id, 'Капля выключена в альбоме');
+      else if (screen.zone !== 'red') fire(entry, { screen: screen.id, summon: true });
+    }
+    return dropShown();
   }
 
   function reload(raw, from = 'конфиг') {
@@ -255,7 +273,7 @@ export function init(rawConfig, bus, stage, { baseUrl = document.baseURI } = {})
     }
     if (!run.handle) {
       end();
-      return decision(c, false, 'эффекту не на чем играть (нет якоря?)'), false;
+      return decision(c, false, safeCall(() => def.skipReason?.()) || 'эффекту не на чем играть (нет якоря?)'), false;
     }
     if (!ended) {
       active.set(prikol.id, run);
@@ -373,6 +391,7 @@ export function init(rawConfig, bus, stage, { baseUrl = document.baseURI } = {})
       rules.resetDaily();
       rules.setSeasonOverride(null);
       sound.setMuted(false);
+      setDropShown(true);
       for (const def of Object.values(effects)) safely(() => def.reset?.());
       info('🔄 демо сброшено: коллекция, кулдауны, лимиты, сезон, звук, Капля');
       // Постоянные жильцы возвращаются сразу, без перехода между экранами.
@@ -381,6 +400,7 @@ export function init(rawConfig, bus, stage, { baseUrl = document.baseURI } = {})
 
     collection,
     openAlbum,
+    showDrop,
     closeAlbum: () => ui.closeAlbum(),
     resetCollection() {
       collection.reset();
@@ -417,6 +437,15 @@ function fillTemplate(value, payload) {
     return Object.fromEntries(Object.entries(value).map(([k, v]) => [k, fillTemplate(v, payload)]));
   }
   return value;
+}
+
+function safeCall(fn) {
+  try {
+    return fn();
+  } catch (err) {
+    console.error('[prikoly]', err);
+    return null;
+  }
 }
 
 function safely(fn) {

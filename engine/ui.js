@@ -70,7 +70,7 @@ export function createUi(stage) {
 
   let album = null;
 
-  function openAlbum({ items, muted, onToggleMute }) {
+  function openAlbum({ items, drop, muted, onToggleMute }) {
     closeAlbum(true);
     restoreFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     const foundCount = items.filter(i => i.found).length;
@@ -87,6 +87,12 @@ export function createUi(stage) {
             <button type="button" class="prikoly-album__mute" aria-label="Звук приколов"></button>
           </header>
         </div>
+        ${drop ? `
+          <label class="prikoly-album__drop">
+            <span class="prikoly-album__icon">💧</span>
+            <span class="prikoly-album__drop-text"><b>Капля</b><small>Показывать Каплю</small></span>
+            <input type="checkbox" role="switch" class="prikoly-album__switch" aria-label="Показывать Каплю"${drop.shown ? ' checked' : ''}>
+          </label>` : ''}
         <ul class="prikoly-album__grid">
           ${items.map(i => `
             <li class="${i.found ? 'is-found' : 'is-locked'}">
@@ -107,6 +113,8 @@ export function createUi(stage) {
     };
     renderMute(muted);
     mute.addEventListener('click', () => renderMute(onToggleMute()));
+    const dropSwitch = album.querySelector('.prikoly-album__switch');
+    dropSwitch?.addEventListener('change', () => { dropSwitch.checked = drop.onToggle(dropSwitch.checked); });
     album.querySelector('.prikoly-album__backdrop').addEventListener('click', () => closeAlbum());
     album.querySelector('.prikoly-album__done').addEventListener('click', () => closeAlbum());
     album.addEventListener('keydown', e => e.key === 'Escape' && closeAlbum());

@@ -5,9 +5,12 @@
 // дыхание и моргание в покое — CSS. Тап и свайп наблюдаются пассивно; единственное, что принимает касание, —
 // круг её тела (~0,9 размера): тап по Капле не нажимает вкладку под ней. Остальной слой — pointer-events: none.
 // Без durationMs Капля постоянная: переезжает между экранами через update({ screen }), исчезает в красной
-// зоне, а свайпом её можно отпустить до следующего входа в приложение.
+// зоне. Свайп — игра в прятки: Капля уезжает за ближайший край и подглядывает оттуда (макушка и глазки),
+// выглядывает на события из params.peekOn, по тапу радостно возвращается; при следующем входе — снова на месте.
+// В альбоме её можно выключить совсем («Показывать Каплю», engine/prefs.js).
 import tilt from '../triggers/tilt.js';
 import shake from '../triggers/shake.js';
+import { dropShown } from '../prefs.js';
 
 export const REACTIONS = {
   none: 'ничего не делает',
@@ -19,7 +22,7 @@ export const REACTIONS = {
   surprise: 'удивляется',
   doze: 'дремлет',
   sleep: 'засыпает и потягивается после',
-  leave: 'убегает до следующего входа',
+  leave: 'прячется за край экрана и подглядывает (прятки)',
 };
 
 export const REACTION_EVENTS = {
@@ -54,8 +57,10 @@ const BUS_EVENT = /^[a-z]+:[A-Za-z]+$/;
 const PERCH_Y = ['top', 'center', 'bottom'];
 const MOOD = { idle: 'curious', happy: 'happy', dizzy: 'dizzy', sleep: 'sleepy', yawn: 'sleepy', surprised: 'surprised' };
 
-// Отпущена свайпом: до перезагрузки страницы (следующего входа) не возвращается сама.
-let dismissed = false;
+// Прятки: -1 — подглядывает из-за левого края, 1 — из-за правого, 0 — дома. Живёт до перезагрузки страницы:
+// при следующем входе в приложение Капля снова на своём месте. Переживает уход на красный экран и обратно.
+let hiddenSide = 0;
+const PEEK_ON = ['task:done', 'tasks:allDone', 'flip'];
 
 export default {
   type: 'resident',
@@ -77,6 +82,11 @@ export default {
         if (!REACTIONS[reaction]) return `reactions.${event}: одна из ${Object.keys(REACTIONS).join(', ')}`;
       }
     }
+    if (p.peekOn != null) {
+      if (!Array.isArray(p.peekOn) || !p.peekOn.every(e => typeof e === 'string' && (REACTION_EVENTS[e] || BUS_EVENT.test(e)))) {
+        return 'peekOn: массив событий, на которые спрятанная Капля выглядывает';
+      }
+    }
     if (p.perches != null) {
       if (!isObject(p.perches) || !Object.keys(p.perches).length) return 'perches: нужен объект «экран → место»';
       for (const [screen, perch] of Object.entries(p.perches)) {
@@ -89,20 +99,26 @@ export default {
     return null;
   },
 
-  // «Сбросить демо» в debug: Капля снова приходит сама.
+  // «Сбросить демо» в debug: Капля снова на своём месте.
   reset() {
-    dismissed = false;
+    hiddenSide = 0;
+  },
+
+  // Почему не играет (для лога решений): Капля выключена в альбоме.
+  skipReason() {
+    return dropShown() ? null : 'Капля выключена в альбоме';
   },
 
   play(p, ctx) {
     const { stage } = ctx;
     const persistent = p.durationMs == null;
     const duration = p.durationMs ?? Infinity;
-    if (ctx.payload?.summon) dismissed = false;
-    if ((persistent && dismissed) || !duration || !stage.availableParticles(ctx.settings.maxParticles)) return null;
+    if (ctx.payload?.summon) hiddenSide = 0;
+    if (!dropShown() || !duration || !stage.availableParticles(ctx.settings.maxParticles)) return null;
     const size = p.size ?? 46;
     const reduced = ctx.reducedMotion;
     const reactions = { ...DEFAULT_REACTIONS, ...(p.reactions || {}) };
+    const peekOn = p.peekOn ?? PEEK_ON;
     const perches = p.perches || { default: { anchor: p.anchor || 'tabbar', x: 0.5, y: p.anchor ? 'top' : 'center' } };
     const w = size;
     const h = size * 1.1;
@@ -144,9 +160,14 @@ export default {
     let hops = [];
     let face = 'idle';
     let faceUntil = 0;
-    let state = 'idle'; // idle | doze | sleep | leaving
+    let state = 'idle'; // idle | doze | sleep
     let jiggleUntil = 0, wobbleUntil = 0, wobbleFrom = 0, danceUntil = 0, stretchUntil = 0;
-    let leaving = null;
+    // Прятки: pose — поза вне домика (центр коробки, поворот, масштаб), пока Капля прячется, подглядывает
+    // или возвращается; null — дома, работает обычная физика. tween — переход между позами.
+    let pose = null;
+    let tween = null;
+    let peekPhase = 'peek'; // peek — за краем, out — выглянула
+    let flipPeeked = false;
     let finished = false;
     let voice = null;
     let running = false;
@@ -164,7 +185,14 @@ export default {
     // ——— Реакции ———
 
     function react(kind, source) {
-      if (finished || leaving || document.hidden || !kind || kind === 'none') return;
+      if (finished || document.hidden || !kind || kind === 'none') return;
+      // Спряталась: тап — радостно возвращается, события из peekOn — выглядывает и снова прячется.
+      if (hiddenSide) {
+        if (source === 'tap' || source === 'debug') comeBack();
+        else if (peekOn.includes(source)) peekOut();
+        return;
+      }
+      if (pose) return; // в пути — прячется или возвращается
       if (state === 'sleep' && source !== 'wake') return;
       if (state === 'doze' && kind !== 'doze') wakeFromDoze();
       switch (kind) {
@@ -219,7 +247,7 @@ export default {
           if (source !== 'flip') setTimeout(() => state === 'sleep' && wakeUp(), 6000);
           break;
         case 'leave':
-          leave(source === 'swipe' ? swipeDir : 1);
+          hideAway(source === 'swipe' ? swipeDir : 1);
           break;
         default:
           break;
@@ -243,17 +271,100 @@ export default {
       setFace('yawn', 1100);
       stretchUntil = t + 1100;
       say('yawn');
-      setTimeout(() => !finished && !leaving && (setFace('happy', 700), jump(reduced ? 0 : 220)), 1150);
+      setTimeout(() => !finished && !pose && (setFace('happy', 700), jump(reduced ? 0 : 220)), 1150);
       wake();
     }
 
-    function leave(dir) {
-      if (leaving) return;
-      leaving = { at: t, dir: dir || 1 };
-      if (persistent) dismissed = true;
-      voice?.();
-      voice = ctx.sound.synth('swish');
+    // ——— Прятки ———
+
+    // За краем: повёрнута макушкой к экрану, видны хохолок, макушка и оба глаза (полоска ≈ 28 px у края).
+    // По высоте — у верхнего скруглённого угла таббара: там нет ни вкладок, ни карточек (контент над таббаром
+    // уходит под его прозрачный градиент). На экранах без таббара — у нижнего края.
+    function peekPose(side) {
+      const bar = stage.getAnchorRect('tabbar');
+      const cy = bar ? bar.top + 2 : stage.height - 120;
+      return { cx: side < 0 ? 10 : stage.width - 10, cy, rot: -side * Math.PI / 2, scale: 0.85 };
+    }
+
+    // Выглянула на событие: показалась целиком у края, чуть наклонившись.
+    function outPose(side) {
+      const peek = peekPose(side);
+      return { cx: side < 0 ? 34 : stage.width - 34, cy: peek.cy - 6, rot: -side * 0.3, scale: 1 };
+    }
+
+    function homePose() {
+      return { cx: perch.restX + x, cy: perch.floorY + y - h / 2, rot, scale: 1 };
+    }
+
+    function moveTo(to, ms, arc, then) {
+      tween = { from: pose || homePose(), to, at: t, ms: reduced ? 1 : ms, arc: reduced ? 0 : arc, then };
+      pose = { ...tween.from };
       wake();
+    }
+
+    // Смахнули: весело уезжает за ближайший край (если стоит посередине — туда, куда смахнули).
+    function hideAway(dir) {
+      if (hiddenSide || !perch) return;
+      const X = perch.restX + x;
+      hiddenSide = Math.abs(X - stage.width / 2) < 40 ? (dir || 1) : Math.sign(X - stage.width / 2);
+      peekPhase = 'peek';
+      setFace('happy', 700);
+      say('swish');
+      moveTo(peekPose(hiddenSide), 520, 26);
+    }
+
+    // Событие, пока прячется: выскакивает, коротко радуется и снова прячется.
+    function peekOut() {
+      if (!hiddenSide || tween || peekPhase === 'out') return;
+      peekPhase = 'out';
+      moveTo(outPose(hiddenSide), 280, 16, () => {
+        setFace('happy', 1000);
+        burst('spark', 3);
+        say('hop');
+        setTimeout(() => {
+          if (finished || !hiddenSide || peekPhase !== 'out') return;
+          peekPhase = 'peek';
+          moveTo(peekPose(hiddenSide), 380, 10);
+        }, 950);
+      });
+    }
+
+    // Тап по подглядывающей Капле: радостно выпрыгивает обратно на своё место.
+    function comeBack() {
+      if (!hiddenSide || !perch) return;
+      hiddenSide = 0;
+      peekPhase = 'peek';
+      x = 0; vx = 0; y = 0; vy = 0; rot = 0;
+      moveTo(homePose(), 560, 70, () => {
+        pose = null;
+        setFace('happy', 1200);
+        burst('heart', 3);
+        say('giggle');
+        jump(reduced ? 0 : 260);
+        ctx.haptics.play('light');
+      });
+    }
+
+    function stepTween() {
+      if (!tween) {
+        // Подглядывает: поза пересчитывается (поворот экрана, другой экран без таббара).
+        if (hiddenSide) pose = peekPhase === 'out' ? outPose(hiddenSide) : peekPose(hiddenSide);
+        return;
+      }
+      const k = Math.min(1, (t - tween.at) / tween.ms);
+      const e = k < 0.5 ? 2 * k * k : 1 - (-2 * k + 2) ** 2 / 2;
+      const { from, to } = tween;
+      pose = {
+        cx: from.cx + (to.cx - from.cx) * e,
+        cy: from.cy + (to.cy - from.cy) * e - Math.sin(Math.PI * k) * tween.arc,
+        rot: from.rot + (to.rot - from.rot) * e,
+        scale: from.scale + (to.scale - from.scale) * e,
+      };
+      if (k < 1) return;
+      const then = tween.then;
+      tween = null;
+      pose = { ...to };
+      then?.();
     }
 
     function jump(v) {
@@ -347,17 +458,19 @@ export default {
       if (!persistent) {
         if (!perch || perch.rect.top < size * 0.45 || t >= duration) return finish(), false;
       }
-      step(dt);
+      if (pose || hiddenSide) stepTween();
+      if (!pose) step(dt);
       apply();
-      if (leaving && t - leaving.at >= 340) return finish(), false;
       if (face !== 'idle' && t >= faceUntil) {
         face = state === 'idle' ? 'idle' : 'sleep';
         applyFace();
       }
-      const busy = !persistent || leaving || airborne || pendingJump || hops.length
-        || t < Math.max(jiggleUntil, wobbleUntil, danceUntil, stretchUntil, faceUntil === Infinity ? 0 : faceUntil)
+      // Вне домика физика стоит: цикл держат только переходы поз.
+      const physics = !pose && (airborne || pendingJump || hops.length
         || Math.abs(vx) > 2 || Math.abs(sq) > 0.003 || Math.abs(sqv) > 0.03
-        || Math.abs(rot - nearestTurn(rot)) > 0.01 || Math.abs(x - restTarget()) > 0.6;
+        || Math.abs(rot - nearestTurn(rot)) > 0.01 || Math.abs(x - restTarget()) > 0.6);
+      const busy = !persistent || tween || physics
+        || t < Math.max(jiggleUntil, wobbleUntil, danceUntil, stretchUntil, faceUntil === Infinity ? 0 : faceUntil);
       if (!busy) running = false;
       return Boolean(busy);
     }
@@ -370,11 +483,6 @@ export default {
     function step(dt) {
       if (reduced) {
         x = 0; y = 0; rot = 0; sq = 0; vx = 0;
-        return;
-      }
-      if (leaving) {
-        x += leaving.dir * 900 * dt;
-        rot += leaving.dir * dt * 9;
         return;
       }
       const rolling = reactions.tilt === 'roll' && state === 'idle';
@@ -421,15 +529,27 @@ export default {
     }
 
     function apply() {
-      const fade = leaving ? Math.max(0, 1 - (t - leaving.at) / 340) : 1;
       const lifeFade = persistent ? 1 : Math.min(1, t / 220, (duration - t) / 450);
-      el.classList.toggle('is-away', !perch);
-      plateEl.hidden = !perch?.spec.plate;
+      const host = stage.root.getBoundingClientRect();
+      el.classList.toggle('is-away', !perch && !pose);
+      el.classList.toggle('is-peeking', Boolean(hiddenSide));
+      el.classList.toggle('is-peeking-right', hiddenSide > 0);
+      // Пока прячется — домика нет: на таббаре снова исходная вкладка.
+      plateEl.hidden = !perch?.spec.plate || Boolean(hiddenSide);
+      if (pose) {
+        el.style.transform = `translate(${(pose.cx - w / 2).toFixed(1)}px, ${(pose.cy - h / 2).toFixed(1)}px) scale(${pose.scale.toFixed(3)})`;
+        el.style.opacity = lifeFade.toFixed(3);
+        rollEl.style.transform = `rotate(${pose.rot.toFixed(3)}rad)`;
+        squashEl.style.transform = '';
+        shadowEl.style.opacity = '0';
+        center = { x: host.left + pose.cx, y: host.top + pose.cy };
+        return;
+      }
       if (!perch) return;
       if (perch.spec.plate) {
         const d = size * 1.22;
         plateEl.style.transform = `translate(${(perch.restX - d / 2).toFixed(1)}px, ${(perch.floorY - h * 0.5 - d / 2).toFixed(1)}px)`;
-        plateEl.style.opacity = (fade * lifeFade).toFixed(3);
+        plateEl.style.opacity = lifeFade.toFixed(3);
       }
       const jiggle = t < jiggleUntil && !reduced ? Math.sin(t / 26) * 2.4 : 0;
       const wobble = t < wobbleUntil && !reduced ? Math.sin((t - wobbleFrom) / 55) * 0.26 * ((wobbleUntil - t) / 1700) : 0;
@@ -437,13 +557,12 @@ export default {
       const X = perch.restX + x + jiggle;
       const Y = perch.floorY + y;
       el.style.transform = `translate(${(X - w / 2).toFixed(1)}px, ${(Y - h).toFixed(1)}px)`;
-      el.style.opacity = (fade * lifeFade).toFixed(3);
+      el.style.opacity = lifeFade.toFixed(3);
       rollEl.style.transform = `rotate(${(rot + wobble + dance).toFixed(3)}rad)`;
       squashEl.style.transform = `scale(${(1 - sq * 0.55).toFixed(3)}, ${(1 + sq).toFixed(3)})`;
       const lift = Math.min(1, -y / 90);
       shadowEl.style.transform = `translate(-50%, ${(-y).toFixed(1)}px) scale(${(1 - lift * 0.5).toFixed(3)})`;
       shadowEl.style.opacity = (1 - lift * 0.6).toFixed(2);
-      const host = stage.root.getBoundingClientRect();
       center = { x: host.left + X, y: host.top + Y - h * 0.48 };
     }
 
@@ -466,14 +585,23 @@ export default {
       if (idleMs > 0) idleTimer = setTimeout(() => react(reactions.idle, 'idle'), idleMs);
     }
 
+    // Подглядывающую Каплю ловим только у самого края (24 px), чтобы не перехватить соседние кнопки.
+    function nearPeek(e) {
+      const host = stage.root.getBoundingClientRect();
+      const edge = host.left + (hiddenSide < 0 ? 0 : stage.width);
+      return Math.abs(e.x - edge) < 24 && Math.abs(e.y - center.y) < 24;
+    }
+
     let swipeDir = 1;
     disposers.push(ctx.sensors.subscribe('pointer', e => {
       if (finished || document.hidden) return;
       activity();
       if (e.type === 'pointerdown' || e.type === 'pointermove') look(e.x, e.y);
-      if (leaving || !perch) return;
+      if (!perch && !hiddenSide) return;
       if (e.type === 'pointerdown') {
-        if (!touch && Math.hypot(e.x - center.x, e.y - center.y) < size * 0.62) touch = { id: e.id, x: e.x, y: e.y, t: e.t, moved: 0 };
+        if (!touch && (hiddenSide ? nearPeek(e) : Math.hypot(e.x - center.x, e.y - center.y) < size * 0.62)) {
+          touch = { id: e.id, x: e.x, y: e.y, t: e.t, moved: 0 };
+        }
         return;
       }
       if (touch?.id !== e.id) return;
@@ -534,9 +662,13 @@ export default {
       const faceDown = Math.abs(o.beta) > 150;
       if (faceDown) {
         faceDownSince ??= o.t;
-        if (state !== 'sleep' && o.t - faceDownSince >= 300) react(reactions.flip, 'flip');
+        if (state !== 'sleep' && !flipPeeked && o.t - faceDownSince >= 300) {
+          flipPeeked = Boolean(hiddenSide); // спрятанная выглядывает один раз за переворот
+          react(reactions.flip, 'flip');
+        }
       } else if (Math.abs(o.beta) < 60) {
         faceDownSince = null;
+        flipPeeked = false;
         if (state === 'sleep') wakeUp();
       }
     }));
@@ -555,8 +687,10 @@ export default {
 
     function enter() {
       perch = resolvePerch();
+      // Спрятанная Капля и на новом экране подглядывает из-за того же края.
+      if (hiddenSide && !tween) pose = peekPhase === 'out' ? outPose(hiddenSide) : peekPose(hiddenSide);
       apply();
-      if (!reduced && perch) {
+      if (!reduced && perch && !hiddenSide) {
         popEl.animate([
           { transform: 'translateY(40%) scale(.2)', opacity: 0 },
           { transform: 'translateY(-6%) scale(1.08, .94)', opacity: 1, offset: 0.65 },
@@ -586,6 +720,7 @@ export default {
     return {
       persistent,
       update(payload = {}) {
+        if (payload.summon && hiddenSide) comeBack();
         if (payload.react) return react(payload.react, 'debug');
         if (payload.wake) return wakeUp();
         if (payload.screen && payload.screen !== screenId) {

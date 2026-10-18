@@ -417,6 +417,7 @@
           "shakeThreshold": 14,
           "idleMs": 20000,
           "stillMs": 6000,
+          "peekOn": ["task:done", "tasks:allDone", "flip"],
           "perches": {
             "default": { "anchor": "tabbar", "x": 0.5, "y": "center", "plate": true },
             "tasks_done": { "anchor": "trophy", "x": 0.84, "y": "bottom" },
