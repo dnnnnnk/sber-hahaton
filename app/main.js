@@ -3,11 +3,14 @@
 
 import { createBus } from './bus.js';
 import {
-  SCREENS, TABS, TABBAR, TASKS, MONEYBOXES, START_SCREEN, READY_IMAGES, DESIGN_WIDTH, IMAGE_CHROME,
+  SCREENS, TABS, TABBAR, TASKS, MONEYBOXES, TOPUP_AMOUNT, START_SCREEN, READY_IMAGES, DESIGN_WIDTH, IMAGE_CHROME, money,
 } from './screens.js';
 
 const DEBUG = new URLSearchParams(location.search).get('debug') === '1';
 const IMAGE_WAIT_MS = 400;
+const TOPUP_RETURN_MS = 2000; // «Копилка пополнена» сама возвращает к копилкам
+const GROW_MS = 1100; // рост полоски после возврата
+const GOAL_DELAY_MS = 650; // полоска дошла до 100 % → экран мечты
 
 const bus = createBus();
 const phone = document.getElementById('phone');
@@ -56,17 +59,70 @@ const shell = {
     go('tasks');
   },
 
+  // +500 ₽: экран «Копилка пополнена» → через 2 с (или по тапу) обратно к копилкам, там растёт полоска.
+  // Полная копилка не сбрасывается по кругу: кнопка ведёт на экран мечты. Сброс — «Сбросить демо» в debug.
   topup(moneyboxId) {
     const m = state.moneyboxes.find(x => x.id === moneyboxId);
     if (!m) return;
-    if (m.saved >= m.goal) m.saved = 0; // для демо: полная копилка начинается заново
+    if (m.saved >= m.goal) return go('moneybox_goal');
+    const prevSaved = m.saved;
     const prevProgress = m.saved / m.goal;
-    const amount = Math.min(m.goal - m.saved, Math.round(m.goal / 4));
+    const amount = Math.min(m.goal - m.saved, TOPUP_AMOUNT);
     m.saved += amount;
     const progress = m.saved / m.goal;
-    state.lastTopup = { moneyboxId, amount };
+    state.lastTopup = { moneyboxId, amount, prevSaved, prevProgress, progress, shown: false };
     state.pending.push(['moneybox:topup', { moneyboxId, progress, prevProgress }]);
     go('topup_success');
+  },
+
+  // Экран «Копилка пополнена» открыт: обратно к копилкам через 2 с.
+  returnFromTopup() {
+    later(() => state.screen === 'topup_success' && go('moneybox'), TOPUP_RETURN_MS);
+  },
+
+  // Экран копилок открыт после пополнения: полоска и сумма заметно растут, затем moneybox:progress
+  // (вехи 25/50/75 % — от полоски, якорь progress); на 100 % — экран мечты и moneybox:goal.
+  growProgress() {
+    const t = state.lastTopup;
+    if (!t || t.shown) return;
+    t.shown = true;
+    const bar = viewport.querySelector('[data-grow]');
+    const sum = viewport.querySelector('[data-count-to]');
+    const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const done = () => {
+      if (state.screen !== 'moneybox') return;
+      bus.emit('moneybox:progress', { moneyboxId: t.moneyboxId, progress: t.progress, prevProgress: t.prevProgress });
+      if (t.progress < 1) return;
+      later(() => {
+        if (state.screen !== 'moneybox') return;
+        state.pending.push(['moneybox:goal', { moneyboxId: t.moneyboxId }]);
+        go('moneybox_goal');
+      }, GOAL_DELAY_MS);
+    };
+    if (!bar || reduced) {
+      if (bar) bar.style.width = `${bar.dataset.grow}%`;
+      if (sum) sum.textContent = money(Number(sum.dataset.countTo));
+      return done();
+    }
+    bar.parentElement.classList.add('is-growing');
+    bar.getBoundingClientRect(); // зафиксировать прежнюю ширину, чтобы переход сработал
+    requestAnimationFrame(() => { bar.style.width = `${bar.dataset.grow}%`; });
+    if (sum) {
+      const from = Number(sum.dataset.countFrom);
+      const to = Number(sum.dataset.countTo);
+      const started = performance.now();
+      const tick = now => {
+        const k = Math.min(1, (now - started) / GROW_MS);
+        const eased = 1 - (1 - k) ** 3;
+        sum.textContent = money(Math.round(from + (to - from) * eased));
+        if (k < 1 && sum.isConnected) requestAnimationFrame(tick);
+      };
+      requestAnimationFrame(tick);
+    }
+    later(() => {
+      bar.parentElement.classList.remove('is-growing');
+      done();
+    }, GROW_MS);
   },
 
   setBalance(value) {
@@ -89,6 +145,12 @@ function go(id) {
   location.hash = id;
 }
 
+// Отложенные шаги сценария экрана (автовозврат, рост полоски) отменяются при любом переходе.
+let flowTimers = [];
+function later(fn, ms) {
+  flowTimers.push(setTimeout(fn, ms));
+}
+
 window.addEventListener('hashchange', () => render(screenFromHash()));
 
 let renderToken = 0;
@@ -97,6 +159,8 @@ async function render(id) {
   const token = ++renderToken;
   const screen = SCREENS[id];
   const previous = state.screen;
+  flowTimers.forEach(clearTimeout);
+  flowTimers = [];
   // Финансовый экран гасит эффекты до ожидания картинки, включая холодный переход.
   if (screen.zone === 'red') bus.emit('screen:open', { screen: id, zone: screen.zone });
   const probe = screen.preferStub ? Promise.resolve(null) : loadImage(id);
@@ -243,23 +307,26 @@ function imageEl(image, alt) {
 
 function zoneEls(zone, image) {
   if (zone.x == null) return []; // зона есть только в заглушке / HTML-дополнении
+  if (zone.hidden?.(state)) return [];
   const actionable = Boolean(zone.go || zone.tap || zone.tab);
   const el = document.createElement(actionable ? 'button' : 'div');
   const box = { left: `${zone.x}%`, top: `${zone.y}%`, width: `${zone.w}%`, height: `${zone.h}%` };
-  el.className = 'zone';
+  el.className = `zone${zone.className ? ` ${zone.className}` : ''}`;
+  if (zone.html) el.innerHTML = zone.html(state);
   Object.assign(el.style, box);
   if (zone.radius) el.style.borderRadius = [].concat(zone.radius).map(pt => `calc(${pt} * var(--pt))`).join(' ');
   if (zone.tab) el.dataset.tab = zone.tab;
   else if (actionable) el.dataset.zone = zone.id;
   if (zone.anchor) el.dataset.anchor = zone.anchor;
   if (zone.progress) el.dataset.progress = String(zone.progress(state));
+  const label = typeof zone.label === 'function' ? zone.label(state) : zone.label;
   if (actionable) {
-    el.setAttribute('aria-label', zone.label || zone.id);
+    el.setAttribute('aria-label', label || zone.id);
     if (zone.tab && TABS.find(tab => tab.id === zone.tab)?.disabled) el.disabled = true;
     if (zone.tab === state.screen) el.setAttribute('aria-current', 'page');
-  } else if (zone.label) {
+  } else if (label) {
     el.setAttribute('role', zone.keyboardAction ? 'button' : 'img');
-    el.setAttribute('aria-label', zone.label);
+    el.setAttribute('aria-label', label);
     if (zone.keyboardAction) el.tabIndex = 0;
   }
   if (zone.done) {

@@ -139,21 +139,22 @@ for (const browserType of [chromium, webkit].filter(b => !process.env.ONLY_BROWS
           assert.equal(await page.evaluate(() => window.sberKids.current()), 'home');
         }
       });
-      await check('navigation: goal, six moneyboxes, success and reset list', async () => {
+      await check('navigation: dream +500, success back to moneyboxes, goal and reset list', async () => {
         await go('moneybox');
+        assert.equal(await page.locator('[data-zone="goal"]').count(), 0, 'no dream link before the dream is reached');
+        await reset();
+        await tap('[data-zone="topup-robot"]');
+        assert.equal(await page.evaluate(() => window.sberKids.current()), 'topup_success');
+        assert.deepEqual(await page.evaluate(() => [window.sberKids.state.lastTopup.moneyboxId, window.sberKids.state.lastTopup.amount]), ['robot', 500]);
+        await page.waitForFunction(() => document.querySelector('.prikoly-lottie svg'));
+        await tap('[data-zone="done"]');
+        assert.equal(await page.evaluate(() => window.sberKids.current()), 'moneybox');
+        await page.evaluate(() => { const s = window.sberKids; s.state.moneyboxes.find(m => m.id === 'robot').saved = 3000; s.refresh(); });
         await tap('[data-zone="goal"]');
         assert.equal(await page.evaluate(() => window.sberKids.current()), 'moneybox_goal');
         await tap('[data-zone="back"]');
-        for (const id of ['slides', 'neon', 'slime', 'markers', 'band', 'robot']) {
-          await go('moneybox');
-          await reset();
-          await tap(`[data-zone="topup-${id}"]`);
-          assert.equal(await page.evaluate(() => window.sberKids.current()), 'topup_success');
-          assert.equal(await page.evaluate(() => window.sberKids.state.lastTopup.moneyboxId), id);
-          await page.waitForFunction(() => document.querySelector('.prikoly-lottie svg'));
-          await tap('[data-zone="done"]');
-          assert.equal(await page.evaluate(() => window.sberKids.current()), 'home');
-        }
+        assert.equal(await page.evaluate(() => window.sberKids.current()), 'moneybox');
+        await page.evaluate(() => { const s = window.sberKids; s.state.moneyboxes.find(m => m.id === 'robot').saved = 0; s.state.lastTopup = null; s.refresh(); });
         await go('tasks_done');
         await tap('[data-zone="back"]');
         assert.equal(await page.evaluate(() => window.sberKids.current()), 'tasks');

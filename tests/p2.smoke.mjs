@@ -137,12 +137,21 @@ for (const browserType of [chromium, webkit].filter(b => !process.env.ONLY_BROWS
     assert.equal(await page.evaluate(() => window.sberKids.engine.stats().particles), 14);
     await page.waitForTimeout(250);
     await screenshot('coins');
-    // Прикосновение к карточке проходит сквозь монеты и открывает пополнение.
-    await page.locator('[data-anchor="moneybox-slides"]').click();
+    // Касание кнопки «+500 ₽» на карточке мечты проходит сквозь монеты и открывает пополнение.
+    await page.evaluate(() => { document.getElementById('viewport').scrollTop = 0; });
+    await reset();
+    await page.evaluate(() => window.sberKids.engine.simulate('shake', { strength: 1 }));
+    await active('moneybox-rattle');
+    await page.locator('[data-zone="topup-robot"]').click();
     await page.waitForFunction(() => window.sberKids.current() === 'topup_success');
     assert.ok(!(await page.evaluate(() => window.sberKids.engine.stats().active)).includes('moneybox-rattle'));
     await go('moneybox');
-    await page.evaluate(() => { document.getElementById('viewport').scrollTop = 490; });
+    await page.evaluate(() => {
+      const s = window.sberKids;
+      s.state.moneyboxes.find(m => m.id === 'slides').saved = 750;
+      s.refresh();
+      document.getElementById('viewport').scrollTop = 490;
+    });
     await reset(); await preview('moneybox-rattle'); await active('moneybox-rattle');
     assert.equal(await page.evaluate(() => window.sberKids.engine.stats().particles), 4, 'quarter-full has four coins');
     await page.evaluate(() => {

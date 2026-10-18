@@ -14,7 +14,9 @@
 //   radius: [20, 20, 5, 5] — скругление углов якоря в pt, замеренное по растру: эффекты повторяют форму
 //   fill: '#fff'          — цвет подложки под поднятым кусочком (по умолчанию берётся с картинки)
 //   done: state => bool   — показать на зоне галочку «сделано»
-//   label: '…'            — короткое русское имя для скринридера
+//   label: '…'            — короткое русское имя для скринридера (или state => '…')
+//   className, html       — видимая кнопка-зона поверх растра (html: state => '…'), например «+500 ₽»
+//   hidden: state => bool — зоны сейчас нет (например, «Открыть мечту», пока мечта не накоплена)
 //   keyboardAction: true  — якорь доступен как кнопка; Enter/Space обрабатывает движок
 // Поля экрана для PNG:
 //   cropBottom: 162       — сколько pt снизу картинки скрыть всегда (нарисованный таббар — вместо него закреплённый)
@@ -87,10 +89,12 @@ export const TASKS = [
   { id: 'read_book', title: 'Прочитаю 10 страниц', icon: '📚', tint: '#FFE9E3', reward: 40, done: false },
 ];
 
-// Мечта «Умный робот» накоплена полностью — те же название и суммы, что на экране мечты.
-// Сумма всех копилок совпадает с «Всего на копилках» в шапке растра (16 158 ₽).
+// Мечта «Умный робот» — та, что на экране мечты. Копится с нуля кнопкой «+500 ₽»: шесть пополнений —
+// вехи 25/50/75 % и экран «Ты накопил на мечту». Сброс — только «Сбросить демо» в debug.
+export const DREAM_ID = 'robot';
+export const TOPUP_AMOUNT = 500;
 export const MONEYBOXES = [
-  { id: 'robot', title: 'Умный робот', icon: '🤖', goal: 7600, saved: 7600 },
+  { id: 'robot', title: 'Умный робот', icon: '🤖', goal: 3000, saved: 0 },
   { id: 'slides', title: 'Тапочки', icon: '🩴', goal: 3000, saved: 1675.5 },
   { id: 'neon', title: 'Неоновая вывеска', icon: '💡', goal: 7600, saved: 3000 },
   { id: 'slime', title: 'Слайм розовый', icon: '🫧', goal: 700, saved: 580 },
@@ -106,10 +110,32 @@ const MONEYBOX_Y = {
   robot: 15.52, slides: 21.14, neon: 26.91, slime: 37.83, markers: 43.6, band: 49.22, bike: 54.84, headphones: 60.45,
 };
 
+const percent = share => Math.max(0, Math.min(100, Math.round(share * 1000) / 10));
+const dreamBox = state => state.moneyboxes.find(m => m.id === DREAM_ID);
+const dreamDone = state => dreamBox(state).saved >= dreamBox(state).goal;
+
+// Карточка мечты: сумма и кнопка «+500 ₽» (зона topup-robot) сверху, полоска (якорь progress), название.
+// Только что пополненная копилка рисуется с прежними суммой и полоской, а растут они после возврата
+// с экрана «Копилка пополнена» (main.js → growProgress).
+function dreamCard(state) {
+  const box = dreamBox(state);
+  const t = state.lastTopup;
+  const growing = t?.moneyboxId === box.id && !t.shown;
+  const from = growing ? t.prevSaved : box.saved;
+  return `
+    <span class="moneybox-patch__icon">${box.icon}</span>
+    <span class="moneybox-patch__body">
+      <span class="moneybox-patch__amount"><b${growing ? ` data-count-from="${from}" data-count-to="${box.saved}"` : ''}>${money(from)}</b></span>
+      <span class="moneybox-patch__progress" data-anchor="progress"><i style="width:${percent(from / box.goal)}%"${growing ? ` data-grow="${percent(box.saved / box.goal)}"` : ''}></i></span>
+      <span class="moneybox-patch__title">${box.title}<small>из ${money(box.goal)}</small></span>
+    </span>`;
+}
+
 const MONEYBOX_PATCHES = MONEYBOXES.map(item => ({
   x: 4.27, y: MONEYBOX_Y[item.id], w: 91.47, h: 5.15,
-  className: 'screen-patch--moneybox',
+  className: `screen-patch--moneybox${item.id === DREAM_ID ? ' screen-patch--dream' : ''}`,
   html: state => {
+    if (item.id === DREAM_ID) return dreamCard(state);
     const box = state.moneyboxes.find(candidate => candidate.id === item.id) || item;
     const progress = Math.min(100, Math.round((box.saved / box.goal) * 100));
     return `
@@ -273,32 +299,48 @@ export const SCREENS = {
 
   moneybox: {
     title: 'Копилки',
-    a11y: 'Экран копилок. Можно открыть мечту или пополнить одну из восьми копилок.',
+    a11y: 'Экран копилок. Мечта «Умный робот» пополняется кнопкой плюс 500 рублей.',
     zone: 'green',
     tab: 'moneybox',
     // Нижняя подборка исходного макета содержит товарные бренды. Оставляем собственные копилки и кнопку,
     // а вместо подборки дорисовываем нейтральные идеи HTML-карточками.
     cropBottom: 770,
-    // Баннер мечты — из растра (робот, ракета, кнопка); плашкой закрыт только заголовок с артефактами «_».
+    onOpen: shell => shell.growProgress(),
+    // Баннер мечты — из растра (робот, ракета). Плашка закрывает заголовок с артефактами «_» и кнопку
+    // с чужой суммой: пока копим — «Коплю на мечту» и остаток, накопили — «Ура!» и та же сумма, что в копилке.
     patches: [...MONEYBOX_PATCHES, {
-      x: 36.27, y: 33.54, w: 39.07, h: 1.6,
+      x: 36.27, y: 33.54, w: 35.2, h: 2.79,
       className: 'screen-patch--goal-banner',
-      html: '<b>Ура! Ты накопил<br>на мечту</b>',
+      html: state => {
+        const box = dreamBox(state);
+        return dreamDone(state)
+          ? `<b>Ура! Ты накопил<br>на мечту</b><span>Снять ${money(box.saved)}</span>`
+          : `<b>Коплю на мечту:<br>${box.title}</b><span>Осталось ${money(box.goal - box.saved)}</span>`;
+      },
     }],
     zones: [
       { id: 'avatar', anchor: 'avatar', label: 'Аватар. Нажмите, чтобы открыть альбом находок', keyboardAction: true, lift: true, round: true, x: 6.4, y: 2.34, w: 14.93, h: 2.18 },
-      { id: 'goal', label: 'Открыть накопленную мечту', go: 'moneybox_goal', x: 4.27, y: 32.37, w: 91.47, h: 4.95 },
+      { id: 'goal', label: 'Открыть накопленную мечту', go: 'moneybox_goal', hidden: state => !dreamDone(state), x: 4.27, y: 32.37, w: 91.47, h: 4.95 },
       ...MONEYBOXES.map(m => ({
-        id: `topup-${m.id}`,
+        id: `card-${m.id}`,
         anchor: `moneybox-${m.id}`,
         progress: state => {
           const box = state.moneyboxes.find(item => item.id === m.id);
           return box ? Math.max(0, Math.min(1, box.saved / box.goal)) : 0;
         },
-        label: `Пополнить копилку «${m.title}»`,
-        tap: shell => shell.topup(m.id),
+        label: `Копилка «${m.title}»`,
         x: 4.27, y: MONEYBOX_Y[m.id], w: 91.47, h: 5.15,
       })),
+      // Кнопка «+500 ₽» в правом верхнем углу карточки мечты (16 pt от краёв, 88 × 32 pt).
+      // Накопили — кнопка ведёт на экран мечты, без сброса по кругу.
+      {
+        id: `topup-${DREAM_ID}`,
+        className: 'zone--pill',
+        html: state => (dreamDone(state) ? 'Ура! 🎉' : `+${money(TOPUP_AMOUNT)}`),
+        label: state => (dreamDone(state) ? 'Мечта накоплена — открыть' : `Пополнить мечту на ${TOPUP_AMOUNT} рублей`),
+        tap: shell => shell.topup(DREAM_ID),
+        x: 68, y: 16.611, w: 23.47, h: 1.248,
+      },
     ],
     afterImage: () => `
       <section class="moneybox-ideas">
@@ -313,10 +355,10 @@ export const SCREENS = {
     stub: s => `
       <header class="page-hdr">
         <h1>Копилки</h1>
-        <div class="page-hdr__sub">Коплю на мечту · нажми на копилку, чтобы пополнить</div>
+        <div class="page-hdr__sub">Коплю на мечту · нажми на «Умного робота», чтобы пополнить</div>
       </header>
       ${s.moneyboxes.map(m => `
-        <button class="mbox" data-zone="topup-${m.id}" data-anchor="moneybox-${m.id}" data-progress="${Math.max(0, Math.min(1, m.saved / m.goal))}">
+        <button class="mbox" ${m.id === DREAM_ID ? `data-zone="topup-${m.id}" ` : ''}data-anchor="moneybox-${m.id}" data-progress="${Math.max(0, Math.min(1, m.saved / m.goal))}">
           <div class="mbox__top">
             <span class="mbox__icon">${m.icon}</span>
             <div>
@@ -324,19 +366,24 @@ export const SCREENS = {
               <div class="mbox__sum">${money(m.saved)} из ${money(m.goal)}</div>
             </div>
           </div>
-          <div class="progress"><div class="progress__bar" style="width:${Math.round((m.saved / m.goal) * 100)}%"></div></div>
+          <div class="progress"${m.id === DREAM_ID ? ' data-anchor="progress"' : ''}><div class="progress__bar" style="width:${Math.round((m.saved / m.goal) * 100)}%"></div></div>
         </button>`).join('')}`,
   },
 
   moneybox_goal: {
     title: 'Ты накопил на мечту',
-    a11y: 'Мечта накоплена. Умный робот: 7 600 рублей из 7 600.',
+    a11y: 'Мечта накоплена: Умный робот.',
     zone: 'green',
     tab: null,
     patches: [{
       x: 4.27, y: 24.8, w: 91.47, h: 9.3,
       className: 'screen-patch--goal-copy',
       html: '<b>Поздравляем!<br>Ты накопил на мечту</b><span>Переводи деньги и купи то, о чём мечтал. После перевода копилка отправится в архив</span>',
+    }, {
+      // Суммы на зелёной полосе — те же, что в копилке (в растре — другая цена).
+      x: 12.27, y: 47.59, w: 75.2, h: 2.62,
+      className: 'screen-patch--goal-sum',
+      html: state => `<b>${money(dreamBox(state).saved)}</b><span>из ${money(dreamBox(state).goal)}</span>`,
     }, {
       // Вместо товарного описания с маркетплейса — слова самого ребёнка о мечте.
       x: 4.27, y: 83.74, w: 91.47, h: 11.9,
@@ -357,7 +404,7 @@ export const SCREENS = {
 
   topup_success: {
     title: 'Копилка пополнена',
-    a11y: 'Копилка пополнена. Можно вернуться на главный экран.',
+    a11y: 'Копилка пополнена. Коснитесь экрана, чтобы вернуться к копилкам.',
     zone: 'green',
     tab: null,
     patches: [{
@@ -366,26 +413,23 @@ export const SCREENS = {
       className: 'screen-patch--topup',
       html: s => {
         const t = s.lastTopup;
-        const m = s.moneyboxes.find(x => x.id === t?.moneyboxId) || s.moneyboxes[0];
-        const progress = Math.min(100, Math.round((m.saved / m.goal) * 100));
+        const m = s.moneyboxes.find(x => x.id === t?.moneyboxId) || dreamBox(s);
         return `
-          <b class="topup-patch__title">Копилка пополнена</b>
+          <b class="topup-patch__title">Копилка пополнена<em>${t ? `+${money(t.amount)}` : ''}</em></b>
           <span class="topup-patch__card">
             <i>${m.icon}</i>
-            <span><b>${m.title}</b><small>${t ? `+${money(t.amount)}` : 'Копим дальше'}</small></span>
-          </span>
-          <span class="topup-patch__card topup-patch__card--progress">
-            <span class="topup-patch__sum"><b>${money(m.saved)}</b><small>из ${money(m.goal)}</small></span>
-            <span class="topup-patch__bar" data-anchor="progress"><i style="width:${progress}%"></i></span>
+            <span><b>${m.title}</b><small>${money(m.saved)} из ${money(m.goal)}</small></span>
           </span>`;
       },
     }, {
       x: 4.27, y: 86.95, w: 91.47, h: 6.9,
-      className: 'screen-patch--primary-button', html: '<b>На главный</b>',
+      className: 'screen-patch--primary-button', html: '<b>К копилкам</b>',
     }],
+    onOpen: shell => shell.returnFromTopup(),
+    // Через 2 с экран сам возвращает к копилкам (main.js); тап в любом месте — сразу.
     zones: [
       { id: 'success', anchor: 'success', label: 'Копилка пополнена', x: 20.27, y: 13.79, w: 34.67, h: 14.78 },
-      { id: 'done', label: 'На главный', go: 'home', x: 4.27, y: 86.95, w: 91.47, h: 6.9 },
+      { id: 'done', label: 'К копилкам', go: 'moneybox', x: 0, y: 0, w: 100, h: 100 },
     ],
     stub: s => {
       const t = s.lastTopup;
@@ -395,7 +439,7 @@ export const SCREENS = {
           <div class="success-mark" data-anchor="success">✓</div>
           <h1>Копилка пополнена</h1>
           <p>${t ? `+${money(t.amount)} в «${m.title}»` : `«${m.title}»`}</p>
-          <div class="progress progress--big" data-anchor="progress">
+          <div class="progress progress--big">
             <div class="progress__bar" style="width:${Math.round((m.saved / m.goal) * 100)}%"></div>
           </div>
           <p class="muted">${money(m.saved)} из ${money(m.goal)}</p>

@@ -433,7 +433,8 @@
             "idle": "doze",
             "task:done": "joy",
             "tasks:allDone": "dance",
-            "moneybox:topup": "joy"
+            "moneybox:topup": "joy",
+            "moneybox:goal": "dance"
           }
         }
       },
@@ -531,8 +532,8 @@
       "enabled": true,
       "exclusive": false,
       "priority": 9,
-      "trigger": { "type": "event", "name": "moneybox:topup", "where": { "progress": { "crosses": [0.25, 0.5, 0.75, 1] } } },
-      "screens": ["topup_success"],
+      "trigger": { "type": "event", "name": "moneybox:progress", "where": { "progress": { "crosses": [0.25, 0.5, 0.75] } } },
+      "screens": ["moneybox"],
       "schedule": null,
       "cooldownMs": 0,
       "maxPerDay": null,
@@ -546,6 +547,55 @@
       },
       "haptic": "success",
       "sound": "sounds/chime.wav"
+    },
+    {
+      "id": "moneybox-dream",
+      "title": "Мечта сбылась",
+      "icon": "🎆",
+      "hint": "Что бывает, когда копилка полна до самых краёв?",
+      "enabled": true,
+      "priority": 20,
+      "trigger": { "type": "event", "name": "moneybox:goal" },
+      "screens": ["moneybox_goal"],
+      "schedule": null,
+      "cooldownMs": 0,
+      "maxPerDay": null,
+      "effect": {
+        "type": "particles",
+        "params": {
+          "spawn": "top", "emoji": ["🎉", "⭐", "🎈"], "shapes": ["rect", "circle", "star"],
+          "colors": ["#FFFFFF", "#FFC93C", "#3D8BFF", "#FF7A59", "#B57BFF", "#4CD4C0"],
+          "count": 110, "size": [9, 18], "flutter": true, "rotation": 360, "sway": 26,
+          "gravity": 170, "drag": 0.8, "emitMs": 1400, "lifeMs": [3200, 4400], "durationMs": 6000
+        }
+      },
+      "haptic": "success",
+      "sound": "sounds/chime.wav"
+    },
+    {
+      "id": "moneybox-dream-stars",
+      "title": "Мечта сбылась: звёзды",
+      "icon": "⭐",
+      "hint": "",
+      "enabled": true,
+      "exclusive": false,
+      "collect": false,
+      "priority": 20,
+      "trigger": { "type": "event", "name": "moneybox:goal" },
+      "screens": ["moneybox_goal"],
+      "schedule": null,
+      "cooldownMs": 0,
+      "maxPerDay": null,
+      "effect": {
+        "type": "particles",
+        "params": {
+          "spawn": "anchor", "anchor": "goal", "shapes": ["star", "spark", "star"],
+          "colors": ["#FFD84D", "#FFF3B0", "#FFFFFF", "#FFB020"], "count": 36, "size": [12, 26],
+          "speed": [220, 420], "gravity": 260, "drag": 1.5, "rotation": 240, "lifeMs": [1200, 2000], "durationMs": 2600
+        }
+      },
+      "haptic": null,
+      "sound": null
     }
   ]
 }

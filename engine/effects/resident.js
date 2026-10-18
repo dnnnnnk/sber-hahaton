@@ -33,6 +33,7 @@ export const REACTION_EVENTS = {
   'task:done': 'Дело выполнено',
   'tasks:allDone': 'Все дела выполнены',
   'moneybox:topup': 'Копилка пополнена',
+  'moneybox:goal': 'Мечта накоплена',
 };
 
 export const DEFAULT_REACTIONS = {
@@ -46,6 +47,7 @@ export const DEFAULT_REACTIONS = {
   'task:done': 'joy',
   'tasks:allDone': 'dance',
   'moneybox:topup': 'joy',
+  'moneybox:goal': 'dance',
 };
 
 const BUS_EVENT = /^[a-z]+:[A-Za-z]+$/;

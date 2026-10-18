@@ -95,7 +95,8 @@ for (const browserType of [chromium, webkit].filter(b => !process.env.ONLY_BROWS
       await page.waitForFunction(() => window.sberKids.engine.stats().active.includes('moneybox-rattle'));
       await page.waitForTimeout(300);
       const particles = await page.evaluate(() => window.sberKids.engine.stats().particles);
-      assert.ok(particles >= 14, `full dream card rattles at scroll 0 (${particles})`);
+      // Мечта в начале демо пустая (монет нет), «Тапочки» накоплены больше чем наполовину.
+      assert.ok(particles >= 6, `visible cards rattle at scroll 0 (${particles})`);
       const pockets = await page.evaluate(() => ['robot', 'slides'].map(id => {
         const r = document.querySelector(`[data-anchor="moneybox-${id}"]`).getBoundingClientRect();
         const tab = document.querySelector('[data-anchor="tabbar"]').getBoundingClientRect();
@@ -128,13 +129,12 @@ for (const browserType of [chromium, webkit].filter(b => !process.env.ONLY_BROWS
 
     await check('A3 topup screen reads as a moneybox, not a payment', async () => {
       await go('moneybox');
-      await page.locator('[data-zone="topup-slides"]').evaluate(el => el.scrollIntoView({ block: 'center' }));
-      await page.locator('[data-zone="topup-slides"]').tap();
+      await page.locator('[data-zone="topup-robot"]').tap();
       await page.waitForFunction(() => window.sberKids.current() === 'topup_success');
       await page.waitForTimeout(300);
       const patch = page.locator('.screen-patch--topup');
       const text = await patch.innerText();
-      assert.ok(text.includes('Копилка пополнена') && text.includes('Тапочки'));
+      assert.ok(/Копилка пополнена\s*\+500\s₽/.test(text) && text.includes('Умный робот'), text);
       assert.ok(!/Оплата|магазин|чек/i.test(text));
       assert.ok(!/Оплата/.test(await page.locator('.screen').getAttribute('aria-label')));
       const r = await patch.boundingBox();
@@ -142,7 +142,9 @@ for (const browserType of [chromium, webkit].filter(b => !process.env.ONLY_BROWS
       // Растровые «Оплата выполнена», «Любимый магазин», сумма чека и «Сохранить чек» — 33..75 % кадра.
       assert.ok(r.y <= frame.y + frame.height * 0.33 && r.y + r.height >= frame.y + frame.height * 0.75 && r.width >= frame.width - 1);
       await shot('a3-topup');
+      await page.waitForFunction(() => window.sberKids.current() === 'moneybox', null, { timeout: 3500 });
       await stop();
+      await page.evaluate(() => { const s = window.sberKids; s.state.moneyboxes.find(m => m.id === 'robot').saved = 0; s.state.lastTopup = null; s.refresh(); });
     });
 
     await check('A4 tasks_done lists the same tasks', async () => {
@@ -163,10 +165,13 @@ for (const browserType of [chromium, webkit].filter(b => !process.env.ONLY_BROWS
       const note = await page.locator('.screen-patch--goal-note').innerText();
       assert.ok(note.includes('Хочу') && !/Светодиод|свадьб|Декор/i.test(note));
       const robot = await page.evaluate(() => window.sberKids.state.moneyboxes.find(m => m.id === 'robot'));
-      assert.deepEqual([robot.title, robot.saved, robot.goal], ['Умный робот', 7600, 7600]);
+      assert.deepEqual([robot.title, robot.saved, robot.goal], ['Умный робот', 0, 3000]);
+      const sum = await page.locator('.screen-patch--goal-sum').innerText();
+      assert.ok(/0\s₽/.test(sum) && /из 3\s000\s₽/.test(sum), `goal sums follow the moneybox (${sum})`);
       await go('moneybox');
       const card = await page.locator('.screen-patch--moneybox').first().innerText();
-      assert.ok(card.includes('Умный робот') && /7\s600\s₽/.test(card));
+      assert.ok(card.includes('Умный робот') && /из 3\s000\s₽/.test(card));
+      assert.ok(/\+500\s₽/.test(await page.locator('[data-zone="topup-robot"]').innerText()), 'explicit +500 ₽ button');
     });
 
     await check('A6 guess-the-price uses a price tag', async () => {
@@ -627,9 +632,10 @@ for (const browserType of [chromium, webkit].filter(b => !process.env.ONLY_BROWS
         muted: window.sberKids.engine.sound.isMuted(),
         balance: window.sberKids.state.balance,
         robot: window.sberKids.state.moneyboxes.find(m => m.id === 'robot').saved,
+        lastTopup: window.sberKids.state.lastTopup,
         daily: localStorage.getItem('prikoly.daily'),
       }));
-      assert.deepEqual(state, { found: 0, tasks: false, season: 'auto', muted: false, balance: 800.55, robot: 7600, daily: null });
+      assert.deepEqual(state, { found: 0, tasks: false, season: 'auto', muted: false, balance: 800.55, robot: 0, lastTopup: null, daily: null });
       await page.evaluate(() => document.querySelector('.dbg').classList.add('is-collapsed'));
     });
 
@@ -657,6 +663,10 @@ for (const browserType of [chromium, webkit].filter(b => !process.env.ONLY_BROWS
       await act('coins');
       await page.waitForFunction(() => window.sberKids.engine.stats().active.includes('moneybox-rattle'));
       await stop();
+      await act('topup');
+      await page.waitForFunction(() => window.sberKids.current() === 'topup_success');
+      await page.waitForFunction(() => window.sberKids.current() === 'moneybox', null, { timeout: 3500 });
+      await stop();
       await act('allDone');
       await page.waitForFunction(() => window.sberKids.current() === 'tasks_done');
       await page.waitForFunction(() => window.sberKids.engine.stats().active.includes('tasks-all-done'));
@@ -680,16 +690,58 @@ for (const browserType of [chromium, webkit].filter(b => !process.env.ONLY_BROWS
       await stop();
     });
 
-    await check('D milestones burst from the progress bar next to the Lottie star', async () => {
+    await check('D six +500 ₽ topups: the bar grows, milestones fire, 100 % opens the dream', async () => {
+      await page.evaluate(() => { document.querySelector('.dbg').classList.remove('is-collapsed'); document.querySelector('[data-act="resetDemo"]').click(); document.querySelector('.dbg').classList.add('is-collapsed'); });
+      await page.waitForFunction(() => window.sberKids.current() === 'home');
       await go('moneybox');
-      await reset();
-      await page.evaluate(() => { window.sberKids.state.moneyboxes.find(m => m.id === 'slides').saved = 1400; window.sberKids.refresh(); });
-      await page.locator('[data-zone="topup-slides"]').tap();
-      await page.waitForFunction(() => window.sberKids.current() === 'topup_success');
-      await page.waitForFunction(() => ['topup-star', 'moneybox-milestones'].every(id => window.sberKids.engine.stats().active.includes(id)));
-      assert.ok(await page.locator('[data-anchor="progress"]').count() === 1, 'progress anchor on the topup screen');
+      const okCount = id => page.evaluate(id => window.sberKids.engine.getLog().filter(l => l.id === id && l.ok).length, id);
+      const width = () => page.locator('[data-anchor="progress"] i').evaluate(el => el.getBoundingClientRect().width / el.parentElement.getBoundingClientRect().width);
+      const milestonesBefore = await okCount('moneybox-milestones');
+      const crossedAt = [];
+      let last = await width();
+      assert.ok(last < 0.01, 'the dream starts empty');
+      for (let i = 1; i <= 6; i++) {
+        const starsBefore = await okCount('topup-star');
+        const milestones = await okCount('moneybox-milestones');
+        await page.locator('[data-zone="topup-robot"]').tap();
+        await page.waitForFunction(() => window.sberKids.current() === 'topup_success');
+        assert.ok(/\+500\s₽/.test(await page.locator('.topup-patch__title').innerText()), 'success screen says +500 ₽');
+        await page.waitForFunction(n => window.sberKids.engine.getLog().filter(l => l.id === 'topup-star' && l.ok).length > n, starsBefore);
+        // Нечётные — тап по экрану, чётные — сам через ~2 с.
+        if (i % 2) await page.touchscreen.tap(190, 420);
+        await page.waitForFunction(() => window.sberKids.current() !== 'topup_success', null, { timeout: 3500 });
+        if (i === 6) break;
+        assert.equal(await page.evaluate(() => window.sberKids.current()), 'moneybox');
+        await page.waitForTimeout(250);
+        const mid = await width();
+        assert.ok(mid > last - 0.001 && mid < i / 6 - 0.02, `bar is still growing (${mid.toFixed(3)} → ${(i / 6).toFixed(3)})`);
+        assert.equal(await page.locator('.moneybox-patch__progress.is-growing').count(), 1, 'growth is highlighted');
+        await page.waitForFunction(() => !document.querySelector('.is-growing'), null, { timeout: 2500 });
+        last = await width();
+        assert.ok(Math.abs(last - i / 6) < 0.01, `bar at ${i}/6 (${last.toFixed(3)})`);
+        await page.waitForTimeout(150);
+        if (await okCount('moneybox-milestones') > milestones) crossedAt.push(i);
+        await page.waitForFunction(() => !window.sberKids.engine.stats().active.includes('moneybox-milestones'), null, { timeout: 4000 });
+      }
+      assert.deepEqual(crossedAt, [2, 3, 5], 'milestones at 25, 50 and 75 %');
+      assert.equal(await okCount('moneybox-milestones') - milestonesBefore, 3);
+      await page.waitForFunction(() => window.sberKids.current() === 'moneybox_goal', null, { timeout: 4000 });
+      await page.waitForFunction(() => ['moneybox-dream', 'moneybox-dream-stars'].every(id => window.sberKids.engine.getLog().some(l => l.id === id && l.ok)));
+      assert.ok(await page.evaluate(() => window.sberKids.engine.stats().active.includes('moneybox-dream')), 'big celebration');
+      await page.waitForFunction(() => document.querySelector('.prikoly-drop')?.dataset.face === 'happy');
+      await page.waitForTimeout(600);
+      await shot('d-dream');
+      // Без сброса по кругу: полная мечта остаётся полной, кнопка ведёт на экран мечты.
+      await go('moneybox');
+      assert.equal(await page.evaluate(() => window.sberKids.state.moneyboxes.find(m => m.id === 'robot').saved), 3000);
+      await page.locator('[data-zone="topup-robot"]').tap();
+      await page.waitForFunction(() => window.sberKids.current() === 'moneybox_goal');
+      assert.equal(await page.evaluate(() => window.sberKids.state.moneyboxes.find(m => m.id === 'robot').saved), 3000);
       await stop();
-      await go('home');
+      // Сброс — только кнопкой ведущего.
+      await page.evaluate(() => { document.querySelector('.dbg').classList.remove('is-collapsed'); document.querySelector('[data-act="resetDemo"]').click(); document.querySelector('.dbg').classList.add('is-collapsed'); });
+      await page.waitForFunction(() => window.sberKids.current() === 'home');
+      assert.equal(await page.evaluate(() => window.sberKids.state.moneyboxes.find(m => m.id === 'robot').saved), 0);
     });
 
     assert.deepEqual(errors, [], 'console and HTTP');

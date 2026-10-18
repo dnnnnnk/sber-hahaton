@@ -2,7 +2,7 @@
 // лог решений движка, FPS, подсветка зон и якорей, калибровка.
 // Инструмент разработчика оболочки — к движку обращается только через его публичный API.
 
-import { TASKS, MONEYBOXES } from './screens.js';
+import { TASKS, MONEYBOXES, DREAM_ID } from './screens.js';
 
 const COLLAPSED_KEY = 'sberkids.debugCollapsed';
 const SEASONS = ['auto', 'autumn', 'winter', 'spring', 'summer'];
@@ -40,6 +40,7 @@ export function mountDebug({ shell, bus, engine }) {
           <button type="button" data-act="still">💤 Тихий час</button>
           <button type="button" data-act="allDone">✅ Все дела</button>
           <button type="button" data-act="coins">🪙 Копилки</button>
+          <button type="button" data-act="topup">🤖 +500 в мечту</button>
         </div>
       </section>
       <div class="dbg__stats" data-out="stats"></div>
@@ -106,6 +107,8 @@ export function mountDebug({ shell, bus, engine }) {
       }, 40);
     },
     coins: () => engine.simulateEntry('moneybox-rattle', { strength: 0.8 }),
+    // То же, что кнопка «+500 ₽» на карточке мечты: экран пополнения → копилки, рост полоски, вехи, мечта.
+    topup: () => shell.topup(DREAM_ID),
     resident: () => engine.simulateEntry('screen-resident', { summon: true }),
     balance: () => shell.setBalance(1111),
     allDone: () => shell.completeAllTasks(),

@@ -241,14 +241,80 @@ button:focus-visible, [role="button"]:focus-visible {
 .moneybox-patch__progress { height: calc(6 * var(--pt)); overflow: hidden; border-radius: 999px; background: #e9edf1; }
 .moneybox-patch__progress i { display: block; height: 100%; border-radius: inherit; background: #16d74b; }
 
+/* Мечта: сумма + кнопка «+500 ₽» (зона поверх, справа сверху), толстая полоска, название и цель */
+.screen-patch--dream .moneybox-patch__body { grid-template-rows: calc(32 * var(--pt)) calc(10 * var(--pt)) calc(16 * var(--pt)); gap: calc(9 * var(--pt)); }
+.screen-patch--dream .moneybox-patch__amount { display: flex; align-items: center; padding-right: calc(96 * var(--pt)); font-size: calc(18 * var(--pt)); }
+.screen-patch--dream .moneybox-patch__progress { height: auto; overflow: visible; }
+.screen-patch--dream .moneybox-patch__progress i { position: relative; overflow: hidden; transition: width 1100ms cubic-bezier(.22, .9, .3, 1); }
+.screen-patch--dream .moneybox-patch__title { display: flex; justify-content: space-between; align-items: center; gap: calc(8 * var(--pt)); }
+.screen-patch--dream .moneybox-patch__title small { color: #a8b1bc; font-size: calc(12 * var(--pt)); }
+/* Полоска растёт заметно: свечение и бегущий блик, пока идёт рост */
+.moneybox-patch__progress.is-growing i { box-shadow: 0 0 calc(10 * var(--pt)) rgba(22, 215, 75, 0.65); }
+.moneybox-patch__progress.is-growing i::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.85), transparent);
+  animation: progress-shine 550ms linear infinite;
+}
+@keyframes progress-shine { from { transform: translateX(-100%); } to { transform: translateX(100%); } }
+
+/* Кнопка-зона «+500 ₽» в стиле кнопок макета (градиент «Создать копилку») */
+.zone--pill {
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #52daf7, #c8fb7c 55%, #85ff22);
+  box-shadow: 0 calc(4 * var(--pt)) calc(10 * var(--pt)) rgba(82, 218, 140, 0.35);
+  color: #1f2229;
+  font-size: calc(15 * var(--pt));
+  font-weight: 700;
+  white-space: nowrap;
+  transition: transform 130ms ease-out;
+}
+.zone--pill:active { transform: scale(.94); }
+button.zone--pill:active::before { display: none; }
+@media (prefers-reduced-motion: reduce) {
+  .zone--pill { transition: none; }
+  .zone--pill:active { transform: none; }
+  .screen-patch--dream .moneybox-patch__progress i { transition: none; }
+  .moneybox-patch__progress.is-growing i::after { animation: none; }
+}
+
 .screen-patch--goal-banner {
   display: flex;
-  align-items: center;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding-top: calc(1 * var(--pt));
   background: rgb(26, 209, 61);
   color: #fff;
 }
 
 .screen-patch--goal-banner b { font-size: calc(17 * var(--pt)); font-weight: 700; line-height: calc(20 * var(--pt)); }
+.screen-patch--goal-banner span {
+  display: grid;
+  place-items: center;
+  height: calc(24 * var(--pt));
+  padding: 0 calc(12 * var(--pt));
+  border-radius: 999px;
+  background: linear-gradient(90deg, #52daf7, #c8fb7c 55%, #85ff22);
+  color: #1f2229;
+  font-size: calc(13 * var(--pt));
+  white-space: nowrap;
+}
+
+/* Мечта: суммы на зелёной полосе — как в копилке */
+.screen-patch--goal-sum {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 calc(9.5 * var(--pt)) 0 calc(10.5 * var(--pt));
+  background: rgb(26, 209, 61);
+  font-size: calc(14 * var(--pt));
+}
+.screen-patch--goal-sum b { font-weight: 600; }
+.screen-patch--goal-sum span { color: rgb(0, 126, 19); font-weight: 500; }
 
 .screen-patch--banks {
   display: grid;
@@ -320,7 +386,8 @@ button:focus-visible, [role="button"]:focus-visible {
   background: #f3f5f7;
 }
 
-.topup-patch__title { padding: 0 calc(16 * var(--pt)) calc(10 * var(--pt)); font-size: calc(30 * var(--pt)); line-height: 1.1; }
+.topup-patch__title { display: grid; gap: calc(6 * var(--pt)); padding: 0 calc(16 * var(--pt)) calc(10 * var(--pt)); font-size: calc(30 * var(--pt)); line-height: 1.1; }
+.topup-patch__title em { color: var(--green); font-size: calc(44 * var(--pt)); font-style: normal; font-weight: 800; }
 
 .topup-patch__card {
   display: flex;
@@ -345,12 +412,7 @@ button:focus-visible, [role="button"]:focus-visible {
 
 .topup-patch__card > span { display: grid; gap: calc(4 * var(--pt)); min-width: 0; }
 .topup-patch__card b { font-size: calc(17 * var(--pt)); }
-.topup-patch__card small { color: var(--green-dark); font-size: calc(15 * var(--pt)); font-weight: 600; }
-.topup-patch__card--progress { flex-direction: column; align-items: stretch; gap: calc(10 * var(--pt)); }
-.topup-patch__sum { display: flex !important; justify-content: space-between; align-items: baseline; }
-.topup-patch__sum small { color: #a8b1bc; font-weight: 500; }
-.topup-patch__bar { display: block; height: calc(10 * var(--pt)); overflow: hidden; border-radius: 999px; background: #e9edf1; }
-.topup-patch__bar i { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #21a038, #7fd858); }
+.topup-patch__card small { color: #8b949f; font-size: calc(15 * var(--pt)); font-weight: 500; }
 
 /* Мечта: слова ребёнка вместо товарного описания */
 .screen-patch--goal-note {
