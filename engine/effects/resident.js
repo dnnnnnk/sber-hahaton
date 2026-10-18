@@ -22,7 +22,7 @@ export const REACTIONS = {
   surprise: 'удивляется',
   doze: 'дремлет',
   sleep: 'засыпает и потягивается после',
-  leave: 'прячется за край экрана и подглядывает (прятки)',
+  leave: 'прячется у края (прятки)',
 };
 
 export const REACTION_EVENTS = {

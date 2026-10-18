@@ -101,11 +101,15 @@ for (const browserType of [chromium, webkit].filter(b => !process.env.ONLY_BROWS
     await page.mouse.down();
     await page.mouse.move(box.x + box.width / 2 + 80, box.y + box.height / 2, { steps: 6 });
     await page.mouse.up();
-    await page.waitForFunction(() => !document.querySelector('.prikoly-resident'));
-    // Отпущенная свайпом Капля не возвращается сама до следующего входа; debug зовёт её обратно.
+    // Свайп — прятки: Капля подглядывает из-за края и на другом экране; debug зовёт её обратно на место.
+    await page.waitForFunction(() => document.querySelector('.prikoly-resident.is-peeking'));
     await go('tasks');
-    assert.equal(await page.locator('.prikoly-resident').count(), 0);
+    await page.waitForFunction(() => document.querySelector('.prikoly-resident.is-peeking'));
+    await page.waitForTimeout(700); // переход за край — 0,52 с (листопад от тряски ещё идёт, цикл занят им)
+    const peek = await page.locator('.prikoly-resident').boundingBox();
+    assert.ok((peek.x < 0 && peek.x + peek.width <= 32) || (peek.x + peek.width > 375 && peek.x >= 343), `peeks from an edge (${peek.x}, ${peek.width})`);
     await page.evaluate(() => window.sberKids.engine.simulateEntry('screen-resident', { summon: true }));
+    await page.waitForFunction(() => !document.querySelector('.prikoly-resident.is-peeking'));
     await active('screen-resident');
 
     // Ресурсы освобождаются в красной зоне, в том числе посреди реакции.
