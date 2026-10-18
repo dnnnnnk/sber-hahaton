@@ -16,13 +16,14 @@
 | `lottie` | `lottie-compose`: `LottieAnimation(composition, iterations = 1)` | `lottie-ios`: `LottieView(animation:).playing(loopMode: .playOnce)` |
 | `cssAnimate` (WAAPI) | `Animatable` + `graphicsLayer { rotationZ; translationY }` на view якоря | `.rotationEffect` / `.offset` + `withAnimation` на view якоря (`PhaseAnimator`/`keyframeAnimator`) |
 | `holo` (`mix-blend-mode`) | `Brush.linearGradient` + `BlendMode.Overlay`/`HardLight` в `drawWithContent` | `LinearGradient` + `.blendMode(.hardLight)` поверх карты |
+| `stage.attachToAnchor` (слой эффекта внутри якоря: голограмма в форме карты) | `Modifier.drawWithContent { drawContent(); drawHolo() }` + `clip(RoundedCornerShape(20.dp, 20.dp, 5.dp, 5.dp))` на самой карте | `.overlay { Holo() }.clipShape(UnevenRoundedRectangle(…))` на view карты |
 | `shake`, `still` (`devicemotion`) | `SensorManager`, `TYPE_LINEAR_ACCELERATION` (+ `TYPE_GYROSCOPE`) | `CMMotionManager.deviceMotion` (`userAcceleration`, `rotationRate`) |
 | `tilt`, `flip` (`deviceorientation`) | `TYPE_ROTATION_VECTOR` → `getOrientation` (pitch/roll) | `CMMotionManager.deviceMotion.attitude` (pitch/roll) |
 | `multitap`, `longpress` (pointer на document; Enter/Space для доступного `longpress`) | `pointerInput` с `PointerEventPass.Initial` на корне, без consume; якорь альбома — семантическая кнопка | `simultaneousGesture` на корне или `UIWindow.sendEvent`; якорь альбома — accessibility action |
 | `rules.js` | чистый Kotlin, без Android-зависимостей (юнит-тесты как есть) | чистый Swift |
 | `config.json` override из CMS | CMS-ключ: произвольный JSON по ключу (уже умеет приложение) → `kotlinx.serialization` | тот же ключ → `Codable` |
 | ассеты `content/` | CDN + дисковый кэш (Coil / OkHttp cache), Lottie по URL с кэшем | CDN + `URLCache`, `LottieAnimation.loadedFrom(url:)` |
-| `collection.js` (localStorage) | `DataStore<Preferences>` | `UserDefaults` / `@AppStorage` |
+| `collection.js`, `prefs.js` («Показывать Каплю») (localStorage) | `DataStore<Preferences>` | `UserDefaults` / `@AppStorage` |
 | `haptics.js` | `HapticFeedback` / `VibrationEffect.createPredefined` | `UIImpactFeedbackGenerator`, `UINotificationFeedbackGenerator(.success)` |
 | `sound.js` | `SoundPool` (короткие сэмплы) | `AVAudioPlayer` с категорией `.ambient` |
 | пауза при `document.hidden` | `Lifecycle.State.STARTED` (`repeatOnLifecycle`) | `scenePhase != .active` |

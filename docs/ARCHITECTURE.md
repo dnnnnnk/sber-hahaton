@@ -43,7 +43,9 @@
 | `screen:open` | `{ screen, zone: 'green' \| 'red' }` | каждый переход; `zone` берётся из `app/screens.js` |
 | `task:done` | `{ taskId }` — `dog_walk`, `dishes`, `multiplication`, `clean_room`, `read_book` | отметка дела |
 | `tasks:allDone` | `{}` | отмечено последнее дело (сразу после его `task:done`) |
-| `moneybox:topup` | `{ moneyboxId, progress, prevProgress }`, 0..1 | открылся экран успеха пополнения |
+| `moneybox:topup` | `{ moneyboxId, progress, prevProgress }`, 0..1 | кнопка «+500 ₽»: открылся экран «Копилка пополнена» |
+| `moneybox:progress` | `{ moneyboxId, progress, prevProgress }`, 0..1 | вернулись к копилкам, полоска доросла до нового значения |
+| `moneybox:goal` | `{ moneyboxId }` | мечта накоплена: открылся экран «Ты накопил на мечту» |
 | `balance:show` | `{ value }` — число, наружу не уходит | открылся главный экран |
 | `app:firstOpenToday` | `{ hour }` | первый запуск за день |
 
@@ -55,12 +57,12 @@
 | Экран | Якоря |
 |---|---|
 | все с таббаром | `tabbar` (белая «таблетка» закреплённого таббара) |
-| `home` | `avatar` (поднимаемый, круглый), `card` (собственное зелёное HTML-лицо карты), `balance` (HTML-сумма на карте) |
+| `home` | `avatar` (поднимаемый, круглый), `card` (исходная растровая карта; скругление по растру 20/5 pt — `radius` зоны), `balance` (живая HTML-сумма поверх растровой) |
 | `tasks` | `avatar`, `task-dog_walk`, `task-dishes`, `task-multiplication`, `task-clean_room`, `task-read_book` |
 | `tasks_done` | `trophy` |
-| `moneybox` | `avatar`, `moneybox-robot`, `moneybox-slides` (обе видны без прокрутки), `moneybox-neon`, `moneybox-slime`, `moneybox-markers`, `moneybox-band`, `moneybox-bike`, `moneybox-headphones` |
+| `moneybox` | `avatar`, `moneybox-robot` (мечта, кнопка «+500 ₽»), `moneybox-slides` (обе видны без прокрутки), `moneybox-neon`, `moneybox-slime`, `moneybox-markers`, `moneybox-band`, `moneybox-bike`, `moneybox-headphones`, `progress` (полоска мечты: растёт после пополнения, от неё — вехи) |
 | `moneybox_goal` | `goal` |
-| `topup_success` | `success`, `progress` (полоска копилки в HTML-плашке «Копилка пополнена») |
+| `topup_success` | `success` (звезда; экран сам возвращает к копилкам через 2 с или по тапу) |
 | все с таббаром | `tabbar` — «таблетка» таббара; в её центре живёт Капля |
 
 «Поднимаемый» якорь (`lift: true`) на PNG-экране — это кусочек картинки поверх подложки цвета фона:
@@ -160,7 +162,8 @@ CMS очищает очередь старого конфига до перес�
   `ctx.events.on`. Реакции — `params.reactions` из конфига. Принимает касание только круг её тела, чтобы тап по
   персонажу не нажимал вкладку под ним. Цикл отрисовки работает только во время движения; красная зона и CMS
   снимают все подписки, свайп отпускает Каплю до следующего входа. Суммы и текст карты не используются.
-- `holo`: четыре слоя фольги со своим смешиванием над `card`; сила и сдвиг перелива — от угла наклона.
+- `holo`: четыре слоя фольги со своим смешиванием в контейнере внутри `card` (`stage.attachToAnchor`): форма карты,
+  `overflow: hidden`, прокрутка без отставания; сила и сдвиг перелива — от угла наклона, яркость деликатная.
 - Правила: отклик на `event` (действие ребёнка) без глобального кулдауна и с мягким гашением предыдущего эффекта;
   если победителю не на чем играть, играет следующий подходящий; `exclusive: false` — вне соревнования.
 - Переходы: короткая анимация появления только нового экрана; старые экраны и их зоны не клонируются.
