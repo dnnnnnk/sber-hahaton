@@ -1,6 +1,9 @@
-// Голографическая «фольга» поверх якоря (по умолчанию — карта): радужный перелив, бегущая полоса блика,
-// мягкий блик и мелкие искры. Яркость и сдвиг — от угла наклона: заметно уже при ±10°. Когда телефон замер
-// (нет обновлений idleMs), фольга мягко гаснет. Непрерывный эффект: принимает update({ x, y }) от tilt.
+// Голографическая «фольга» поверх якоря (по умолчанию — карта): деликатный радужный перелив, бегущая полоса
+// блика, мягкий блик и мелкие искры. Сила и сдвиг — от угла наклона: заметно уже при ±10°, но текст и картинка
+// под фольгой остаются читаемыми при любом наклоне. Когда телефон замер (нет обновлений idleMs), фольга гаснет.
+// Непрерывный эффект: принимает update({ x, y }) от tilt.
+// Все слои — в одном контейнере внутри якоря (stage.attachToAnchor): он прокручивается вместе с картой,
+// повторяет её скругление (border-radius: inherit от якоря) и обрезает всё по ней (overflow: hidden).
 // Каждый слой — отдельный элемент со своим mix-blend-mode, чтобы смешиваться с картой под ним.
 
 const SPARKS = 14;
@@ -32,19 +35,23 @@ export default {
     if (!ctx.stage.getAnchorRect(anchor)) return null;
     const idleMs = params.idleMs ?? 900;
     const durationMs = params.durationMs ?? 20000;
-    const intensity = Math.min(1, params.intensity ?? 0.9) * (ctx.reducedMotion ? 0.5 : 1);
+    const intensity = Math.min(1, params.intensity ?? 0.45) * (ctx.reducedMotion ? 0.5 : 1);
     const follow = ctx.reducedMotion ? 0.15 : 1;
     // Доля полного отклонения tilt, при которой фольга горит в полную силу (0.45 от ±20° ≈ 9°).
     const fullAt = params.fullAt ?? 0.45;
     const sparkCount = ctx.reducedMotion ? 0 : params.sparkles ?? SPARKS;
 
+    // Контейнер без opacity и z-index: не изолирует смешивание слоёв с картой.
+    const holder = document.createElement('div');
+    holder.className = 'prikoly-holo';
+    holder.setAttribute('aria-hidden', 'true');
     const layers = ['foil', 'stripe', 'glare', 'sparks'].map(name => {
       const el = document.createElement('div');
-      el.className = `prikoly-holo prikoly-holo--${name}`;
-      el.setAttribute('aria-hidden', 'true');
-      ctx.stage.root.append(el);
+      el.className = `prikoly-holo__layer prikoly-holo--${name}`;
+      holder.append(el);
       return el;
     });
+    if (!ctx.stage.attachToAnchor(anchor, holder)) return null;
     const [foil, stripe, glare, sparksEl] = layers;
     const sparks = Array.from({ length: sparkCount }, (_, i) => {
       const s = document.createElement('i');
@@ -68,12 +75,7 @@ export default {
 
     const remove = ctx.stage.addRenderer({
       frame(dt, now) {
-        const r = ctx.stage.getAnchorRect(anchor);
-        if (!r) return finish(), false;
-        const box = {
-          left: `${r.left}px`, top: `${r.top}px`, width: `${r.width}px`, height: `${r.height}px`, borderRadius: `${r.radius}px`,
-        };
-        for (const el of layers) Object.assign(el.style, box);
+        if (!ctx.stage.attachToAnchor(anchor, holder)) return finish(), false;
         const k = Math.min(1, dt * 9) * follow;
         pos.x += (target.x - pos.x) * k;
         pos.y += (target.y - pos.y) * k;
@@ -83,7 +85,8 @@ export default {
         const power = Math.min(1, 0.3 + Math.hypot(pos.x, pos.y) / fullAt * 0.7);
         const a = activity * intensity;
         foil.style.opacity = (a * (0.45 + 0.5 * power)).toFixed(3);
-        foil.style.backgroundPosition = `${(50 + pos.x * 70).toFixed(1)}% ${(50 + pos.y * 50).toFixed(1)}%`;
+        // Плитка фольги 220 %: сдвиг в пределах 0..100 % всегда накрывает слой целиком — без шва на краю плитки.
+        foil.style.backgroundPosition = `${clamp(50 + pos.x * 50)}% ${clamp(50 + pos.y * 50)}%`;
         stripe.style.opacity = (a * Math.min(1, 0.25 + power)).toFixed(3);
         stripe.style.backgroundPosition = `${(50 - pos.x * 130 - pos.y * 40).toFixed(1)}% 0%`;
         glare.style.opacity = (a * 0.85).toFixed(3);
@@ -112,7 +115,7 @@ export default {
       finished = true;
       remove();
       voice?.();
-      layers.forEach(el => el.remove());
+      holder.remove();
       ctx.end();
     }
 
@@ -125,6 +128,10 @@ export default {
     };
   },
 };
+
+function clamp(value) {
+  return Math.max(0, Math.min(100, value)).toFixed(1);
+}
 
 function finite(value) {
   return typeof value === 'number' && Number.isFinite(value);

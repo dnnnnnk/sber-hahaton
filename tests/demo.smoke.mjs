@@ -383,26 +383,96 @@ for (const browserType of [chromium, webkit].filter(b => !process.env.ONLY_BROWS
       await shot('b1-home-raster');
     });
 
-    await check('B2 foil is visible from the first ±10° and fades when still', async () => {
+    await check('B2 foil is a soft sheen from the first ±10° and fades when still', async () => {
       await go('home');
       await reset();
-      for (const [x, min] of [[0.25, 0.35], [0.5, 0.6]]) {
+      // Деликатный перелив: вдвое тише прежнего (было 0.35 / 0.6 / ≤ 0.86), но заметен с первых градусов.
+      for (const [x, min] of [[0.25, 0.17], [0.5, 0.3], [1, 0.3]]) {
         await page.evaluate(x => window.sberKids.engine.simulate('tilt', { x, y: 0 }), x);
         await page.waitForTimeout(250);
         const opacity = await page.evaluate(() => Number(getComputedStyle(document.querySelector('.prikoly-holo--foil')).opacity));
-        assert.ok(opacity >= min, `foil opacity ${opacity} at x=${x}`);
+        assert.ok(opacity >= min && opacity <= 0.45, `foil opacity ${opacity} at x=${x}`);
       }
-      const delta = await page.evaluate(() => {
-        const a = document.querySelector('[data-anchor="card"]').getBoundingClientRect();
-        return Math.max(...[...document.querySelectorAll('.prikoly-holo')].flatMap(el => {
-          const h = el.getBoundingClientRect();
-          return ['left', 'top', 'width', 'height'].map(k => Math.abs(a[k] - h[k]));
-        }));
+      const shape = await page.evaluate(() => {
+        const card = document.querySelector('[data-anchor="card"]');
+        const holo = document.querySelector('.prikoly-holo');
+        const a = card.getBoundingClientRect();
+        const h = holo.getBoundingClientRect();
+        const cs = getComputedStyle(holo);
+        return {
+          inside: holo.parentElement === card,
+          delta: Math.max(...['left', 'top', 'width', 'height'].map(k => Math.abs(a[k] - h[k]))),
+          overflow: cs.overflow,
+          radius: ['borderTopLeftRadius', 'borderTopRightRadius', 'borderBottomRightRadius', 'borderBottomLeftRadius'].map(k => cs[k]),
+          cardRadius: ['borderTopLeftRadius', 'borderTopRightRadius', 'borderBottomRightRadius', 'borderBottomLeftRadius'].map(k => getComputedStyle(card)[k]),
+          input: cs.pointerEvents,
+        };
       });
-      assert.ok(delta < 1, 'all foil layers sit exactly on the card');
+      assert.ok(shape.inside && shape.delta < 1, 'the foil container sits inside the card anchor and scrolls with it');
+      assert.equal(shape.overflow, 'hidden');
+      assert.deepEqual(shape.radius, shape.cardRadius, 'same corners as the card');
+      assert.ok(parseFloat(shape.radius[0]) >= 19 && parseFloat(shape.radius[0]) <= 21 && parseFloat(shape.radius[2]) <= 6, `card corners from the raster (${shape.radius})`);
+      assert.equal(shape.input, 'none');
       assert.ok(await page.locator('.prikoly-holo--sparks i').count() >= 10, 'sparkles');
       await shot('b2-foil');
       await page.waitForFunction(() => !document.querySelector('.prikoly-holo'), null, { timeout: 4000 });
+    });
+
+    await check('B2 nothing leaks past the rounded card corners at extreme tilts, also scrolled', async () => {
+      await go('home');
+      await reset();
+      for (const scroll of [0, 60]) {
+        await page.locator('#viewport').evaluate((el, top) => { el.scrollTop = top; }, scroll);
+        await page.waitForTimeout(150);
+        const card = await page.locator('[data-anchor="card"]').boundingBox();
+        const clip = { x: card.x - 8, y: card.y - 8, width: card.width + 16, height: card.height + 16 };
+        const before = await page.screenshot({ clip, scale: 'device' });
+        for (const [x, y] of [[-1, -1], [1, 1], [1, -1]]) {
+          for (let i = 0; i < 8; i++) {
+            await page.evaluate(([x, y]) => window.sberKids.engine.simulate('tilt', { x, y }), [x, y]);
+            await page.waitForTimeout(50);
+          }
+          const after = await page.screenshot({ clip, scale: 'device' });
+          const leaks = await page.evaluate(async ({ a, b, card, clip }) => {
+            const read = async b64 => {
+              const img = new Image();
+              img.src = `data:image/png;base64,${b64}`;
+              await img.decode();
+              const c = document.createElement('canvas');
+              c.width = img.width; c.height = img.height;
+              const g = c.getContext('2d');
+              g.drawImage(img, 0, 0);
+              return g.getImageData(0, 0, c.width, c.height);
+            };
+            const [A, B] = await Promise.all([read(a), read(b)]);
+            const s = A.width / clip.width;
+            const radii = getComputedStyle(document.querySelector('[data-anchor="card"]'));
+            const [tl, tr, br, bl] = ['borderTopLeftRadius', 'borderTopRightRadius', 'borderBottomRightRadius', 'borderBottomLeftRadius'].map(k => parseFloat(radii[k]) * s);
+            const L = (card.x - clip.x) * s, T = (card.y - clip.y) * s, W = card.width * s, H = card.height * s;
+            // Снаружи формы карты с запасом 1,5 px устройства на сглаживание края.
+            const outside = (x, y) => {
+              const pad = 1.5;
+              if (x < L - pad || x > L + W + pad || y < T - pad || y > T + H + pad) return true;
+              const far = (cx, cy, r) => Math.hypot(x - cx, y - cy) > r + pad;
+              if (x < L + tl && y < T + tl) return far(L + tl, T + tl, tl);
+              if (x > L + W - tr && y < T + tr) return far(L + W - tr, T + tr, tr);
+              if (x > L + W - br && y > T + H - br) return far(L + W - br, T + H - br, br);
+              if (x < L + bl && y > T + H - bl) return far(L + bl, T + H - bl, bl);
+              return false;
+            };
+            let leaks = 0;
+            for (let y = 0; y < A.height; y++) for (let x = 0; x < A.width; x++) {
+              if (!outside(x, y)) continue;
+              const i = (y * A.width + x) * 4;
+              if (Math.max(Math.abs(A.data[i] - B.data[i]), Math.abs(A.data[i + 1] - B.data[i + 1]), Math.abs(A.data[i + 2] - B.data[i + 2])) > 2) leaks++;
+            }
+            return leaks;
+          }, { a: before.toString('base64'), b: after.toString('base64'), card, clip });
+          assert.equal(leaks, 0, `pixels changed outside the card at x=${x} y=${y} scroll=${scroll}`);
+        }
+        await page.waitForFunction(() => !document.querySelector('.prikoly-holo'), null, { timeout: 4000 });
+      }
+      await page.locator('#viewport').evaluate(el => { el.scrollTop = 0; });
     });
 
     // ——— B4: «Кувырок» — ночь лицом вниз и рассвет ———

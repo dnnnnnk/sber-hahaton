@@ -144,6 +144,17 @@ export function createStage(host) {
     // Элемент якоря — только для эффектов, которые анимируют сам якорь (cssAnimate).
     getAnchorElement: findAnchor,
 
+    // Декоративный слой эффекта внутри якоря (как overlay/drawWithContent у вью в нативе): прокручивается
+    // вместе с якорем без отставания на кадр и может обрезаться по его форме (border-radius: inherit).
+    // Слой обязан быть aria-hidden и pointer-events: none. Вызывать в каждом кадре: оболочка могла
+    // перерисовать экран, тогда слой переезжает в новый элемент. false — якоря на экране нет.
+    attachToAnchor(name, layer) {
+      const el = findAnchor(name);
+      if (!el) return false;
+      if (layer.parentNode !== el) el.append(layer);
+      return true;
+    },
+
     // Имена видимых якорей с префиксом: "task-" → ["task-dog_walk", …]. Для шаблонов вида "task-*".
     anchorNames(prefix) {
       const names = new Set();

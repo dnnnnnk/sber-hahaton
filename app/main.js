@@ -248,6 +248,7 @@ function zoneEls(zone, image) {
   const box = { left: `${zone.x}%`, top: `${zone.y}%`, width: `${zone.w}%`, height: `${zone.h}%` };
   el.className = 'zone';
   Object.assign(el.style, box);
+  if (zone.radius) el.style.borderRadius = [].concat(zone.radius).map(pt => `calc(${pt} * var(--pt))`).join(' ');
   if (zone.tab) el.dataset.tab = zone.tab;
   else if (actionable) el.dataset.zone = zone.id;
   if (zone.anchor) el.dataset.anchor = zone.anchor;
